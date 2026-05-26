@@ -39,9 +39,9 @@ body[data-theme="dark"] .p-home__welcome-card {
   width: 100%;
   margin: 0 0 24px;
   padding: 14px 24px;
-  border: 2px solid #008859;
-  border-radius: 10px;
-  background-color: transparent;
+  border: 2px solid #008859 !important;
+  border-radius: 10px !important;
+  background-color: transparent !important;
   cursor: pointer;
   font-size: 16px;
   font-weight: 600;
@@ -78,8 +78,8 @@ body[data-theme="light"] #p-home .p-home__add-idea-btn {
 body[data-theme="light"] #p-home .p-home__add-idea-btn .p-home__add-idea-icon { color: #008859 !important; }
 body[data-theme="light"] #p-home .p-home__add-idea-btn span { color: #008859 !important; }
 body[data-theme="light"] #p-home .p-home__add-idea-btn:hover {
-  background-color: #008859;
-  border-color: #008859;
+  background-color: #008859 !important;
+  border-color: #008859 !important;
   color: #ffffff;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
@@ -88,14 +88,14 @@ body[data-theme="light"] #p-home .p-home__add-idea-btn:hover span { color: #ffff
 
 /* Dark mode: bright green outline + bright green text -> filled green with white on hover */
 body[data-theme="dark"] #p-home .p-home__add-idea-btn {
-  border-color: #00f7a5;
+  border-color: #00f7a5 !important;
   color: #00f7a5;
 }
 body[data-theme="dark"] #p-home .p-home__add-idea-btn .p-home__add-idea-icon { color: #00f7a5 !important; }
 body[data-theme="dark"] #p-home .p-home__add-idea-btn span { color: #00f7a5 !important; }
 body[data-theme="dark"] #p-home .p-home__add-idea-btn:hover {
-  background-color: #008859;
-  border-color: #008859;
+  background-color: #008859 !important;
+  border-color: #008859 !important;
   color: #ffffff;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }

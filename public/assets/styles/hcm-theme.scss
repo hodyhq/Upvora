@@ -67,13 +67,15 @@ body[data-theme="dark"] .p-home__welcome-card {
 // labelled-input + Submit-button look.
 // ============================================================================
 // Outlined CTA button — green border + green text by default, fills on hover.
+// !important on border/background because Home.page.scss redeclares them
+// at the same specificity and gets bundled after this file.
 #p-home .p-home__add-idea-btn {
   width: 100%;
   margin: 0 0 24px;
   padding: 14px 24px;
-  border: 2px solid $hcm-green-mid;
-  border-radius: 10px;
-  background-color: transparent;
+  border: 2px solid $hcm-green-mid !important;
+  border-radius: 10px !important;
+  background-color: transparent !important;
   cursor: pointer;
   font-size: 16px;
   font-weight: 600;
@@ -107,8 +109,8 @@ body[data-theme="light"] #p-home .p-home__add-idea-btn {
   span { color: $hcm-green-mid !important; }
 
   &:hover {
-    background-color: $hcm-green-mid;
-    border-color: $hcm-green-mid;
+    background-color: $hcm-green-mid !important;
+    border-color: $hcm-green-mid !important;
     color: #ffffff;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
     .p-home__add-idea-icon { color: #ffffff !important; }
@@ -118,14 +120,14 @@ body[data-theme="light"] #p-home .p-home__add-idea-btn {
 
 // Dark mode: bright green outline + bright green text → fills green with white text on hover.
 body[data-theme="dark"] #p-home .p-home__add-idea-btn {
-  border-color: $hcm-green-bright;
+  border-color: $hcm-green-bright !important;
   color: $hcm-green-bright;
   .p-home__add-idea-icon { color: $hcm-green-bright !important; }
   span { color: $hcm-green-bright !important; }
 
   &:hover {
-    background-color: $hcm-green-mid;
-    border-color: $hcm-green-mid;
+    background-color: $hcm-green-mid !important;
+    border-color: $hcm-green-mid !important;
     color: #ffffff;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     .p-home__add-idea-icon { color: #ffffff !important; }
