@@ -66,23 +66,21 @@ body[data-theme="dark"] .p-home__welcome-card {
 // is the click target (opens the ShareFeedback modal); CSS gives it the
 // labelled-input + Submit-button look.
 // ============================================================================
-// Clean solid CTA button. Clicking opens the ShareFeedback modal where the
-// user actually types — so this is just a clear, obvious call-to-action.
+// Outlined CTA button — green border + green text by default, fills on hover.
 #p-home .p-home__add-idea-btn {
   width: 100%;
   margin: 0 0 24px;
-  padding: 16px 24px;
-  border: none;
+  padding: 14px 24px;
+  border: 2px solid $hcm-green-mid;
   border-radius: 10px;
-  background-color: $hcm-green-mid;
-  color: #ffffff;
+  background-color: transparent;
   cursor: pointer;
   font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.01em;
   line-height: 1;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+  box-shadow: none;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
 
   > * {
     background-color: transparent !important;
@@ -93,28 +91,46 @@ body[data-theme="dark"] .p-home__welcome-card {
   .p-home__add-idea-icon {
     width: 20px;
     height: 20px;
-    color: #ffffff !important;
+    transition: color 0.15s ease;
   }
 
-  span { color: #ffffff !important; font-size: 16px; font-weight: 600; }
-
-  &:hover {
-    background-color: $hcm-green-dark;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  }
+  span { font-size: 16px; font-weight: 600; transition: color 0.15s ease; }
 
   &:active { transform: translateY(1px); }
+  &:focus { outline: 3px solid rgba($hcm-green-bright, 0.4); outline-offset: 2px; }
+}
 
-  &:focus {
-    outline: 3px solid rgba($hcm-green-bright, 0.4);
-    outline-offset: 2px;
+// Light mode: green outline + green text → fills green with white text on hover.
+body[data-theme="light"] #p-home .p-home__add-idea-btn {
+  color: $hcm-green-mid;
+  .p-home__add-idea-icon { color: $hcm-green-mid !important; }
+  span { color: $hcm-green-mid !important; }
+
+  &:hover {
+    background-color: $hcm-green-mid;
+    border-color: $hcm-green-mid;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    .p-home__add-idea-icon { color: #ffffff !important; }
+    span { color: #ffffff !important; }
   }
 }
 
-// In dark mode the button still looks great with the mid green; bump the
-// hover to a slightly punchier shade to keep contrast against the dark page.
+// Dark mode: bright green outline + bright green text → fills green with white text on hover.
 body[data-theme="dark"] #p-home .p-home__add-idea-btn {
-  &:hover { background-color: lighten($hcm-green-mid, 4%); }
+  border-color: $hcm-green-bright;
+  color: $hcm-green-bright;
+  .p-home__add-idea-icon { color: $hcm-green-bright !important; }
+  span { color: $hcm-green-bright !important; }
+
+  &:hover {
+    background-color: $hcm-green-mid;
+    border-color: $hcm-green-mid;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    .p-home__add-idea-icon { color: #ffffff !important; }
+    span { color: #ffffff !important; }
+  }
 }
 
 // ============================================================================
