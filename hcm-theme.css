@@ -1,157 +1,12 @@
 /* ============================================================================
-   HCM Brand Theme for Fider
-   Paste this entire file into:
-     Site Settings -> Advanced Settings -> Custom CSS
-
-   No rebuild required. Fider loads this file *after* its own bundle, so every
-   rule here wins the cascade without !important being strictly necessary
-   (kept anyway for safety in case Fider tightens specificity upstream).
-
-   Source of truth lives in this repo:
-     - public/assets/styles/hcm-theme.scss  (SCSS, for a future from-source build)
-     - hcm-theme.css                        (this file, flattened for the admin UI)
-   Keep both in sync when editing.
+   HCM brand theme — flattened CSS, mirrors public/assets/styles/hcm-theme.scss.
+   Paste into Site Settings -> Advanced Settings -> Custom CSS if you ever
+   need to apply the brand without rebuilding the Fider image.
+   Works in both light and dark mode.
    ============================================================================ */
 
-/* HCM brand palette
-   Green 100  #00f7a5   accents, highlights, active states
-   Green 200  #008859   primary buttons, borders
-   Green 300  #004c2c   dark fills, hover states
-   Submit bg  #0d1f17
-   Vote bdr   #1e3329
-*/
+/* ---------- Brand colors (both modes) ---------- */
 
-/* 1. Submit area on the home page ------------------------------------------ */
-#p-home .p-home__add-idea-btn {
-  position: relative !important;
-  background-color: #0d1f17 !important;
-  border: 2px solid #008859 !important;
-  color: #00f7a5 !important;
-  padding-top: 32px !important;
-  padding-right: 120px !important;
-  box-shadow: none !important;
-}
-#p-home .p-home__add-idea-btn::before {
-  content: "Submit your idea";
-  position: absolute;
-  top: 8px;
-  left: 16px;
-  color: #00f7a5;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-#p-home .p-home__add-idea-btn::after {
-  content: "Submit";
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-25%);
-  background-color: #008859;
-  color: #ffffff;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  line-height: 1;
-  pointer-events: none;
-}
-#p-home .p-home__add-idea-btn:hover {
-  background-color: #112720 !important;
-  border-color: #00f7a5 !important;
-  box-shadow: 0 0 0 3px rgba(0, 247, 165, 0.15) !important;
-}
-#p-home .p-home__add-idea-btn:hover::after {
-  background-color: #004c2c;
-}
-#p-home .p-home__add-idea-btn:focus {
-  outline-color: #00f7a5 !important;
-}
-#p-home .p-home__add-idea-btn .p-home__add-idea-icon {
-  color: #00f7a5 !important;
-}
-#p-home .p-home__add-idea-btn span {
-  color: rgba(0, 247, 165, 0.85);
-}
-body[data-theme="dark"] #p-home .p-home__add-idea-btn {
-  background-color: #0d1f17 !important;
-}
-
-/* 2. Vote buttons ---------------------------------------------------------- */
-.c-vote-counter__button {
-  background-color: #0d1f17 !important;
-  border-color: #1e3329 !important;
-  color: #00f7a5 !important;
-}
-.c-vote-counter__button .c-vote-counter__icon,
-.c-vote-counter__button .c-vote-counter__count {
-  color: #00f7a5 !important;
-}
-.c-vote-counter__button:hover {
-  background-color: #12281f !important;
-  border-color: #00f7a5 !important;
-  color: #00f7a5 !important;
-}
-.c-vote-counter__button:hover .c-vote-counter__icon {
-  color: #00f7a5 !important;
-}
-.c-vote-counter__button--voted {
-  background-color: #004c2c !important;
-  border-color: #00f7a5 !important;
-  color: #00f7a5 !important;
-}
-.c-vote-counter__button--voted .c-vote-counter__icon,
-.c-vote-counter__button--voted .c-vote-counter__count {
-  color: #00f7a5 !important;
-}
-.c-vote-counter__button--voted:hover {
-  background-color: #003c23 !important;
-  border-color: #00f7a5 !important;
-}
-
-/* 3. Header ---------------------------------------------------------------- */
-#c-header {
-  border-left: 4px solid #008859 !important;
-}
-#c-header h1.text-header,
-body[data-theme="dark"] #c-header h1.text-header {
-  color: #ffffff !important;
-}
-
-/* 4. Status tags ----------------------------------------------------------- */
-.c-status-label {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  line-height: 1.2;
-  background-color: var(--colors-gray-100);
-  color: var(--colors-gray-700);
-  border: 1px solid var(--colors-gray-200);
-}
-.c-status-label--planned,
-.c-status-label--started {
-  background-color: #0d1f17 !important;
-  color: #008859 !important;
-  border-color: rgba(0, 136, 89, 0.5) !important;
-}
-.c-status-label--completed {
-  background-color: #004c2c !important;
-  color: #00f7a5 !important;
-  border-color: #008859 !important;
-}
-.c-status-label--declined,
-.c-status-label--duplicate {
-  background-color: var(--colors-gray-100) !important;
-  color: var(--colors-gray-700) !important;
-  border-color: var(--colors-gray-300) !important;
-}
-
-/* 5. Primary buttons globally --------------------------------------------- */
 .c-button--primary {
   background-color: #008859 !important;
   border-color: #008859 !important;
@@ -161,4 +16,264 @@ body[data-theme="dark"] #c-header h1.text-header {
   background-color: #004c2c !important;
   border-color: #004c2c !important;
   color: #ffffff !important;
+}
+.c-button--link { color: #008859 !important; }
+
+.c-vote-counter__button,
+.c-vote-counter__button--voted {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 36px;
+  color: #008859 !important;
+  gap: 2px !important;
+}
+.c-vote-counter__button .c-vote-counter__icon,
+.c-vote-counter__button .c-vote-counter__count,
+.c-vote-counter__button--voted .c-vote-counter__icon,
+.c-vote-counter__button--voted .c-vote-counter__count {
+  color: #008859 !important;
+}
+.c-vote-counter__button .c-vote-counter__count,
+.c-vote-counter__button--voted .c-vote-counter__count {
+  font-weight: 700 !important;
+  font-size: 16px !important;
+}
+.c-vote-counter__button:hover,
+.c-vote-counter__button--voted:hover { background-color: transparent !important; }
+.c-vote-counter__button:hover .c-vote-counter__icon { transform: translateY(-1px); }
+
+.c-status-label {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  background-color: #f3f4f6;
+  color: #6e6e6e;
+  border: 1px solid #e5e7eb;
+}
+.c-status-label--started {
+  background-color: #0d1f17 !important;
+  color: #00f7a5 !important;
+  border-color: rgba(0, 247, 165, 0.35) !important;
+}
+.c-status-label--planned {
+  background-color: #0d1f17 !important;
+  color: #008859 !important;
+  border-color: rgba(0, 136, 89, 0.45) !important;
+}
+.c-status-label--completed {
+  background-color: #004c2c !important;
+  color: #00f7a5 !important;
+  border-color: #008859 !important;
+}
+
+.text-blue-600 { color: #008859 !important; }
+
+/* Submit-your-idea card — brand-bordered in both modes */
+#p-home .p-home__add-idea-btn {
+  position: relative !important;
+  border: 2px solid #008859 !important;
+  border-radius: 10px !important;
+  padding: 14px !important;
+  padding-top: 40px !important;
+  padding-right: 110px !important;
+  margin-bottom: 24px !important;
+  box-shadow: none !important;
+  text-align: left;
+}
+#p-home .p-home__add-idea-btn::before {
+  content: "Submit your idea";
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  padding-left: 10px;
+  border-left: 2px solid #008859;
+  color: #008859;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+#p-home .p-home__add-idea-btn::after {
+  content: "Submit";
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  background-color: #008859;
+  color: #ffffff;
+  padding: 9px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1;
+  pointer-events: none;
+}
+#p-home .p-home__add-idea-btn > * {
+  border-radius: 6px !important;
+  padding: 11px 14px !important;
+}
+#p-home .p-home__add-idea-btn .p-home__add-idea-icon {
+  color: #008859 !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+#p-home .p-home__add-idea-btn:hover {
+  border-color: #004c2c !important;
+  box-shadow: 0 0 0 3px rgba(0, 136, 89, 0.15) !important;
+}
+#p-home .p-home__add-idea-btn:hover::after { background-color: #004c2c; }
+#p-home .p-home__add-idea-btn:focus { outline-color: #008859 !important; }
+
+/* ---------- Light mode specifics ---------- */
+
+body[data-theme="light"] #p-home .p-home__add-idea-btn {
+  background-color: #f6fdf9 !important;
+}
+body[data-theme="light"] #p-home .p-home__add-idea-btn > * {
+  background-color: #ffffff !important;
+  border: 1px solid #d6e5dc !important;
+}
+body[data-theme="light"] #p-home .p-home__add-idea-btn span {
+  color: #6b7280 !important;
+}
+
+/* ---------- Dark mode specifics ---------- */
+
+body[data-theme="dark"] { background-color: #111111 !important; color: #e6e6e6; }
+body[data-theme="dark"] html { background-color: #111111 !important; }
+body[data-theme="dark"] #p-home {
+  background-color: #111111 !important;
+  color: #e6e6e6;
+}
+
+body[data-theme="dark"] .bg-white { background-color: #111111 !important; }
+body[data-theme="dark"] .bg-gray-50,
+body[data-theme="dark"] .bg-gray-100 { background-color: #161616 !important; }
+body[data-theme="dark"] .text-gray-500,
+body[data-theme="dark"] .text-gray-600,
+body[data-theme="dark"] .text-gray-700,
+body[data-theme="dark"] .text-muted { color: #9a9a9a !important; }
+body[data-theme="dark"] .text-gray-800,
+body[data-theme="dark"] .text-gray-900 { color: #e6e6e6 !important; }
+
+body[data-theme="dark"] #c-header {
+  background-color: #111111 !important;
+  border-bottom: 1px solid #1e1e1e !important;
+}
+body[data-theme="dark"] #c-header[style] { border-bottom: 1px solid #1e1e1e !important; }
+body[data-theme="dark"] #c-header h1.text-header { color: #e6e6e6 !important; }
+body[data-theme="dark"] #c-header .c-themeswitcher svg,
+body[data-theme="dark"] #c-header .c-notification svg { color: #9a9a9a !important; }
+
+body[data-theme="dark"] .p-home__welcome-col > .vstack:first-child,
+body[data-theme="dark"] .p-home__welcome-col > div:first-child {
+  background-color: #161616 !important;
+  border: 1px solid #1e1e1e !important;
+  border-radius: 12px !important;
+  padding: 24px !important;
+}
+body[data-theme="dark"] .p-home__welcome-title { color: #e6e6e6 !important; }
+body[data-theme="dark"] .p-home__welcome-body,
+body[data-theme="dark"] .p-home__welcome-body p { color: #9a9a9a !important; }
+body[data-theme="dark"] .p-home__welcome-body a { color: #00f7a5 !important; }
+
+body[data-theme="dark"] #p-home .p-home__add-idea-btn {
+  background-color: #0d1f17 !important;
+}
+body[data-theme="dark"] #p-home .p-home__add-idea-btn::before {
+  color: #00f7a5 !important;
+  border-left-color: #00f7a5 !important;
+}
+body[data-theme="dark"] #p-home .p-home__add-idea-btn > * {
+  background-color: #111111 !important;
+  border: 1px solid #1e3329 !important;
+}
+body[data-theme="dark"] #p-home .p-home__add-idea-btn .p-home__add-idea-icon {
+  color: #00f7a5 !important;
+}
+body[data-theme="dark"] #p-home .p-home__add-idea-btn span {
+  color: #9a9a9a !important;
+  font-weight: 400;
+  font-size: 14px;
+}
+body[data-theme="dark"] #p-home .p-home__add-idea-btn:hover {
+  border-color: #00f7a5 !important;
+  box-shadow: 0 0 0 3px rgba(0, 247, 165, 0.12) !important;
+}
+
+body[data-theme="dark"] .c-post-filter-btn,
+body[data-theme="dark"] .c-post-sort-btn {
+  background-color: #161616 !important;
+  border: 1px solid #1e1e1e !important;
+  color: #9a9a9a !important;
+  border-radius: 8px !important;
+}
+body[data-theme="dark"] .c-post-filter-btn:hover,
+body[data-theme="dark"] .c-post-sort-btn:hover {
+  background-color: #1c1c1c !important;
+  color: #e6e6e6 !important;
+}
+
+body[data-theme="dark"] .c-input,
+body[data-theme="dark"] .c-input input,
+body[data-theme="dark"] input.filter-input,
+body[data-theme="dark"] input[type="text"],
+body[data-theme="dark"] input[type="search"] {
+  background-color: #161616 !important;
+  border: 1px solid #1e1e1e !important;
+  color: #e6e6e6 !important;
+}
+body[data-theme="dark"] .c-input ::placeholder,
+body[data-theme="dark"] input::placeholder { color: #6e6e6e !important; }
+body[data-theme="dark"] input:focus {
+  border-color: #008859 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(0, 247, 165, 0.1) !important;
+}
+
+body[data-theme="dark"] .c-posts-container__post {
+  background-color: #161616 !important;
+  border: 1px solid #1e1e1e !important;
+  border-radius: 12px !important;
+  padding: 18px 20px !important;
+  margin-bottom: 12px !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+body[data-theme="dark"] .c-posts-container__post:hover {
+  border-color: #1e3329 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+body[data-theme="dark"] .c-posts-container__post-title {
+  color: #e6e6e6 !important;
+  font-weight: 600 !important;
+}
+body[data-theme="dark"] .c-posts-container__postdescription { color: #9a9a9a !important; }
+
+body[data-theme="dark"] .c-vote-counter__button,
+body[data-theme="dark"] .c-vote-counter__button--voted { color: #00f7a5 !important; }
+body[data-theme="dark"] .c-vote-counter__button .c-vote-counter__icon,
+body[data-theme="dark"] .c-vote-counter__button .c-vote-counter__count,
+body[data-theme="dark"] .c-vote-counter__button--voted .c-vote-counter__icon,
+body[data-theme="dark"] .c-vote-counter__button--voted .c-vote-counter__count {
+  color: #00f7a5 !important;
+}
+body[data-theme="dark"] .text-blue-600 { color: #00f7a5 !important; }
+
+body[data-theme="dark"] .c-button--secondary {
+  background-color: #161616 !important;
+  border-color: #1e1e1e !important;
+  color: #e6e6e6 !important;
+}
+body[data-theme="dark"] .c-button--secondary:hover {
+  background-color: #1c1c1c !important;
+  border-color: #1e3329 !important;
 }
