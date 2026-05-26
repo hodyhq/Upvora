@@ -206,18 +206,18 @@ What can we do better? This is the place for you to vote, discuss and share idea
                   <Markdown className="p-home__welcome-body" text={fider.session.tenant.welcomeMessage || defaultWelcomeMessage} style="full" />
                 </div>
               </VStack>
-              <button className="p-home__add-idea-btn" onClick={handleNewPost}>
-                <HStack spacing={4} align="center">
-                  <Icon sprite={IconPlusCircle} className="p-home__add-idea-icon" />
-                  <span>{fider.session.tenant.invitation || defaultInvitation}</span>
-                </HStack>
-              </button>
             </div>
             <div>
               <PoweredByFider slot="home-input" className="sm:hidden md:hidden lg:block mt-3" />
             </div>
           </div>
           <div className="p-home__posts-col">
+            <button className="p-home__add-idea-btn" onClick={handleNewPost}>
+              <HStack spacing={4} align="center">
+                <Icon sprite={IconPlusCircle} className="p-home__add-idea-icon" />
+                <span>{fider.session.tenant.invitation || defaultInvitation}</span>
+              </HStack>
+            </button>
             {isLonely() ? (
               <Lonely />
             ) : (

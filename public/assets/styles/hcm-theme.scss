@@ -69,8 +69,8 @@ body[data-theme="dark"] .p-home__welcome-card {
 #p-home .p-home__add-idea-btn {
   position: relative;
   width: 100%;
-  margin-top: 20px;
-  margin-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 24px;
   padding: 14px 110px 14px 14px;     // right padding leaves room for Submit pill
   padding-top: 40px;                  // top padding leaves room for the label
   border: 2px solid $hcm-green-mid;
@@ -222,6 +222,16 @@ body[data-theme="dark"] {
   }
   .c-vote-counter__count { color: $hcm-green-bright !important; }
 }
+
+// Larger variant used on the post-detail page
+.c-vote-counter__button--large {
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px;
+  .c-vote-counter__icon { width: 22px !important; height: 22px !important; }
+}
+.c-vote-counter--large .c-vote-counter__count,
+.c-vote-counter__button--large + .c-vote-counter__count { font-size: 15px !important; }
 
 // Hide the "Voted!" inline indicator on list cards (spec 3.4)
 .c-posts-container__post .text-blue-600 { display: none !important; }
@@ -436,5 +446,122 @@ body[data-theme="dark"] {
     border-color: $hcm-dark-border !important;
     color: #e6e6e6 !important;
     &:hover { background-color: lighten($hcm-dark-panel, 3%) !important; border-color: $hcm-dark-input-bd !important; }
+  }
+}
+
+// ============================================================================
+// Post-detail page (ShowPost + PostDetails component)
+// Same brand surfaces and accents as the home page.
+// ============================================================================
+#p-show-post {
+  // Page-level surface (override default Fider light-gray bg)
+  background-color: transparent !important;
+}
+
+// Common card treatment shared across the page's cards
+.p-show-post__post-card,
+.p-show-post__action-col > .card,
+.c-comment-input-card,
+.c-response-details__card {
+  border: 1px solid transparent !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+
+.p-show-post__title { font-weight: 600 !important; }
+.p-show-post__description,
+.c-response-details__content { line-height: 1.6; }
+
+// Replace the loud blue 5px border-top accent with a subtle brand-green divider
+.p-show-post__actions {
+  border-top: 1px solid transparent !important;
+  padding-top: 16px !important;
+  margin-top: 20px !important;
+}
+
+// Discussion count badge — brand pill instead of blue
+.p-show-post__discussion-count {
+  width: 22px !important;
+  height: 22px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 22px !important;
+}
+
+// Follow button — neutral surface in both modes
+.p-show-post__action-col__follow-button--follow,
+.p-show-post__action-col__follow-button--following {
+  border-radius: 7px !important;
+}
+
+// --------- Light mode ---------
+body[data-theme="light"] {
+  #p-show-post { background-color: $hcm-light-bg !important; }
+
+  .p-show-post__post-card,
+  .p-show-post__action-col > .card,
+  .c-comment-input-card,
+  .c-response-details__card {
+    background-color: $hcm-light-panel !important;
+    border-color: $hcm-light-border !important;
+  }
+
+  .p-show-post__title { color: #111111 !important; }
+  .p-show-post__description,
+  .c-response-details__content { color: #374151 !important; }
+
+  .p-show-post__actions { border-top-color: $hcm-light-border !important; }
+
+  .p-show-post__discussion-count {
+    background-color: rgba(0, 136, 89, 0.1) !important;
+    color: $hcm-green-mid !important;
+  }
+
+  .p-show-post__action-col__follow-button--follow,
+  .p-show-post__action-col__follow-button--following {
+    background-color: $hcm-light-panel !important;
+    border: 1px solid $hcm-light-border !important;
+    color: #374151 !important;
+
+    &:hover {
+      border-color: $hcm-green-mid !important;
+      color: $hcm-green-mid !important;
+    }
+  }
+}
+
+// --------- Dark mode ---------
+body[data-theme="dark"] {
+  #p-show-post { background-color: $hcm-dark-bg !important; color: #e6e6e6; }
+
+  .p-show-post__post-card,
+  .p-show-post__action-col > .card,
+  .c-comment-input-card,
+  .c-response-details__card {
+    background-color: $hcm-dark-panel !important;
+    border-color: $hcm-dark-border !important;
+  }
+
+  .p-show-post__title { color: #e6e6e6 !important; }
+  .p-show-post__description,
+  .c-response-details__content { color: #c9c9c9 !important; }
+
+  .p-show-post__actions { border-top-color: $hcm-dark-border !important; }
+
+  .p-show-post__discussion-count {
+    background-color: $hcm-dark-input !important;
+    color: $hcm-green-bright !important;
+  }
+
+  .p-show-post__action-col__follow-button--follow,
+  .p-show-post__action-col__follow-button--following {
+    background-color: $hcm-dark-panel !important;
+    border: 1px solid $hcm-dark-input-bd !important;
+    color: #e6e6e6 !important;
+
+    &:hover {
+      border-color: $hcm-green-bright !important;
+      color: $hcm-green-bright !important;
+    }
   }
 }

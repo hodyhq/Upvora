@@ -38,8 +38,8 @@ body[data-theme="dark"] .p-home__welcome-card {
 #p-home .p-home__add-idea-btn {
   position: relative;
   width: 100%;
-  margin-top: 20px;
-  margin-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 24px;
   padding: 14px 110px 14px 14px;
   padding-top: 40px;
   border: 2px solid #008859;
@@ -343,4 +343,108 @@ body[data-theme="dark"] .c-button--secondary {
 body[data-theme="dark"] .c-button--secondary:hover {
   background-color: #1c1c1c !important;
   border-color: #1e3329 !important;
+}
+
+/* Larger VoteCounter (post detail page) */
+.c-vote-counter__button--large {
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px;
+}
+.c-vote-counter__button--large .c-vote-counter__icon {
+  width: 22px !important;
+  height: 22px !important;
+}
+
+/* ---------- Post-detail page (ShowPost + PostDetails) ---------- */
+#p-show-post { background-color: transparent !important; }
+
+.p-show-post__post-card,
+.p-show-post__action-col > .card,
+.c-comment-input-card,
+.c-response-details__card {
+  border: 1px solid transparent !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+
+.p-show-post__title { font-weight: 600 !important; }
+.p-show-post__description,
+.c-response-details__content { line-height: 1.6; }
+
+.p-show-post__actions {
+  border-top: 1px solid transparent !important;
+  padding-top: 16px !important;
+  margin-top: 20px !important;
+}
+
+.p-show-post__discussion-count {
+  width: 22px !important;
+  height: 22px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 22px !important;
+}
+
+.p-show-post__action-col__follow-button--follow,
+.p-show-post__action-col__follow-button--following {
+  border-radius: 7px !important;
+}
+
+/* Light mode */
+body[data-theme="light"] #p-show-post { background-color: #fafafa !important; }
+body[data-theme="light"] .p-show-post__post-card,
+body[data-theme="light"] .p-show-post__action-col > .card,
+body[data-theme="light"] .c-comment-input-card,
+body[data-theme="light"] .c-response-details__card {
+  background-color: #ffffff !important;
+  border-color: #e5e5e5 !important;
+}
+body[data-theme="light"] .p-show-post__title { color: #111111 !important; }
+body[data-theme="light"] .p-show-post__description,
+body[data-theme="light"] .c-response-details__content { color: #374151 !important; }
+body[data-theme="light"] .p-show-post__actions { border-top-color: #e5e5e5 !important; }
+body[data-theme="light"] .p-show-post__discussion-count {
+  background-color: rgba(0, 136, 89, 0.1) !important;
+  color: #008859 !important;
+}
+body[data-theme="light"] .p-show-post__action-col__follow-button--follow,
+body[data-theme="light"] .p-show-post__action-col__follow-button--following {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e5e5 !important;
+  color: #374151 !important;
+}
+body[data-theme="light"] .p-show-post__action-col__follow-button--follow:hover,
+body[data-theme="light"] .p-show-post__action-col__follow-button--following:hover {
+  border-color: #008859 !important;
+  color: #008859 !important;
+}
+
+/* Dark mode */
+body[data-theme="dark"] #p-show-post { background-color: #111111 !important; color: #e6e6e6; }
+body[data-theme="dark"] .p-show-post__post-card,
+body[data-theme="dark"] .p-show-post__action-col > .card,
+body[data-theme="dark"] .c-comment-input-card,
+body[data-theme="dark"] .c-response-details__card {
+  background-color: #161616 !important;
+  border-color: #1e1e1e !important;
+}
+body[data-theme="dark"] .p-show-post__title { color: #e6e6e6 !important; }
+body[data-theme="dark"] .p-show-post__description,
+body[data-theme="dark"] .c-response-details__content { color: #c9c9c9 !important; }
+body[data-theme="dark"] .p-show-post__actions { border-top-color: #1e1e1e !important; }
+body[data-theme="dark"] .p-show-post__discussion-count {
+  background-color: #0d1f17 !important;
+  color: #00f7a5 !important;
+}
+body[data-theme="dark"] .p-show-post__action-col__follow-button--follow,
+body[data-theme="dark"] .p-show-post__action-col__follow-button--following {
+  background-color: #161616 !important;
+  border: 1px solid #1e3329 !important;
+  color: #e6e6e6 !important;
+}
+body[data-theme="dark"] .p-show-post__action-col__follow-button--follow:hover,
+body[data-theme="dark"] .p-show-post__action-col__follow-button--following:hover {
+  border-color: #00f7a5 !important;
+  color: #00f7a5 !important;
 }
