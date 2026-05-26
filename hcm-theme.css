@@ -230,39 +230,19 @@ body[data-theme="light"] .bg-green-100 { background-color: rgba(0, 136, 89, 0.1)
 body[data-theme="light"] .text-green-800,
 body[data-theme="light"] .c-status-col--completed { color: #008859 !important; }
 
-/* ---------- 3.7 Filter pills ---------- */
-.c-post-sort-pills { display: inline-flex; flex-wrap: wrap; gap: 8px; }
-.c-post-sort-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 20px;
-  border: 1px solid transparent;
-  background-color: transparent;
-  font-size: 11px;
+/* ---------- 3.7 Sort dropdown handle ---------- */
+.c-post-sort-btn {
+  font-size: 12px;
   font-weight: 500;
-  line-height: 1.2;
+  padding: 4px 10px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
-.c-post-sort-pill__icon { width: 12px; height: 12px; }
-
-body[data-theme="light"] .c-post-sort-pill { border-color: #e5e5e5; color: #6b7280; }
-body[data-theme="light"] .c-post-sort-pill:hover { color: #1f2937; border-color: #d1d5db; }
-body[data-theme="light"] .c-post-sort-pill--active {
-  background-color: rgba(0, 136, 89, 0.1);
-  border-color: transparent;
-  color: #008859;
-}
-
-body[data-theme="dark"] .c-post-sort-pill { border-color: #2a2a2a; color: #9a9a9a; }
-body[data-theme="dark"] .c-post-sort-pill:hover { color: #e6e6e6; border-color: #3a3a3a; }
-body[data-theme="dark"] .c-post-sort-pill--active {
-  background-color: #004c2c;
-  border-color: transparent;
-  color: #00f7a5;
-}
+body[data-theme="light"] .c-post-sort-btn { color: #6b7280; }
+body[data-theme="light"] .c-post-sort-btn:hover { color: #008859; }
+body[data-theme="dark"] .c-post-sort-btn { color: #9a9a9a; }
+body[data-theme="dark"] .c-post-sort-btn:hover { color: #00f7a5; }
 
 /* ---------- 3.8 Primary buttons ---------- */
 .c-button--primary {

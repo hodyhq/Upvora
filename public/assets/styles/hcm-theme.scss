@@ -320,51 +320,24 @@ body[data-theme="light"] {
 }
 
 // ============================================================================
-// 3.7 Filter pills — PostsSort now renders a flex row of pill buttons
+// 3.7 Sort dropdown handle — keep Fider's <Dropdown> but reskin it
 // ============================================================================
-.c-post-sort-pills { display: inline-flex; flex-wrap: wrap; gap: 8px; }
-
-.c-post-sort-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 20px;
-  border: 1px solid transparent;
-  background-color: transparent;
-  font-size: 11px;
+.c-post-sort-btn {
+  font-size: 12px;
   font-weight: 500;
-  line-height: 1.2;
+  padding: 4px 10px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.c-post-sort-pill__icon { width: 12px; height: 12px; }
-
-body[data-theme="light"] {
-  .c-post-sort-pill {
-    border-color: $hcm-light-border;
-    color: #6b7280;
-    &:hover { color: #1f2937; border-color: #d1d5db; }
-  }
-  .c-post-sort-pill--active {
-    background-color: rgba(0, 136, 89, 0.1);
-    border-color: transparent;
-    color: $hcm-green-mid;
-  }
+body[data-theme="light"] .c-post-sort-btn {
+  color: #6b7280;
+  &:hover { color: $hcm-green-mid; }
 }
-
-body[data-theme="dark"] {
-  .c-post-sort-pill {
-    border-color: #2a2a2a;
-    color: #9a9a9a;
-    &:hover { color: #e6e6e6; border-color: #3a3a3a; }
-  }
-  .c-post-sort-pill--active {
-    background-color: $hcm-green-dark;
-    border-color: transparent;
-    color: $hcm-green-bright;
-  }
+body[data-theme="dark"] .c-post-sort-btn {
+  color: #9a9a9a;
+  &:hover { color: $hcm-green-bright; }
 }
 
 // ============================================================================
