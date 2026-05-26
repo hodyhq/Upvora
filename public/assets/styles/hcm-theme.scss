@@ -66,39 +66,24 @@ body[data-theme="dark"] .p-home__welcome-card {
 // is the click target (opens the ShareFeedback modal); CSS gives it the
 // labelled-input + Submit-button look.
 // ============================================================================
-// Single clickable card. Clicking anywhere opens the ShareFeedback modal,
-// so we don't fake an input field or a Submit button — that's misleading.
+// Clean solid CTA button. Clicking opens the ShareFeedback modal where the
+// user actually types — so this is just a clear, obvious call-to-action.
 #p-home .p-home__add-idea-btn {
-  position: relative;
   width: 100%;
-  margin-top: 0;
-  margin-bottom: 24px;
-  padding: 36px 16px 16px;            // top padding leaves room for the label
-  border: 2px solid $hcm-green-mid;
+  margin: 0 0 24px;
+  padding: 16px 24px;
+  border: none;
   border-radius: 10px;
-  background-color: transparent;      // theme-specific override below
-  box-shadow: none;
+  background-color: $hcm-green-mid;
+  color: #ffffff;
   cursor: pointer;
-  text-align: left;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
 
-  // "SUBMIT YOUR IDEA" label with a 2px vertical bar
-  &::before {
-    content: "SUBMIT YOUR IDEA";
-    position: absolute;
-    top: 14px;
-    left: 14px;
-    padding-left: 10px;
-    height: 14px;
-    line-height: 14px;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    border-left: 2px solid currentColor;
-  }
-
-  // The inner HStack is just the icon + invitation text — no fake input.
   > * {
     background-color: transparent !important;
     border: none !important;
@@ -106,35 +91,30 @@ body[data-theme="dark"] .p-home__welcome-card {
   }
 
   .p-home__add-idea-icon {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
+    color: #ffffff !important;
   }
 
-  &:focus { outline-color: $hcm-green-mid; }
-}
-
-body[data-theme="light"] #p-home .p-home__add-idea-btn {
-  background-color: $hcm-light-input;
-  &::before { color: $hcm-green-mid; }
-  .p-home__add-idea-icon { color: $hcm-green-mid !important; }
-  span { color: #374151 !important; font-size: 15px; font-weight: 500; }
+  span { color: #ffffff !important; font-size: 16px; font-weight: 600; }
 
   &:hover {
-    background-color: rgba($hcm-green-mid, 0.08);
-    border-color: $hcm-green-dark;
+    background-color: $hcm-green-dark;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+
+  &:active { transform: translateY(1px); }
+
+  &:focus {
+    outline: 3px solid rgba($hcm-green-bright, 0.4);
+    outline-offset: 2px;
   }
 }
 
+// In dark mode the button still looks great with the mid green; bump the
+// hover to a slightly punchier shade to keep contrast against the dark page.
 body[data-theme="dark"] #p-home .p-home__add-idea-btn {
-  background-color: $hcm-dark-input;
-  &::before { color: $hcm-green-bright; }
-  .p-home__add-idea-icon { color: $hcm-green-bright !important; }
-  span { color: #e6e6e6 !important; font-size: 15px; font-weight: 500; }
-
-  &:hover {
-    background-color: lighten($hcm-dark-input, 3%);
-    border-color: $hcm-green-bright;
-  }
+  &:hover { background-color: lighten($hcm-green-mid, 4%); }
 }
 
 // ============================================================================
