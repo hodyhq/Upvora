@@ -47,17 +47,21 @@ export const VoteCounter = (props: VoteCounterProps) => {
   })
 
   const vote = (
-    <button className={className} onClick={voteOrUndo}>
-      {!hasVoted && <Icon sprite={ChevronUp} className="c-vote-counter__icon" />}
+    <>
+      <button className={className} onClick={voteOrUndo}>
+        <Icon sprite={ChevronUp} className="c-vote-counter__icon" />
+      </button>
       <span className="c-vote-counter__count">{votesCount}</span>
-    </button>
+    </>
   )
 
   const disabled = (
-    <button className={className}>
-      {!hasVoted && <Icon sprite={ChevronUp} className="c-vote-counter__icon" />}
+    <>
+      <button className={className}>
+        <Icon sprite={ChevronUp} className="c-vote-counter__icon" />
+      </button>
       <span className="c-vote-counter__count">{votesCount}</span>
-    </button>
+    </>
   )
 
   return (
