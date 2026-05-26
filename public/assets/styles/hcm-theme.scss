@@ -66,91 +66,75 @@ body[data-theme="dark"] .p-home__welcome-card {
 // is the click target (opens the ShareFeedback modal); CSS gives it the
 // labelled-input + Submit-button look.
 // ============================================================================
+// Single clickable card. Clicking anywhere opens the ShareFeedback modal,
+// so we don't fake an input field or a Submit button — that's misleading.
 #p-home .p-home__add-idea-btn {
   position: relative;
   width: 100%;
   margin-top: 0;
   margin-bottom: 24px;
-  padding: 14px 110px 14px 14px;     // right padding leaves room for Submit pill
-  padding-top: 40px;                  // top padding leaves room for the label
+  padding: 36px 16px 16px;            // top padding leaves room for the label
   border: 2px solid $hcm-green-mid;
   border-radius: 10px;
   background-color: transparent;      // theme-specific override below
   box-shadow: none;
   cursor: pointer;
   text-align: left;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 
-  // "SUBMIT YOUR IDEA" label with a 2px x 12px vertical bar
+  // "SUBMIT YOUR IDEA" label with a 2px vertical bar
   &::before {
     content: "SUBMIT YOUR IDEA";
     position: absolute;
     top: 14px;
     left: 14px;
     padding-left: 10px;
-    height: 12px;
-    line-height: 12px;
+    height: 14px;
+    line-height: 14px;
     font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.06em;
+    font-weight: 600;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     border-left: 2px solid currentColor;
   }
 
-  // Inline Submit button on the right
-  &::after {
-    content: "Submit";
-    position: absolute;
-    right: 14px;
-    bottom: 14px;
-    padding: 10px 20px;
-    background-color: $hcm-green-mid;
-    color: #ffffff;
-    border-radius: 7px;
-    font-weight: 500;
-    font-size: 13px;
-    line-height: 1;
-    pointer-events: none;
-    transition: background-color 0.15s ease;
-  }
-
-  // The inner HStack (icon + placeholder text) becomes the "input field".
+  // The inner HStack is just the icon + invitation text — no fake input.
   > * {
-    padding: 10px 12px !important;
-    border-radius: 7px !important;
-    border: 1px solid transparent;
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0 !important;
   }
 
   .p-home__add-idea-icon {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
   }
 
-  &:hover::after { background-color: $hcm-green-dark; }
   &:focus { outline-color: $hcm-green-mid; }
 }
 
 body[data-theme="light"] #p-home .p-home__add-idea-btn {
   background-color: $hcm-light-input;
   &::before { color: $hcm-green-mid; }
-
-  > * {
-    background-color: #ffffff !important;
-    border-color: $hcm-light-input-bd !important;
-  }
   .p-home__add-idea-icon { color: $hcm-green-mid !important; }
-  span { color: #6b7280 !important; font-size: 14px; font-weight: 400; }
+  span { color: #374151 !important; font-size: 15px; font-weight: 500; }
+
+  &:hover {
+    background-color: rgba($hcm-green-mid, 0.08);
+    border-color: $hcm-green-dark;
+  }
 }
 
 body[data-theme="dark"] #p-home .p-home__add-idea-btn {
   background-color: $hcm-dark-input;
   &::before { color: $hcm-green-bright; }
-
-  > * {
-    background-color: $hcm-dark-bg !important;
-    border-color: $hcm-dark-input-bd !important;
-  }
   .p-home__add-idea-icon { color: $hcm-green-bright !important; }
-  span { color: #9a9a9a !important; font-size: 14px; font-weight: 400; }
+  span { color: #e6e6e6 !important; font-size: 15px; font-weight: 500; }
+
+  &:hover {
+    background-color: lighten($hcm-dark-input, 3%);
+    border-color: $hcm-green-bright;
+  }
 }
 
 // ============================================================================
@@ -441,7 +425,14 @@ body[data-theme="dark"] {
   box-shadow: none !important;
 }
 
-.p-show-post__title { font-weight: 600 !important; }
+.p-show-post__title {
+  font-weight: 600 !important;
+  font-size: 18px !important;
+  line-height: 1.3 !important;
+
+  @media (min-width: 768px) { font-size: 24px !important; }
+  @media (min-width: 992px) { font-size: 28px !important; }
+}
 .p-show-post__description,
 .c-response-details__content { line-height: 1.6; }
 
