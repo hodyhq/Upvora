@@ -341,6 +341,21 @@ body[data-theme="dark"] .c-button--secondary:hover {
   box-shadow: none !important;
 }
 
+/* Response details — make sure the markdown body remains visible */
+.c-response-details__card { padding: 16px 18px !important; flex-grow: 1; }
+.c-response-details__inner { width: 100%; }
+.c-response-details__content {
+  margin-top: 8px !important;
+  line-height: 1.55 !important;
+  font-size: 14px !important;
+}
+.c-response-details__content p,
+.c-response-details__content li,
+.c-response-details__content em,
+.c-response-details__content strong { color: inherit !important; }
+.c-response-details__content a { color: #008859 !important; text-decoration: underline; }
+body[data-theme="dark"] .c-response-details__content a { color: #00f7a5 !important; }
+
 .p-show-post__title {
   font-weight: 600 !important;
   font-size: 18px !important;
@@ -426,4 +441,48 @@ body[data-theme="dark"] .p-show-post__action-col__follow-button--follow:hover,
 body[data-theme="dark"] .p-show-post__action-col__follow-button--following:hover {
   border-color: #00f7a5 !important;
   color: #00f7a5 !important;
+}
+
+/* ---------- Bottom actions bar (Copy link / Edit / Respond / etc.) ---------- */
+.c-action-button {
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  padding: 6px 12px !important;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+body[data-theme="light"] .c-action-button {
+  color: #4b5563 !important;
+  background-color: transparent !important;
+}
+body[data-theme="light"] .c-action-button:hover {
+  background-color: rgba(0, 136, 89, 0.08) !important;
+  border-color: #008859 !important;
+  color: #008859 !important;
+}
+body[data-theme="light"] .c-action-button--danger {
+  color: #b91c1c !important;
+}
+body[data-theme="light"] .c-action-button--danger:hover {
+  background-color: rgba(220, 38, 38, 0.08) !important;
+  border-color: #b91c1c !important;
+  color: #b91c1c !important;
+}
+
+body[data-theme="dark"] .c-action-button {
+  color: #c9c9c9 !important;
+  background-color: transparent !important;
+}
+body[data-theme="dark"] .c-action-button:hover {
+  background-color: rgba(0, 247, 165, 0.08) !important;
+  border-color: #00f7a5 !important;
+  color: #00f7a5 !important;
+}
+body[data-theme="dark"] .c-action-button--danger {
+  color: #f87171 !important;
+}
+body[data-theme="dark"] .c-action-button--danger:hover {
+  background-color: rgba(220, 38, 38, 0.12) !important;
+  border-color: #f87171 !important;
+  color: #f87171 !important;
 }

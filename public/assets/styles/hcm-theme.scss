@@ -423,6 +423,24 @@ body[data-theme="dark"] {
   box-shadow: none !important;
 }
 
+// Response details — make sure the response body (Markdown) is visible.
+// Apply colors to the content wrapper AND to nested Markdown elements
+// (p, li, em, strong) so inherited or default colors don't make the
+// text invisible against the themed card surface.
+.c-response-details__card { padding: 16px 18px !important; flex-grow: 1; }
+.c-response-details__inner { width: 100%; }
+.c-response-details__content {
+  margin-top: 8px !important;
+  line-height: 1.55 !important;
+  font-size: 14px !important;
+}
+.c-response-details__content p,
+.c-response-details__content li,
+.c-response-details__content em,
+.c-response-details__content strong { color: inherit !important; }
+.c-response-details__content a { color: $hcm-green-mid !important; text-decoration: underline; }
+body[data-theme="dark"] .c-response-details__content a { color: $hcm-green-bright !important; }
+
 .p-show-post__title {
   font-weight: 600 !important;
   font-size: 18px !important;
@@ -524,6 +542,57 @@ body[data-theme="dark"] {
     &:hover {
       border-color: $hcm-green-bright !important;
       color: $hcm-green-bright !important;
+    }
+  }
+}
+
+// ============================================================================
+// Bottom actions bar — outlined ghost buttons that fill on hover (matches the
+// home-page Submit CTA treatment).
+// ============================================================================
+.c-action-button {
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  padding: 6px 12px !important;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+body[data-theme="light"] .c-action-button {
+  color: #4b5563 !important;
+  background-color: transparent !important;
+
+  &:hover {
+    background-color: rgba($hcm-green-mid, 0.08) !important;
+    border-color: $hcm-green-mid !important;
+    color: $hcm-green-mid !important;
+  }
+
+  &--danger {
+    color: #b91c1c !important;
+    &:hover {
+      background-color: rgba(220, 38, 38, 0.08) !important;
+      border-color: #b91c1c !important;
+      color: #b91c1c !important;
+    }
+  }
+}
+
+body[data-theme="dark"] .c-action-button {
+  color: #c9c9c9 !important;
+  background-color: transparent !important;
+
+  &:hover {
+    background-color: rgba($hcm-green-bright, 0.08) !important;
+    border-color: $hcm-green-bright !important;
+    color: $hcm-green-bright !important;
+  }
+
+  &--danger {
+    color: #f87171 !important;
+    &:hover {
+      background-color: rgba(220, 38, 38, 0.12) !important;
+      border-color: #f87171 !important;
+      color: #f87171 !important;
     }
   }
 }
