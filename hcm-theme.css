@@ -1,0 +1,164 @@
+/* ============================================================================
+   HCM Brand Theme for Fider
+   Paste this entire file into:
+     Site Settings -> Advanced Settings -> Custom CSS
+
+   No rebuild required. Fider loads this file *after* its own bundle, so every
+   rule here wins the cascade without !important being strictly necessary
+   (kept anyway for safety in case Fider tightens specificity upstream).
+
+   Source of truth lives in this repo:
+     - public/assets/styles/hcm-theme.scss  (SCSS, for a future from-source build)
+     - hcm-theme.css                        (this file, flattened for the admin UI)
+   Keep both in sync when editing.
+   ============================================================================ */
+
+/* HCM brand palette
+   Green 100  #00f7a5   accents, highlights, active states
+   Green 200  #008859   primary buttons, borders
+   Green 300  #004c2c   dark fills, hover states
+   Submit bg  #0d1f17
+   Vote bdr   #1e3329
+*/
+
+/* 1. Submit area on the home page ------------------------------------------ */
+#p-home .p-home__add-idea-btn {
+  position: relative !important;
+  background-color: #0d1f17 !important;
+  border: 2px solid #008859 !important;
+  color: #00f7a5 !important;
+  padding-top: 32px !important;
+  padding-right: 120px !important;
+  box-shadow: none !important;
+}
+#p-home .p-home__add-idea-btn::before {
+  content: "Submit your idea";
+  position: absolute;
+  top: 8px;
+  left: 16px;
+  color: #00f7a5;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+#p-home .p-home__add-idea-btn::after {
+  content: "Submit";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-25%);
+  background-color: #008859;
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1;
+  pointer-events: none;
+}
+#p-home .p-home__add-idea-btn:hover {
+  background-color: #112720 !important;
+  border-color: #00f7a5 !important;
+  box-shadow: 0 0 0 3px rgba(0, 247, 165, 0.15) !important;
+}
+#p-home .p-home__add-idea-btn:hover::after {
+  background-color: #004c2c;
+}
+#p-home .p-home__add-idea-btn:focus {
+  outline-color: #00f7a5 !important;
+}
+#p-home .p-home__add-idea-btn .p-home__add-idea-icon {
+  color: #00f7a5 !important;
+}
+#p-home .p-home__add-idea-btn span {
+  color: rgba(0, 247, 165, 0.85);
+}
+body[data-theme="dark"] #p-home .p-home__add-idea-btn {
+  background-color: #0d1f17 !important;
+}
+
+/* 2. Vote buttons ---------------------------------------------------------- */
+.c-vote-counter__button {
+  background-color: #0d1f17 !important;
+  border-color: #1e3329 !important;
+  color: #00f7a5 !important;
+}
+.c-vote-counter__button .c-vote-counter__icon,
+.c-vote-counter__button .c-vote-counter__count {
+  color: #00f7a5 !important;
+}
+.c-vote-counter__button:hover {
+  background-color: #12281f !important;
+  border-color: #00f7a5 !important;
+  color: #00f7a5 !important;
+}
+.c-vote-counter__button:hover .c-vote-counter__icon {
+  color: #00f7a5 !important;
+}
+.c-vote-counter__button--voted {
+  background-color: #004c2c !important;
+  border-color: #00f7a5 !important;
+  color: #00f7a5 !important;
+}
+.c-vote-counter__button--voted .c-vote-counter__icon,
+.c-vote-counter__button--voted .c-vote-counter__count {
+  color: #00f7a5 !important;
+}
+.c-vote-counter__button--voted:hover {
+  background-color: #003c23 !important;
+  border-color: #00f7a5 !important;
+}
+
+/* 3. Header ---------------------------------------------------------------- */
+#c-header {
+  border-left: 4px solid #008859 !important;
+}
+#c-header h1.text-header,
+body[data-theme="dark"] #c-header h1.text-header {
+  color: #ffffff !important;
+}
+
+/* 4. Status tags ----------------------------------------------------------- */
+.c-status-label {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  background-color: var(--colors-gray-100);
+  color: var(--colors-gray-700);
+  border: 1px solid var(--colors-gray-200);
+}
+.c-status-label--planned,
+.c-status-label--started {
+  background-color: #0d1f17 !important;
+  color: #008859 !important;
+  border-color: rgba(0, 136, 89, 0.5) !important;
+}
+.c-status-label--completed {
+  background-color: #004c2c !important;
+  color: #00f7a5 !important;
+  border-color: #008859 !important;
+}
+.c-status-label--declined,
+.c-status-label--duplicate {
+  background-color: var(--colors-gray-100) !important;
+  color: var(--colors-gray-700) !important;
+  border-color: var(--colors-gray-300) !important;
+}
+
+/* 5. Primary buttons globally --------------------------------------------- */
+.c-button--primary {
+  background-color: #008859 !important;
+  border-color: #008859 !important;
+  color: #ffffff !important;
+}
+.c-button--primary:hover {
+  background-color: #004c2c !important;
+  border-color: #004c2c !important;
+  color: #ffffff !important;
+}
