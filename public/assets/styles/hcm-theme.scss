@@ -275,6 +275,15 @@ body[data-theme="dark"] .c-posts-container__post {
   }
 }
 
+// Plane substage label appended inside the lozenge (e.g. "Started · In Beta Testing")
+.c-status-substage {
+  opacity: 0.8;
+  font-weight: 500 !important;
+  text-transform: none !important;  // preserve original casing from Plane
+  letter-spacing: 0;
+  margin-left: 2px;
+}
+
 // Planned: dark mode -> dark-input bg + mid green text;
 // light mode -> rgba(0,136,89,0.1) + mid green text.
 .bg-purple-100 { background-color: $hcm-dark-input !important; }

@@ -201,6 +201,15 @@ body[data-theme="dark"] .c-posts-container__postdescription { color: #9a9a9a !im
   font-weight: 500 !important;
 }
 
+/* Plane substage appended to the status bubble (e.g. "Started · In Beta Testing") */
+.c-status-substage {
+  opacity: 0.8;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  letter-spacing: 0;
+  margin-left: 2px;
+}
+
 .bg-purple-100 { background-color: #0d1f17 !important; }
 .text-purple-800, .text-purple-700, .c-status-col--planned { color: #008859 !important; }
 .border-purple-300, .border-purple-200 { border-color: rgba(0, 136, 89, 0.45) !important; }
