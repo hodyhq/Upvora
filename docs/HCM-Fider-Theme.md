@@ -204,6 +204,15 @@ Switch the theme in the header to verify both states whenever you touch a rule.
 > [!note] Substage parser
 > `extractSubstage()` in `ShowPostResponse.tsx` reads the first non-empty line of `post.response.text`. If your Plane workflow ever changes where it puts the substage label (e.g. as a markdown heading or with a different prefix), update that function. It also strips `*`, `_`, and `` ` `` so simple bold/italic markdown doesn't leak into the lozenge.
 
+> [!note] Forgejo Actions is intentionally OFF on this repo
+> The upstream Fider repo has `.github/workflows/*.yml` files (build, locale, publish, publish-pr-multiarch). Forgejo can read those, but we have no runners attached, so every tag push used to show a yellow "waiting on runs" badge on the release page. We disabled Actions for the repo with:
+> ```bash
+> curl -sk -u "$USER:$PASS" -X PATCH -H "Content-Type: application/json" \
+>   -d '{"has_actions": false}' \
+>   https://git.hcm.adev/api/v1/repos/hody/fider
+> ```
+> The workflow files are left in place so they don't conflict during upstream merges. If you ever want CI here, attach a runner first, then re-enable Actions via the repo Settings or by PATCHing `has_actions: true`.
+
 ---
 
 ## 8. Versioning scheme
