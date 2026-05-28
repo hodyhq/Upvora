@@ -193,47 +193,133 @@ grep "p-home__welcome-card" public/pages/Home/Home.page.tsx
 
 All four should print at least one line. If any prints nothing, you lost that edit in the merge — open the file and add it back. See [[HCM-Fider-Theme#3.2 Files we modified (in the Fider source tree)|the file-change reference]] for what each looked like.
 
-### 2.6 Build the new image
+### 2.6 Decide the new version number
+
+We follow a `vX.Y.Z-hcm.N` scheme where `vX.Y.Z` is the **upstream Fider tag** you just merged and `N` is our iteration counter against it.
+
+```bash
+# Confirm which upstream tag your main is sitting on
+git describe --tags --abbrev=0 main           # e.g. "v0.36.0"
+
+# Look at the most recent HCM tag for this base
+git tag --list "v0.36.0-hcm*" --sort=-v:refname | head -3
+
+# If the list is empty → your tag is v0.36.0-hcm.1
+# If you see v0.36.0-hcm.2 → your tag is v0.36.0-hcm.3
+```
+
+Hold onto two values for the next steps:
+
+```bash
+NEW_VERSION="v0.36.0-hcm.1"                   # adjust to match the above
+COMMITHASH=$(git rev-parse --short hcm-theme) # 8-char hash of current hcm-theme HEAD
+```
+
+### 2.7 Tag the commit
+
+```bash
+git tag "$NEW_VERSION"
+```
+
+> [!important] Tag BEFORE the build.
+> The COMMITHASH baked into the binary should match the tagged commit. Doing it in this order keeps the displayed version and the git history aligned.
+
+### 2.8 Build the new image (with version baked in)
 
 ```bash
 set -o pipefail
-docker build -t git.hcm.adev/hody/fider:stable . 2>&1 | tee /tmp/fider-build.log
+docker build \
+  --build-arg VERSION="$NEW_VERSION" \
+  --build-arg COMMITHASH="$COMMITHASH" \
+  -t "git.hcm.adev/hody/fider:stable" \
+  -t "git.hcm.adev/hody/fider:$NEW_VERSION" \
+  . 2>&1 | tee /tmp/fider-build.log
 ```
 
 > [!danger] Use `set -o pipefail`
-> Without it, if `docker build` fails, the pipeline still exits 0 because `tee` succeeded — you'll think the build worked and push an outdated image. With `pipefail`, the pipeline's exit code reflects the *first* failing command.
+> Without it, if `docker build` fails the pipeline still exits 0 because `tee` succeeded — you'll think the build worked and push an outdated image. With `pipefail`, the pipeline's exit code reflects the *first* failing command.
+
+> [!note] Why pass both `VERSION` and `COMMITHASH`?
+> The Fider Go binary reads these via `-ldflags` (see Makefile line 5–6). Without them, the version shown in the footer / API and on `./fider --version` defaults to literal `"dev"` — that's why our pre-versioning builds all reported `dev`.
 
 This takes 5–15 minutes the first time after an upstream update (npm + Go caches get invalidated). Subsequent builds with no source changes finish in ~30 seconds.
 
 If it fails, jump to [[#5. When things go wrong]].
 
-### 2.7 Push the image
+### 2.9 Push the image (both tags)
 
 ```bash
-docker push git.hcm.adev/hody/fider:stable
+docker push "git.hcm.adev/hody/fider:stable"
+docker push "git.hcm.adev/hody/fider:$NEW_VERSION"
 ```
 
-Watch the output. You want to see new layer hashes followed by `Pushed`. If you only see `Layer already exists`, the build didn't actually rebuild anything (probably because step 2.6 silently failed and we didn't catch it).
+Watch the output. You want to see new layer hashes followed by `Pushed`. If you only see `Layer already exists`, the build didn't actually rebuild anything (probably because step 2.8 silently failed and we didn't catch it).
 
 Note the digest printed at the end — something like `sha256:abcd…`. That's the new image you just pushed.
 
-### 2.8 Push your branch
+The `:stable` tag is what VM 201 pulls automatically. The `:vX.Y.Z-hcm.N` tag is your immutable rollback point.
+
+### 2.10 Push your branch and tag
 
 ```bash
 git push origin hcm-theme
+git push origin "$NEW_VERSION"
 ```
 
-### 2.9 (Optional but recommended) Tag the release
+### 2.11 Publish the Gitea release
+
+Gitea separates **tags** (markers on a commit) from **releases** (titled, notable entries on the repo's Releases page). Step 2.10 pushed the tag — now turn it into a release.
+
+#### Option A: Web UI (easiest, no scripting)
+
+1. Open https://git.hcm.adev/hody/fider/releases/new
+2. **Tag**: pick `v0.35.0-hcm.1` (or whatever `$NEW_VERSION` you chose) from the dropdown — *don't create a new one*
+3. **Title**: `v0.35.0-hcm.1 — HCM brand on Fider v0.35.0`
+4. **Description**: paste a short summary. A reusable template:
+   ```markdown
+   HCM build on upstream Fider <upstream-version>.
+
+   **Image:** `git.hcm.adev/hody/fider:<NEW_VERSION>` (also pushed as `:stable`)
+   **Digest:** `sha256:<from-docker-push-output>`
+
+   ## What changed since the previous release
+   - <bullet>
+   - <bullet>
+
+   ## Deploy
+   ```bash
+   cd /opt/fider && sudo docker compose pull && sudo docker compose up -d
+   ```
+   ```
+5. Click **Publish Release**.
+
+#### Option B: API (scriptable, one command)
+
+If your Windows Credential Manager already has `git.hcm.adev` saved (because `git push` works without a prompt), you can publish a release without opening the browser:
 
 ```bash
-# Pick the next version number. If the last tag was hcm-v0.3.0, use hcm-v0.4.0.
-git tag hcm-v0.4.0
-git push origin hcm-v0.4.0
+CREDS=$(printf 'protocol=https\nhost=git.hcm.adev\n\n' | git credential fill 2>/dev/null)
+USER=$(echo "$CREDS" | sed -n 's/^username=//p')
+PASS=$(echo "$CREDS" | sed -n 's/^password=//p')
+
+cat > /tmp/release.json <<EOF
+{
+  "tag_name": "$NEW_VERSION",
+  "name": "$NEW_VERSION — HCM brand on Fider <upstream-version>",
+  "body": "Short release summary in markdown.\\n\\nImage: \\\`git.hcm.adev/hody/fider:$NEW_VERSION\\\`",
+  "draft": false,
+  "prerelease": false
+}
+EOF
+
+curl -sk -u "$USER:$PASS" -H "Content-Type: application/json" \
+  -X POST --data-binary @/tmp/release.json \
+  https://git.hcm.adev/api/v1/repos/hody/fider/releases
 ```
 
-Tags give us named restore points. `git checkout hcm-v0.3.0` can roll back to the previous release if the new one breaks.
+The response includes the `html_url` of the published release.
 
-### 2.10 Deploy to VM 201
+### 2.12 Deploy to VM 201
 
 SSH to VM 201, then:
 
@@ -263,6 +349,7 @@ Go through this after every deploy. It takes 60 seconds and will save you from s
 - [ ] If you have a Plane-driven post in "Started", the status pill reads `Started · <substage>` and the substage stays mixed-case.
 - [ ] The bottom action bar (Copy link / Edit / Respond / Comment Feed / Delete) — hover any one. Should outline + fill brand green (red for Delete).
 - [ ] No console errors in DevTools.
+- [ ] In the footer (or on `/api/v1/_version`), the Fider version reads `vX.Y.Z-hcm.N` — **not `dev`**. If it says `dev`, the build skipped the `--build-arg VERSION=` and `COMMITHASH=` flags; rebuild and redeploy.
 
 If anything fails: roll back per [[#6. Rolling back]].
 
@@ -328,7 +415,7 @@ Read the error carefully — it'll point at a file and line number. Common cause
 
 ### 5.3 Build "succeeds" but push says `Already exists` for every layer
 
-You hit the `tee` pipe-failure bug (see [[#2.6 Build the new image]] warning). Rerun the build with `set -o pipefail` first and look at the *real* exit code.
+You hit the `tee` pipe-failure bug (see [[#2.8 Build the new image (with version baked in)]] warning). Rerun the build with `set -o pipefail` first and look at the *real* exit code.
 
 ### 5.4 `docker compose pull` on VM 201 says `unauthorized`
 
@@ -387,24 +474,47 @@ docker push git.hcm.adev/hody/fider:stable
 
 ## 7. Cheat sheet (paste-this version)
 
-For when you've done this twice and don't want to read the long version.
+For when you've done this twice and don't want to read the long version. Set `NEW_VERSION` first.
 
 ```bash
-# On laptop, on hcm-theme branch, clean working tree:
+# ── On laptop, on hcm-theme branch, clean working tree ──────────────
 git fetch upstream && git fetch origin
 git checkout main && git merge --ff-only upstream/main && git push origin main
-git checkout hcm-theme && git merge main             # resolve conflicts, commit
-grep -q "hcm-theme.scss" public/assets/styles/index.scss || echo "LOST IMPORT"
-grep -q "Submit Your Idea" public/pages/Home/Home.page.tsx || echo "LOST BUTTON TEXT"
-grep -q "c-status-substage" public/components/ShowPostResponse.tsx || echo "LOST SUBSTAGE"
+git checkout hcm-theme && git merge main              # resolve conflicts, commit
 
+# Sanity check that our edits survived the merge
+grep -q "hcm-theme.scss"      public/assets/styles/index.scss        || echo "LOST IMPORT"
+grep -q "Submit Your Idea"    public/pages/Home/Home.page.tsx        || echo "LOST BUTTON TEXT"
+grep -q "c-status-substage"   public/components/ShowPostResponse.tsx || echo "LOST SUBSTAGE"
+grep -q "p-home__welcome-card" public/pages/Home/Home.page.tsx       || echo "LOST CARD WRAPPER"
+
+# Decide version (vX.Y.Z = upstream tag, .N = our iteration)
+NEW_VERSION="v0.36.0-hcm.1"                            # edit me
+COMMITHASH=$(git rev-parse --short hcm-theme)
+
+git tag "$NEW_VERSION"
+
+# Build + push (both tags)
 set -o pipefail
-docker build -t git.hcm.adev/hody/fider:stable . 2>&1 | tee /tmp/build.log
-docker push git.hcm.adev/hody/fider:stable
+docker build --build-arg VERSION="$NEW_VERSION" --build-arg COMMITHASH="$COMMITHASH" \
+  -t "git.hcm.adev/hody/fider:stable" -t "git.hcm.adev/hody/fider:$NEW_VERSION" \
+  . 2>&1 | tee /tmp/build.log
+docker push "git.hcm.adev/hody/fider:stable"
+docker push "git.hcm.adev/hody/fider:$NEW_VERSION"
 git push origin hcm-theme
-git tag hcm-vX.Y.Z && git push origin hcm-vX.Y.Z     # optional but recommended
+git push origin "$NEW_VERSION"
 
-# On VM 201:
+# Publish the Gitea release (uses saved git credentials)
+CREDS=$(printf 'protocol=https\nhost=git.hcm.adev\n\n' | git credential fill 2>/dev/null)
+USER=$(echo "$CREDS" | sed -n 's/^username=//p'); PASS=$(echo "$CREDS" | sed -n 's/^password=//p')
+cat > /tmp/release.json <<EOF
+{"tag_name":"$NEW_VERSION","name":"$NEW_VERSION","body":"HCM build on upstream Fider.","draft":false,"prerelease":false}
+EOF
+curl -sk -u "$USER:$PASS" -H "Content-Type: application/json" \
+  -X POST --data-binary @/tmp/release.json \
+  https://git.hcm.adev/api/v1/repos/hody/fider/releases
+
+# ── On VM 201 ──────────────────────────────────────────────────────
 cd /opt/fider && sudo docker compose pull && sudo docker compose up -d && sudo docker compose ps
 ```
 

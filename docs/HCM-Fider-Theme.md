@@ -142,14 +142,29 @@ That's all of it on the source-code side. **Five files** of edits plus the new t
 
 ## 5. The deploy pipeline
 
-> [!important] Day-to-day: build locally, push to registry, pull on VM.
+> [!important] Day-to-day: build locally with version baked in, push to registry, pull on VM.
 
 ```bash
 # On your laptop, inside this repo, on hcm-theme:
-docker build -t git.hcm.adev/hody/fider:stable .
-docker push git.hcm.adev/hody/fider:stable
+NEW_VERSION="v0.35.0-hcm.2"                                # bump per release
+COMMITHASH=$(git rev-parse --short HEAD)
+git tag "$NEW_VERSION"
+
+set -o pipefail
+docker build \
+  --build-arg VERSION="$NEW_VERSION" \
+  --build-arg COMMITHASH="$COMMITHASH" \
+  -t "git.hcm.adev/hody/fider:stable" \
+  -t "git.hcm.adev/hody/fider:$NEW_VERSION" \
+  . 2>&1 | tee /tmp/build.log
+
+docker push "git.hcm.adev/hody/fider:stable"
+docker push "git.hcm.adev/hody/fider:$NEW_VERSION"
 git push origin hcm-theme
+git push origin "$NEW_VERSION"
 ```
+
+For full procedure (including merging upstream, the version-numbering scheme, conflict resolution, and the API call to publish the Gitea release), see [[Update-Fider]].
 
 ```bash
 # On VM 201 (/opt/fider):
@@ -191,14 +206,36 @@ Switch the theme in the header to verify both states whenever you touch a rule.
 
 ---
 
-## 8. Quick reference
+## 8. Versioning scheme
+
+We use `vX.Y.Z-hcm.N` where:
+- `vX.Y.Z` = the **upstream Fider tag** our `main` branch is sitting on (find with `git describe --tags --abbrev=0 main`).
+- `-hcm.N` = our iteration counter against that base. Starts at 1. Bumps each time we ship a new build on the same upstream.
+
+Examples:
+- `v0.35.0-hcm.1` — first HCM build on Fider v0.35.0
+- `v0.35.0-hcm.2` — second iteration on the same upstream (theme tweak only)
+- `v0.36.0-hcm.1` — first build after pulling Fider v0.36.0 (counter resets)
+
+Each tag becomes:
+1. A **git tag** (`git tag v0.35.0-hcm.1 && git push origin v0.35.0-hcm.1`)
+2. A **Docker image tag** alongside `:stable` (`docker push git.hcm.adev/hody/fider:v0.35.0-hcm.1`)
+3. A **Gitea release** with a description (created via the API or the web UI — see [[Update-Fider#2.11 Publish the Gitea release|Update-Fider § 2.11]])
+
+The displayed version in Fider's footer / `/api/v1/_version` comes from the `VERSION` Docker build-arg, which is baked into the Go binary via `-ldflags` (see `Makefile` lines 5–6). Builds without that arg report literal `"dev"`.
+
+---
+
+## 9. Quick reference
 
 | Question | Answer |
 | --- | --- |
 | Where does the theme code live? | `public/assets/styles/hcm-theme.scss` (source) + `hcm-theme.css` (flat mirror). |
 | What's the deploy branch? | `hcm-theme` on `origin` (= `https://git.hcm.adev/hody/fider`). |
-| Where is the image? | `git.hcm.adev/hody/fider:stable`. |
-| How do I update the VM with a new theme tweak? | Edit SCSS → build → push → `docker compose pull && up -d` on VM 201. |
+| Where is the image? | `git.hcm.adev/hody/fider:stable` (latest) or `:vX.Y.Z-hcm.N` (immutable). |
+| What version is deployed right now? | Pull up the site → footer → `vX.Y.Z-hcm.N`. Or `curl https://<host>/api/v1/_version`. |
+| How do I update the VM with a new theme tweak? | Bump `NEW_VERSION`, tag, build with `--build-arg VERSION=`, push both tags, `docker compose pull && up -d` on VM 201. |
 | How do I pick up a new upstream Fider release? | See [[Update-Fider]]. |
 | Where's the mockup that defined the look? | `screenshots/` in this repo, plus `instructions/instructions.md`. |
 | Where do I paste CSS if I can't rebuild? | Site Settings → Advanced Settings → Custom CSS field. Paste contents of `hcm-theme.css`. Some changes (e.g. relocated DOM, restructured PostsSort) require the rebuilt image; selector-level rules work fine via Custom CSS alone. |
+| Why does my build still report `dev` as the version? | You didn't pass `--build-arg VERSION="$NEW_VERSION"` to `docker build`. See [[Update-Fider#2.8 Build the new image (with version baked in)|the build step]]. |
