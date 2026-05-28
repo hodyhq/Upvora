@@ -158,6 +158,7 @@ For each conflict, pick the right side — usually **keep the new upstream code 
 | `public/pages/Home/Home.page.tsx` | (1) Welcome message is wrapped in `<div className="p-home__welcome-card">`. (2) The submit button's inner `<span>` reads literally `Submit Your Idea` instead of `{fider.session.tenant.invitation \|\| defaultInvitation}`. (3) The button's `<HStack>` uses `spacing={2} align="center" justify="center"`. |
 | `public/components/VoteCounter.tsx` | `<span className="c-vote-counter__count">…</span>` is rendered as a **sibling** of the `<button>`, not inside it. Two fragments (`vote` and `disabled`) both use `<>…</>` wrappers with the span after the button. |
 | `public/components/ShowPostResponse.tsx` | New `extractSubstage()` helper function near the top. `ResponseLozenge` computes a `substage` variable from `props.response?.text` and conditionally renders `<span className="c-status-substage"> · {substage}</span>` inside the lozenge's main span. |
+| `public/components/common/PoweredByFider.tsx` | Version parse changed from `.split("-")[0]` to `.replace(/-[0-9a-f]{7,}$/, "")` so the `-hcm.N` suffix survives. If upstream rewrites how the version string is shown, re-apply the regex form. |
 
 > [!tip] Use the patch as a reference
 > `hcm-theme.patch` in the repo root holds the diff that originally added the SCSS theme + `index.scss` import. It won't apply cleanly after rebases, but it's a quick way to remind yourself what the original change looked like.
@@ -185,13 +186,14 @@ Don't panic. Section 5 covers diagnosis.
 Verify our changes are still present:
 
 ```bash
-grep "hcm-theme.scss" public/assets/styles/index.scss
-grep "Submit Your Idea" public/pages/Home/Home.page.tsx
-grep "c-status-substage" public/components/ShowPostResponse.tsx
-grep "p-home__welcome-card" public/pages/Home/Home.page.tsx
+grep "hcm-theme.scss"          public/assets/styles/index.scss
+grep "Submit Your Idea"        public/pages/Home/Home.page.tsx
+grep "c-status-substage"       public/components/ShowPostResponse.tsx
+grep "p-home__welcome-card"    public/pages/Home/Home.page.tsx
+grep "0-9a-f]{7,}"             public/components/common/PoweredByFider.tsx
 ```
 
-All four should print at least one line. If any prints nothing, you lost that edit in the merge — open the file and add it back. See [[HCM-Fider-Theme#3.2 Files we modified (in the Fider source tree)|the file-change reference]] for what each looked like.
+All five should print at least one line. If any prints nothing, you lost that edit in the merge — open the file and add it back. See [[HCM-Fider-Theme#3.2 Files we modified (in the Fider source tree)|the file-change reference]] for what each looked like.
 
 ### 2.6 Decide the new version number
 
@@ -487,6 +489,7 @@ grep -q "hcm-theme.scss"      public/assets/styles/index.scss        || echo "LO
 grep -q "Submit Your Idea"    public/pages/Home/Home.page.tsx        || echo "LOST BUTTON TEXT"
 grep -q "c-status-substage"   public/components/ShowPostResponse.tsx || echo "LOST SUBSTAGE"
 grep -q "p-home__welcome-card" public/pages/Home/Home.page.tsx       || echo "LOST CARD WRAPPER"
+grep -q "0-9a-f]{7,}"          public/components/common/PoweredByFider.tsx || echo "LOST VERSION REGEX"
 
 # Decide version (vX.Y.Z = upstream tag, .N = our iteration)
 NEW_VERSION="v0.36.0-hcm.1"                            # edit me

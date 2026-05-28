@@ -86,8 +86,9 @@ Everything HCM-specific is intentionally consolidated into a handful of files so
 | `public/pages/Home/Home.page.tsx` | Wrapped the welcome message in a new `.p-home__welcome-card` div (gives us a themed card target). Also changed the home page "submit" button so its label reads **"Submit Your Idea"** instead of repeating the modal's placeholder text. The placeholder is still passed to the modal where the user actually types. |
 | `public/components/VoteCounter.tsx` | Moved `<span class="c-vote-counter__count">` *outside* the `<button>` so the count renders as a sibling beneath the 32×32 vote button (instead of overlapping inside the button). |
 | `public/components/ShowPostResponse.tsx` | Added an `extractSubstage()` helper that reads the first non-empty line of `post.response.text` (where the Plane integration writes its substage label) and appends it inside the status lozenge as `"Started · In Beta Testing"`. Same colors / shape, just wider. |
+| `public/components/common/PoweredByFider.tsx` | Changed the version-string parse from `.split("-")[0]` to `.replace(/-[0-9a-f]{7,}$/, "")` so pre-release suffixes like `-hcm.N` survive in the footer. Upstream's logic only stripped the trailing commit hash via a naive first-segment split, which also ate our HCM marker. |
 
-That's all of it on the source-code side. **Five files** of edits plus the new theme file. Everything else is CSS rules added into `hcm-theme.scss`.
+That's all of it on the source-code side. **Six files** of edits plus the new theme file. Everything else is CSS rules added into `hcm-theme.scss`.
 
 > [!tip] When you touch the theme, only edit `hcm-theme.scss` and then mirror the change into `hcm-theme.css` by hand. The flat file is the one you'd paste into the admin UI if the rebuilt image were ever unavailable.
 
