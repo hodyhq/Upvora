@@ -24,6 +24,9 @@ type Tenant struct {
 	PreventIndexing     bool              `json:"preventIndexing"`
 	IsModerationEnabled bool              `json:"isModerationEnabled"`
 	IsPro               bool              `json:"isPro"`
+	SiteBannerEnabled   bool              `json:"siteBannerEnabled"`
+	SiteBannerMessage   string            `json:"siteBannerMessage"`
+	SiteBannerVariant   string            `json:"siteBannerVariant"`
 }
 
 func (t *Tenant) IsDisabled() bool {

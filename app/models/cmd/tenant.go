@@ -41,6 +41,12 @@ type UpdateTenantAdvancedSettings struct {
 	AllowedSchemes string
 }
 
+type UpdateTenantSiteBanner struct {
+	Enabled bool
+	Message string
+	Variant string
+}
+
 type ActivateTenant struct {
 	TenantID int
 }

@@ -26,6 +26,9 @@ type Tenant struct {
 	IsModerationEnabled   bool   `db:"is_moderation_enabled"`
 	IsPro                 bool   `db:"is_pro"`
 	HasPaddleSubscription bool   `db:"has_paddle_subscription"`
+	SiteBannerEnabled     bool   `db:"site_banner_enabled"`
+	SiteBannerMessage     string `db:"site_banner_message"`
+	SiteBannerVariant     string `db:"site_banner_variant"`
 }
 
 func (t *Tenant) ToModel() *entity.Tenant {
@@ -59,6 +62,9 @@ func (t *Tenant) ToModel() *entity.Tenant {
 		PreventIndexing:     t.PreventIndexing,
 		IsModerationEnabled: isPro && t.IsModerationEnabled,
 		IsPro:               isPro,
+		SiteBannerEnabled:   t.SiteBannerEnabled,
+		SiteBannerMessage:   t.SiteBannerMessage,
+		SiteBannerVariant:   t.SiteBannerVariant,
 	}
 
 	return tenant

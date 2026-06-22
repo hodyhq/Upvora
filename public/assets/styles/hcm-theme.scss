@@ -605,3 +605,35 @@ body[data-theme="dark"] .c-action-button {
     }
   }
 }
+
+// ============================================================================
+// Site banner (tenant-controlled). Renders above the header on every route.
+// Toggle + message + variant come from tenants.site_banner_* columns set by
+// admins on Site Settings -> General -> Banner. PR #5 (feat/site-banner-admin).
+// ============================================================================
+.site-banner {
+  display: block;
+  width: 100%;
+  padding: 10px 24px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  // Long messages wrap to multiple lines rather than getting cropped horizontally.
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.site-banner--info    { background: #0EA5E9; color: #FFFFFF; }
+.site-banner--success { background: #16A34A; color: #FFFFFF; }
+.site-banner--warning { background: #FBBF24; color: #111111; }
+.site-banner--danger  { background: #DC2626; color: #FFFFFF; }
+.site-banner--brand   { background: $hcm-green-mid; color: #FFFFFF; }
+
+@media (max-width: 640px) {
+  .site-banner {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+}
