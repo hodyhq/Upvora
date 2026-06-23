@@ -27,6 +27,7 @@ type Tenant struct {
 	SiteBannerEnabled   bool              `json:"siteBannerEnabled"`
 	SiteBannerMessage   string            `json:"siteBannerMessage"`
 	SiteBannerVariant   string            `json:"siteBannerVariant"`
+	Statuses            []*Status         `json:"statuses,omitempty"`
 }
 
 func (t *Tenant) IsDisabled() bool {
