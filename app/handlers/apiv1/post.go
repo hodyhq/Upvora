@@ -176,6 +176,7 @@ func SetResponse() web.HandlerFunc {
 		}
 
 		prevStatus := getPost.Result.Status
+		prevStatusSlug := getPost.Result.StatusSlug
 
 		var command bus.Msg
 		if action.StatusSlug == "duplicate" {
@@ -193,7 +194,7 @@ func SetResponse() web.HandlerFunc {
 			return c.Failure(err)
 		}
 
-		c.Enqueue(tasks.NotifyAboutStatusChange(getPost.Result, prevStatus))
+		c.Enqueue(tasks.NotifyAboutStatusChange(getPost.Result, prevStatus, prevStatusSlug))
 
 		return c.Ok(web.Map{})
 	}

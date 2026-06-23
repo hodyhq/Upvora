@@ -60,7 +60,7 @@ func TestNotifyAboutStatusChangeTask(t *testing.T) {
 		},
 	}
 
-	task := tasks.NotifyAboutStatusChange(post, enum.PostOpen)
+	task := tasks.NotifyAboutStatusChange(post, enum.PostOpen, "open")
 
 	err := worker.
 		OnTenant(mock.DemoTenant).
@@ -177,7 +177,7 @@ func TestNotifyAboutStatusChangeTask_Duplicate(t *testing.T) {
 		},
 	}
 
-	task := tasks.NotifyAboutStatusChange(post, enum.PostOpen)
+	task := tasks.NotifyAboutStatusChange(post, enum.PostOpen, "open")
 
 	err := worker.
 		OnTenant(mock.DemoTenant).

@@ -60,6 +60,9 @@ func dummyTriggerProps(c context.Context, webhookType enum.WebhookType) webhook.
 	case enum.WebhookChangeStatus:
 		props.SetPost(dummyPost, "post", baseURL, true, true)
 		props["post_old_status"] = enum.PostOpen.Name()
+		props["post_old_status_slug"] = enum.PostOpen.Name()
+		props["post_old_status_label"] = "Open"
+		props["post_status_label"] = "Started"
 	case enum.WebhookDeletePost:
 		props.SetPost(dummyPost, "post", baseURL, true, true)
 		props["post_status"] = enum.PostDeleted.Name()

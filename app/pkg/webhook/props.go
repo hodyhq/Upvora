@@ -54,6 +54,14 @@ func (p Props) SetPost(post *entity.Post, keyPrefix, baseURL string, includeAllF
 			p[keyPrefix+"_votes"] = post.VotesCount
 			p[keyPrefix+"_comments"] = post.CommentsCount
 			p[keyPrefix+"_status"] = post.Status.Name()
+			// Tenant-defined custom statuses (feedback.fider.io/111) carry an
+			// authoritative slug separate from the legacy enum. Emit it so
+			// receivers can act on custom slugs the legacy enum can't represent.
+			if post.StatusSlug != "" {
+				p[keyPrefix+"_status_slug"] = post.StatusSlug
+			} else {
+				p[keyPrefix+"_status_slug"] = post.Status.Name()
+			}
 			p[keyPrefix+"_tags"] = post.Tags
 			p[keyPrefix+"_response"] = postResponse != nil
 

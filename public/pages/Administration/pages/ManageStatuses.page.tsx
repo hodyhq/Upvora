@@ -12,6 +12,7 @@ interface ManageStatusesPageProps {
 interface ManageStatusesPageState {
   statuses: Status[]
   isAdding: boolean
+  editingId: number | null
   draftSlug: string
   draftLabel: string
   draftKind: StatusKind
@@ -58,6 +59,7 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
     this.state = {
       statuses: props.statuses ?? [],
       isAdding: false,
+      editingId: null,
       draftSlug: "",
       draftLabel: "",
       draftKind: "open",
@@ -73,6 +75,7 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
   private openAdd = () => {
     this.setState({
       isAdding: true,
+      editingId: null,
       draftSlug: "",
       draftLabel: "",
       draftKind: "open",
@@ -85,8 +88,24 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
     })
   }
 
+  private openEdit = (status: Status) => {
+    this.setState({
+      isAdding: true,
+      editingId: status.id,
+      draftSlug: status.slug,
+      draftLabel: status.label,
+      draftKind: status.kind,
+      draftColor: status.color,
+      draftIcon: status.icon,
+      draftShowOnHome: status.showOnHome,
+      draftFilterable: status.filterable,
+      draftSortOrder: status.sortOrder,
+      error: undefined,
+    })
+  }
+
   private cancelAdd = () => {
-    this.setState({ isAdding: false, error: undefined })
+    this.setState({ isAdding: false, editingId: null, error: undefined })
   }
 
   private updateLabel = (value: string) => {
@@ -100,6 +119,45 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
   private save = async (e: ButtonClickEvent) => {
     e.preventEnable()
     this.setState({ busy: true, error: undefined })
+
+    if (this.state.editingId !== null) {
+      const existing = this.state.statuses.find((s) => s.id === this.state.editingId)
+      const result = await actions.updateStatus(this.state.editingId, {
+        label: this.state.draftLabel,
+        color: this.state.draftColor,
+        icon: this.state.draftIcon,
+        showOnHome: this.state.draftShowOnHome,
+        filterable: this.state.draftFilterable,
+        sortOrder: this.state.draftSortOrder,
+        isActive: existing ? existing.isActive : true,
+      })
+      if (result.ok) {
+        this.setState({
+          statuses: this.state.statuses
+            .map((s) =>
+              s.id === this.state.editingId
+                ? {
+                    ...s,
+                    label: this.state.draftLabel,
+                    color: this.state.draftColor,
+                    icon: this.state.draftIcon,
+                    showOnHome: this.state.draftShowOnHome,
+                    filterable: this.state.draftFilterable,
+                    sortOrder: this.state.draftSortOrder,
+                  }
+                : s
+            )
+            .sort((a, b) => a.sortOrder - b.sortOrder),
+          isAdding: false,
+          editingId: null,
+          busy: false,
+        })
+      } else {
+        this.setState({ busy: false, error: result.error })
+      }
+      return
+    }
+
     const result = await actions.createStatus({
       slug: this.state.draftSlug,
       label: this.state.draftLabel,
@@ -185,11 +243,16 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
                   <Toggle active={s.isActive} onToggle={() => this.toggleActive(s)} />
                 </td>
                 <td>
-                  {!s.isSystem && (
-                    <Button variant="danger" size="small" onClick={() => this.remove(s)}>
-                      Delete
+                  <HStack spacing={2}>
+                    <Button variant="tertiary" size="small" onClick={() => this.openEdit(s)}>
+                      Edit
                     </Button>
-                  )}
+                    {!s.isSystem && (
+                      <Button variant="danger" size="small" onClick={() => this.remove(s)}>
+                        Delete
+                      </Button>
+                    )}
+                  </HStack>
                 </td>
               </tr>
             ))}
@@ -200,14 +263,22 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
           <Form error={this.state.error}>
             <VStack spacing={4}>
               <Input field="label" label="Label" value={this.state.draftLabel} onChange={this.updateLabel} />
-              <Input field="slug" label="Slug (URL-safe)" value={this.state.draftSlug} onChange={(v) => this.setState({ draftSlug: slugify(v) })} />
-              <Select
-                field="kind"
-                label="Semantic kind"
-                defaultValue={this.state.draftKind}
-                options={KIND_OPTIONS}
-                onChange={(opt) => this.setState({ draftKind: (opt?.value ?? "open") as StatusKind })}
-              />
+              {this.state.editingId === null ? (
+                <>
+                  <Input field="slug" label="Slug (URL-safe)" value={this.state.draftSlug} onChange={(v) => this.setState({ draftSlug: slugify(v) })} />
+                  <Select
+                    field="kind"
+                    label="Semantic kind"
+                    defaultValue={this.state.draftKind}
+                    options={KIND_OPTIONS}
+                    onChange={(opt) => this.setState({ draftKind: (opt?.value ?? "open") as StatusKind })}
+                  />
+                </>
+              ) : (
+                <p className="text-sm text-muted">
+                  Slug <code>{this.state.draftSlug}</code> and semantic kind <code>{this.state.draftKind}</code> are fixed once a status is created.
+                </p>
+              )}
               <Select
                 field="color"
                 label="Color"
@@ -225,7 +296,7 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
               </HStack>
               <HStack spacing={2}>
                 <Button variant="primary" onClick={this.save} disabled={this.state.busy}>
-                  Save status
+                  {this.state.editingId === null ? "Save status" : "Update status"}
                 </Button>
                 <Button variant="tertiary" onClick={this.cancelAdd}>
                   Cancel

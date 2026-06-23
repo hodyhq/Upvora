@@ -75,6 +75,7 @@ var (
 																COALESCE(agg_s.recent, 0) AS recent_votes_count,
 																COALESCE(agg_c.recent, 0) AS recent_comments_count,
 																p.status,
+																p.status_slug,
 																u.id AS user_id,
 																u.name AS user_name,
 																u.email AS user_email,
@@ -158,6 +159,7 @@ func setPostResponse(ctx context.Context, c *cmd.SetPostResponse) error {
 		}
 
 		c.Post.Status = c.Status
+		c.Post.StatusSlug = c.StatusSlug
 		c.Post.Response = &entity.PostResponse{
 			Text:        c.Text,
 			RespondedAt: respondedAt,
@@ -197,6 +199,7 @@ func markPostAsDuplicate(ctx context.Context, c *cmd.MarkPostAsDuplicate) error 
 		}
 
 		c.Post.Status = enum.PostDuplicate
+		c.Post.StatusSlug = "duplicate"
 		c.Post.Response = &entity.PostResponse{
 			RespondedAt: respondedAt,
 			User:        user,

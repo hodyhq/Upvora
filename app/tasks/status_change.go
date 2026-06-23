@@ -7,6 +7,7 @@ import (
 	"github.com/getfider/fider/app/models/dto"
 	"github.com/getfider/fider/app/models/entity"
 	"github.com/getfider/fider/app/models/enum"
+	"github.com/getfider/fider/app/models/query"
 	"github.com/getfider/fider/app/pkg/bus"
 	"github.com/getfider/fider/app/pkg/i18n"
 	"github.com/getfider/fider/app/pkg/markdown"
@@ -16,10 +17,12 @@ import (
 )
 
 // NotifyAboutStatusChange sends a notification (web and email) to subscribers
-func NotifyAboutStatusChange(post *entity.Post, prevStatus enum.PostStatus) worker.Task {
+func NotifyAboutStatusChange(post *entity.Post, prevStatus enum.PostStatus, prevStatusSlug string) worker.Task {
 	return describe("Notify about post status change", func(c *worker.Context) error {
-		//Don't notify if previous status is the same
-		if prevStatus == post.Status {
+		// Custom tenant-defined statuses (feedback.fider.io/111) share legacy_enum 0
+		// with Open, so prevStatus alone is ambiguous. Treat unchanged when both the
+		// int enum and the slug match.
+		if prevStatus == post.Status && prevStatusSlug == post.StatusSlug {
 			return nil
 		}
 
@@ -88,7 +91,36 @@ func NotifyAboutStatusChange(post *entity.Post, prevStatus enum.PostStatus) work
 			Props:        props,
 		})
 
-		webhookProps := webhook.Props{"post_old_status": prevStatus.Name()}
+		// Resolve human labels for both old and new status from the tenant
+		// catalogue so webhook receivers (Plane et al.) get the actual label
+		// admins picked, not a built-in enum name fallback. Custom statuses
+		// have legacy_enum NULL, so prevStatus.Name() would just say "open".
+		statusList := &query.ListActiveStatusesForTenant{}
+		_ = bus.Dispatch(c, statusList)
+		labelFor := func(slug string, fallback string) string {
+			for _, s := range statusList.Result {
+				if s.Slug == slug {
+					return s.Label
+				}
+			}
+			return fallback
+		}
+
+		newSlug := post.StatusSlug
+		if newSlug == "" {
+			newSlug = post.Status.Name()
+		}
+		oldSlug := prevStatusSlug
+		if oldSlug == "" {
+			oldSlug = prevStatus.Name()
+		}
+
+		webhookProps := webhook.Props{
+			"post_old_status":       prevStatus.Name(),
+			"post_old_status_slug":  oldSlug,
+			"post_old_status_label": labelFor(oldSlug, prevStatus.Name()),
+			"post_status_label":     labelFor(newSlug, post.Status.Name()),
+		}
 		webhookProps.SetPost(post, "post", baseURL, true, true)
 		webhookProps.SetUser(author, "author")
 		webhookProps.SetTenant(tenant, "tenant", baseURL, logoURL)

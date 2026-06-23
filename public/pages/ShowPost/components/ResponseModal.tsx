@@ -1,7 +1,7 @@
 import React from "react"
 
 import { Modal, Button, DisplayError, Select, Form, TextArea, Field, SelectOption } from "@fider/components"
-import { Post, PostStatus, statusListFor, statusLabel } from "@fider/models"
+import { Post, PostStatus, postStatusValue, statusListFor, statusLabel } from "@fider/models"
 
 import { actions, Failure, Fider } from "@fider/services"
 import { PostSearch } from "./PostSearch"
@@ -26,7 +26,7 @@ export class ResponseModal extends React.Component<ResponseModalProps, ResponseM
     super(props)
 
     this.state = {
-      status: this.props.post.status,
+      status: postStatusValue(this.props.post),
       originalNumber: 0,
       text: this.props.post.response ? this.props.post.response.text : "",
     }

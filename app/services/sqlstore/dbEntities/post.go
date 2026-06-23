@@ -25,6 +25,7 @@ type Post struct {
 	RecentVotes    int            `db:"recent_votes_count"`
 	RecentComments int            `db:"recent_comments_count"`
 	Status         int            `db:"status"`
+	StatusSlug     dbx.NullString `db:"status_slug"`
 	Response       dbx.NullString `db:"response"`
 	RespondedAt    dbx.NullTime   `db:"response_date"`
 	ResponseUser   *User          `db:"response_user"`
@@ -49,6 +50,7 @@ func (i *Post) ToModel(ctx context.Context) *entity.Post {
 		VotesCount:    i.VotesCount,
 		CommentsCount: i.CommentsCount,
 		Status:        enum.PostStatus(i.Status),
+		StatusSlug:    i.StatusSlug.String,
 		Tags:          i.Tags,
 		IsApproved:    i.IsApproved,
 	}

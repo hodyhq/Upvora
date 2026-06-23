@@ -20,6 +20,7 @@ type Post struct {
 	VotesCount    int             `json:"votesCount"`
 	CommentsCount int             `json:"commentsCount"`
 	Status        enum.PostStatus `json:"status"`
+	StatusSlug    string          `json:"statusSlug,omitempty"`
 	Response      *PostResponse   `json:"response,omitempty"`
 	Tags          []string        `json:"tags"`
 	IsApproved    bool            `json:"isApproved"`
