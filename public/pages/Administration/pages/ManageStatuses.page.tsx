@@ -3,6 +3,8 @@ import { Button, ButtonClickEvent, Form, Input, Select, SelectOption, Toggle } f
 import { HStack, VStack } from "@fider/components/layout"
 import { Status, StatusKind } from "@fider/models"
 import { actions, Failure } from "@fider/services"
+import { i18n } from "@lingui/core"
+import { Trans } from "@lingui/react/macro"
 import { AdminBasePage } from "../components/AdminBasePage"
 
 interface ManageStatusesPageProps {
@@ -25,20 +27,20 @@ interface ManageStatusesPageState {
   busy: boolean
 }
 
-const KIND_OPTIONS: SelectOption[] = [
-  { value: "open", label: "Open — default initial state" },
-  { value: "active", label: "Active — accepted, in progress" },
-  { value: "closed-completed", label: "Closed (completed) — done, positive resolution" },
-  { value: "closed-declined", label: "Closed (declined) — closed without action" },
-  { value: "duplicate", label: "Duplicate — merged into another post" },
+const kindOptions = (): SelectOption[] => [
+  { value: "open", label: i18n._({ id: "admin.statuses.kind.open", message: "Open — default initial state" }) },
+  { value: "active", label: i18n._({ id: "admin.statuses.kind.active", message: "Active — accepted, in progress" }) },
+  { value: "closed-completed", label: i18n._({ id: "admin.statuses.kind.closedcompleted", message: "Closed (completed) — done, positive resolution" }) },
+  { value: "closed-declined", label: i18n._({ id: "admin.statuses.kind.closeddeclined", message: "Closed (declined) — closed without action" }) },
+  { value: "duplicate", label: i18n._({ id: "admin.statuses.kind.duplicate", message: "Duplicate — merged into another post" }) },
 ]
 
-const COLOR_OPTIONS: SelectOption[] = [
-  { value: "blue", label: "Blue" },
-  { value: "green", label: "Green" },
-  { value: "yellow", label: "Yellow" },
-  { value: "red", label: "Red" },
-  { value: "gray", label: "Gray" },
+const colorOptions = (): SelectOption[] => [
+  { value: "blue", label: i18n._({ id: "admin.statuses.color.blue", message: "Blue" }) },
+  { value: "green", label: i18n._({ id: "admin.statuses.color.green", message: "Green" }) },
+  { value: "yellow", label: i18n._({ id: "admin.statuses.color.yellow", message: "Yellow" }) },
+  { value: "red", label: i18n._({ id: "admin.statuses.color.red", message: "Red" }) },
+  { value: "gray", label: i18n._({ id: "admin.statuses.color.gray", message: "Gray" }) },
 ]
 
 const slugify = (s: string): string =>
@@ -51,8 +53,8 @@ const slugify = (s: string): string =>
 export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPageProps, ManageStatusesPageState> {
   public id = "p-admin-statuses"
   public name = "statuses"
-  public title = "Statuses"
-  public subtitle = "Customize the list of post statuses your admins can apply"
+  public title = i18n._({ id: "admin.statuses.page.title", message: "Statuses" })
+  public subtitle = i18n._({ id: "admin.statuses.page.subtitle", message: "Customize the list of post statuses your admins can apply" })
 
   constructor(props: ManageStatusesPageProps) {
     super(props)
@@ -198,12 +200,20 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
 
   private remove = async (status: Status) => {
     if (status.isSystem) return
-    if (!window.confirm(`Delete the "${status.label}" status? Posts already using it must be reassigned first.`)) return
+    const prompt = i18n._({
+      id: "admin.statuses.delete.confirm",
+      values: { label: status.label },
+      message: 'Delete the "{label}" status? Posts already using it must be reassigned first.',
+    })
+    if (!window.confirm(prompt)) return
     const result = await actions.deleteStatus(status.id)
     if (result.ok) {
       this.setState({ statuses: this.state.statuses.filter((s) => s.id !== status.id) })
     } else {
-      window.alert((result.error?.errors?.[0]?.message ?? "Could not delete this status."))
+      window.alert(
+        result.error?.errors?.[0]?.message ??
+          i18n._({ id: "admin.statuses.delete.failed", message: "Could not delete this status." })
+      )
     }
   }
 
@@ -211,20 +221,22 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
     return (
       <VStack spacing={4}>
         <p className="text-sm text-muted">
-          The 6 built-in statuses are seeded for every site and can be renamed, recolored, or deactivated but not deleted.
-          Add custom statuses for your own workflow — e.g. <em>Under Review</em> between Open and Planned.
+          <Trans id="admin.statuses.help">
+            The 6 built-in statuses are seeded for every site and can be renamed, recolored, or deactivated but not deleted.
+            Add custom statuses for your own workflow — e.g. <em>Under Review</em> between Open and Planned.
+          </Trans>
         </p>
 
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-muted">
-              <th className="py-2">Label</th>
-              <th>Slug</th>
-              <th>Kind</th>
-              <th>Color</th>
-              <th>Home</th>
-              <th>Filter</th>
-              <th>Active</th>
+              <th className="py-2"><Trans id="admin.statuses.table.label">Label</Trans></th>
+              <th><Trans id="admin.statuses.table.slug">Slug</Trans></th>
+              <th><Trans id="admin.statuses.table.kind">Kind</Trans></th>
+              <th><Trans id="admin.statuses.table.color">Color</Trans></th>
+              <th><Trans id="admin.statuses.table.home">Home</Trans></th>
+              <th><Trans id="admin.statuses.table.filter">Filter</Trans></th>
+              <th><Trans id="admin.statuses.table.active">Active</Trans></th>
               <th />
             </tr>
           </thead>
@@ -232,24 +244,29 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
             {this.state.statuses.map((s) => (
               <tr key={s.id} className="border-t">
                 <td className="py-2">
-                  {s.label} {s.isSystem && <span className="text-xs text-muted ml-1">(system)</span>}
+                  {s.label}{" "}
+                  {s.isSystem && (
+                    <span className="text-xs text-muted ml-1">
+                      <Trans id="admin.statuses.table.system">(system)</Trans>
+                    </span>
+                  )}
                 </td>
                 <td><code>{s.slug}</code></td>
                 <td>{s.kind}</td>
                 <td>{s.color}</td>
-                <td>{s.showOnHome ? "yes" : "—"}</td>
-                <td>{s.filterable ? "yes" : "—"}</td>
+                <td>{s.showOnHome ? i18n._({ id: "admin.statuses.table.yes", message: "yes" }) : "—"}</td>
+                <td>{s.filterable ? i18n._({ id: "admin.statuses.table.yes", message: "yes" }) : "—"}</td>
                 <td>
                   <Toggle active={s.isActive} onToggle={() => this.toggleActive(s)} />
                 </td>
                 <td>
                   <HStack spacing={2}>
                     <Button variant="tertiary" size="small" onClick={() => this.openEdit(s)}>
-                      Edit
+                      <Trans id="admin.statuses.action.edit">Edit</Trans>
                     </Button>
                     {!s.isSystem && (
                       <Button variant="danger" size="small" onClick={() => this.remove(s)}>
-                        Delete
+                        <Trans id="admin.statuses.action.delete">Delete</Trans>
                       </Button>
                     )}
                   </HStack>
@@ -262,51 +279,71 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
         {this.state.isAdding ? (
           <Form error={this.state.error}>
             <VStack spacing={4}>
-              <Input field="label" label="Label" value={this.state.draftLabel} onChange={this.updateLabel} />
+              <Input
+                field="label"
+                label={i18n._({ id: "admin.statuses.form.label", message: "Label" })}
+                value={this.state.draftLabel}
+                onChange={this.updateLabel}
+              />
               {this.state.editingId === null ? (
                 <>
-                  <Input field="slug" label="Slug (URL-safe)" value={this.state.draftSlug} onChange={(v) => this.setState({ draftSlug: slugify(v) })} />
+                  <Input
+                    field="slug"
+                    label={i18n._({ id: "admin.statuses.form.slug", message: "Slug (URL-safe)" })}
+                    value={this.state.draftSlug}
+                    onChange={(v) => this.setState({ draftSlug: slugify(v) })}
+                  />
                   <Select
                     field="kind"
-                    label="Semantic kind"
+                    label={i18n._({ id: "admin.statuses.form.kind", message: "Semantic kind" })}
                     defaultValue={this.state.draftKind}
-                    options={KIND_OPTIONS}
+                    options={kindOptions()}
                     onChange={(opt) => this.setState({ draftKind: (opt?.value ?? "open") as StatusKind })}
                   />
                 </>
               ) : (
                 <p className="text-sm text-muted">
-                  Slug <code>{this.state.draftSlug}</code> and semantic kind <code>{this.state.draftKind}</code> are fixed once a status is created.
+                  <Trans id="admin.statuses.form.lockednote">
+                    Slug <code>{this.state.draftSlug}</code> and semantic kind <code>{this.state.draftKind}</code> are fixed once a status is created.
+                  </Trans>
                 </p>
               )}
               <Select
                 field="color"
-                label="Color"
+                label={i18n._({ id: "admin.statuses.form.color", message: "Color" })}
                 defaultValue={this.state.draftColor}
-                options={COLOR_OPTIONS}
+                options={colorOptions()}
                 onChange={(opt) => this.setState({ draftColor: opt?.value ?? "blue" })}
               />
               <HStack spacing={4}>
                 <Toggle active={this.state.draftShowOnHome} onToggle={(v) => this.setState({ draftShowOnHome: v })} />
-                <span className="text-sm">Show posts in this status on the home page</span>
+                <span className="text-sm">
+                  <Trans id="admin.statuses.form.showonhome">Show posts in this status on the home page</Trans>
+                </span>
               </HStack>
               <HStack spacing={4}>
                 <Toggle active={this.state.draftFilterable} onToggle={(v) => this.setState({ draftFilterable: v })} />
-                <span className="text-sm">Include this status in the home-page filter</span>
+                <span className="text-sm">
+                  <Trans id="admin.statuses.form.filterable">Include this status in the home-page filter</Trans>
+                </span>
               </HStack>
               <HStack spacing={2}>
                 <Button variant="primary" onClick={this.save} disabled={this.state.busy}>
-                  {this.state.editingId === null ? "Save status" : "Update status"}
+                  {this.state.editingId === null ? (
+                    <Trans id="admin.statuses.form.save">Save status</Trans>
+                  ) : (
+                    <Trans id="admin.statuses.form.update">Update status</Trans>
+                  )}
                 </Button>
                 <Button variant="tertiary" onClick={this.cancelAdd}>
-                  Cancel
+                  <Trans id="action.cancel">Cancel</Trans>
                 </Button>
               </HStack>
             </VStack>
           </Form>
         ) : (
           <Button variant="primary" onClick={this.openAdd}>
-            Add a custom status
+            <Trans id="admin.statuses.add">Add a custom status</Trans>
           </Button>
         )}
       </VStack>
