@@ -492,12 +492,44 @@ git push origin hcm-theme && git push origin "$NEW_VERSION"
 
 **Cutover on VM 204** (requires explicit "go on prod" approval in chat):
 
+**Step C1 — turn on maintenance mode (optional but recommended).** Locks the site behind Fider's built-in 503 page while the migration runs (~30 s on a paged-out VM, instant on warm cache). Append to `services.fider.environment` in `/opt/fider/docker-compose.yml`:
+
+```yaml
+      MAINTENANCE: "true"
+      MAINTENANCE_MESSAGE: "Brief maintenance — back at 1:00 PM EDT."
+      MAINTENANCE_UNTIL: "2026-06-24T17:00:00Z"   # ISO-8601 in UTC; 17:00Z = 1pm EDT
+```
+
+Then recreate the container — this picks up the env change without pulling the new image yet:
+
 ```bash
-# From laptop, two-hop deploy
+ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> "cd /opt/fider && docker compose up -d && sleep 4 && curl -sS https://ideas.hcm.adev/ -o /dev/null -w \"http %{http_code}\n\""'
+# expect: http 503
+```
+
+**Step C2 — pull the new image and apply migrations.**
+
+```bash
 ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> "cd /opt/fider && docker compose pull && docker compose up -d && sleep 5 && docker logs fider-fider-1 2>&1 | tail -40"'
 ```
 
 Watch the logs for `running migration 202606231500` then `server started`. The first request after restart will JIT-compile the new SSR bundle (typically <30 s).
+
+**Step C3 — verify smoke test (still in maintenance — admins not bypassed).** Until maintenance is off you cannot hit the home page through a browser, so verify via the host shell:
+
+```bash
+ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> "docker exec fider-fider-1 wget -qO- http://localhost:3000/_health && docker logs fider-fider-1 2>&1 | tail -5"'
+# expect: OK
+```
+
+`_health` is the only route that doesn't go through the maintenance middleware. Container running + `OK` body + log line `server started` is enough to take maintenance off.
+
+**Step C4 — disable maintenance and verify the live site.** Strip the three vars and recreate:
+
+```bash
+ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> "sed -i \"/MAINTENANCE:/d;/MAINTENANCE_MESSAGE:/d;/MAINTENANCE_UNTIL:/d\" /opt/fider/docker-compose.yml && cd /opt/fider && docker compose up -d && sleep 4 && curl -sS https://ideas.hcm.adev/ -o /dev/null -w \"http %{http_code}\n\""'
+# expect: http 200
+```
 
 **Verify** — `https://ideas.hcm.adev/` returns 200, hover the version footer to check the `v0.35.0-hcm.3` tag, hit `/admin/statuses` and confirm the six built-ins seeded.
 
