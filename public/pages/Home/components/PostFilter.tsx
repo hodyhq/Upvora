@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { Tag, statusListFor } from "@fider/models"
+import { Tag, statusListFor, statusLabel } from "@fider/models"
 import { Checkbox, Dropdown, Icon } from "@fider/components"
 import { HStack } from "@fider/components/layout"
 import HeroIconFilter from "@fider/assets/images/heroicons-filter.svg"
@@ -102,14 +102,14 @@ export const PostFilter = (props: PostFilterProps) => {
   }
 
   // Prefer the tenant's configured status catalogue (feedback.fider.io/111).
-  // statusListFor falls back to PostStatus.All when tenant.statuses is empty,
-  // so this keeps current behavior for sites that haven't run the migration.
+  // statusListFor falls back to PostStatus.All when tenant.statuses is empty.
+  // statusLabel routes built-in slugs through i18n and uses the tenant-defined
+  // label verbatim for custom slugs (no locale entry to translate from).
   statusListFor(fider.session.tenant)
     .filter((s) => s.filterable && props.countPerStatus[s.value])
     .forEach((s) => {
-      const id = `enum.poststatus.${s.value}`
       options.push({
-        label: i18n._(id, { message: s.label }),
+        label: statusLabel(s, (id, fallback) => i18n._(id, { message: fallback })),
         value: s.value,
         count: props.countPerStatus[s.value],
         type: "status",

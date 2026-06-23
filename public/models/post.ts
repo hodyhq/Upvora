@@ -54,7 +54,13 @@ export class PostStatus {
         return status
       }
     }
-    throw new Error(`PostStatus not found for value ${value}.`)
+    // Tenant-defined custom statuses (feedback.fider.io/111) won't have a
+    // matching constant. Return a synthetic so the post page can still render;
+    // callers that need richer info (color/icon/label) should look up the
+    // status in fider.session.tenant.statuses via the helpers in
+    // status-helpers.ts.
+    const synthesizedTitle = value.charAt(0).toUpperCase() + value.slice(1).replace(/-/g, " ")
+    return new PostStatus(synthesizedTitle, value, true, false, true)
   }
 
   public static All = [PostStatus.Open, PostStatus.Review, PostStatus.Planned, PostStatus.Started, PostStatus.Completed, PostStatus.Duplicate, PostStatus.Declined]

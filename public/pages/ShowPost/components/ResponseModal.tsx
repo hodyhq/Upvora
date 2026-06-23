@@ -1,7 +1,7 @@
 import React from "react"
 
 import { Modal, Button, DisplayError, Select, Form, TextArea, Field, SelectOption } from "@fider/components"
-import { Post, PostStatus, statusListFor } from "@fider/models"
+import { Post, PostStatus, statusListFor, statusLabel } from "@fider/models"
 
 import { actions, Failure, Fider } from "@fider/services"
 import { PostSearch } from "./PostSearch"
@@ -59,18 +59,12 @@ export class ResponseModal extends React.Component<ResponseModalProps, ResponseM
 
   public render() {
     // Prefer the tenant's configured status catalogue (feedback.fider.io/111).
-    // Falls back to the static PostStatus.All for tenants whose statuses haven't
-    // been seeded yet (e.g. fresh installs that haven't run the migration).
-    const statusList = statusListFor(Fider.session.tenant)
-    const options = statusList.map((s) => {
-      const id = `enum.poststatus.${s.value}`
-      return {
-        value: s.value,
-        // Translation key wins when present; falls back to the tenant-defined
-        // label (which is what custom statuses use).
-        label: i18n._(id, { message: s.label }),
-      }
-    })
+    // Built-in slugs go through i18n; custom slugs use the tenant-defined label
+    // verbatim because the locale catalog has no entry for them.
+    const options = statusListFor(Fider.session.tenant).map((s) => ({
+      value: s.value,
+      label: statusLabel(s, (id, fallback) => i18n._(id, { message: fallback })),
+    }))
 
     const modal = (
       <Modal.Window isOpen={this.props.showModal} onClose={this.props.onCloseModal} center={false} size="large">

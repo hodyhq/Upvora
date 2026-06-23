@@ -30,3 +30,21 @@ export const statusListFor = (tenant: Tenant | null | undefined): Array<{ value:
   }
   return PostStatus.All.map((p) => ({ value: p.value, label: p.title, closed: p.closed, filterable: p.filterable }))
 }
+
+// The 6 built-in slugs have entries in locale/<lang>/client.json under
+// enum.poststatus.<slug>. Custom slugs don't, so the i18n lookup returns
+// the literal key string. Pages should consult this set to decide whether
+// to call i18n._() for translation or fall straight through to the
+// tenant-defined label.
+const BUILT_IN_STATUS_SLUGS = new Set<string>(["open", "planned", "started", "completed", "declined", "duplicate"])
+
+// statusLabel resolves the user-visible label for a status row in the
+// runtime list. For built-in slugs it consults the i18n catalog so locale
+// overrides still apply; for custom slugs it returns the tenant-defined
+// label verbatim (the locale catalog has no entry to translate from).
+export const statusLabel = (item: { value: string; label: string }, translate: (id: string, fallback: string) => string): string => {
+  if (BUILT_IN_STATUS_SLUGS.has(item.value)) {
+    return translate(`enum.poststatus.${item.value}`, item.label)
+  }
+  return item.label
+}
