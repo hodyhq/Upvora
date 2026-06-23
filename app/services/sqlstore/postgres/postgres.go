@@ -117,6 +117,15 @@ func (s Service) Init() {
 	bus.AddHandler(updateTenantAdvancedSettings)
 	bus.AddHandler(updateTenantSiteBanner)
 
+	bus.AddHandler(listActiveStatusesForTenant)
+	bus.AddHandler(getStatusByID)
+	bus.AddHandler(getStatusBySlug)
+	bus.AddHandler(countPostsByStatusID)
+	bus.AddHandler(createStatus)
+	bus.AddHandler(updateStatus)
+	bus.AddHandler(deleteStatus)
+	bus.AddHandler(seedTenantStatuses)
+
 	bus.AddHandler(getVerificationByKey)
 	bus.AddHandler(getVerificationByEmailAndCode)
 	bus.AddHandler(getActiveVerificationByEmail)
