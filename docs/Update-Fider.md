@@ -447,6 +447,78 @@ Roll back. See next section.
 
 ---
 
+## 5b. Phase 2 cutover (v0.35.0-hcm.3, one-time)
+
+> [!warning] This section only applies to the **first** cutover that ships the custom-statuses feature (Phase 2). It runs DDL migrations that drop the legacy `posts.status` int column and `statuses.legacy_enum`. Once Phase 2 is in production, the regular procedure in §2 covers everything; this section can be deleted.
+
+**What's different from a normal release.**
+
+- Migrations `202606231200`..`202606231500` are DDL changes: a new `statuses` table, a new `posts.status_slug` column with backfill, a defensive collapse of the HCM-only `PostReview=7` enum value, then a DROP of `posts.status` and `statuses.legacy_enum`.
+- Once those migrations apply, you cannot start an older image again — the new code is the only thing that knows about `status_slug`. **You must back up the DB before pulling the new image** so rollback is possible.
+- Webhook payload gains `post_status_slug`, `post_status_kind`, `post_status_label`, `post_old_status_slug`, `post_old_status_label`. The legacy `post_status`/`post_old_status` keys are gone. If Plane (or any other receiver) maps on the legacy key, update it before cutover.
+
+**Pre-cutover checklist** — run in order:
+
+1. **Back up the prod DB on VM 204.** Compose includes the postgres service; dump the live volume to a host file:
+   ```bash
+   ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> "cd /opt/fider && docker compose exec -T db pg_dump -U postgres fider | gzip > /root/fider-pre-phase2-$(date +%Y%m%d-%H%M).sql.gz"'
+   ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> ls -lh /root/fider-pre-phase2-*.sql.gz'
+   ```
+2. **Snapshot the VM in Proxmox** so the whole disk is reversible if the migration corrupts anything unforeseen:
+   ```
+   Proxmox web UI → VM 204 → Snapshots → Take Snapshot → name: pre-phase2-<date>
+   ```
+   Or `qm snapshot 204 pre-phase2-$(date +%Y%m%d-%H%M) --vmstate 1` from the host.
+3. **Set `WEBHOOK_ALLOW_PRIVATE_IPS=true`** in `/opt/fider/docker-compose.yml`'s `fider` service env block (Plane lives on a private network; PR #0 makes the SSRF block opt-out). Restart will pick this up when we recompose below.
+4. **Update the Plane webhook** to consume `post_status_slug` instead of `post_status` (or duplicate the mapping). The legacy keys are removed in v0.35.0-hcm.3.
+5. **Confirm beta has run the same image stable** for at least 24h with no regressions. Beta = ideas-beta.hcm.adev, VM 214, running `git.hcm.adev/hody/fider:beta`.
+
+**Build and tag the release image** (on laptop, on `hcm-theme` after merging `hcm-beta` in):
+
+```bash
+git checkout hcm-theme
+git merge hcm-beta                                # bring Phase 2 commits in
+NEW_VERSION="v0.35.0-hcm.3"
+COMMITHASH=$(git rev-parse --short hcm-theme)
+git tag "$NEW_VERSION"
+set -o pipefail
+docker build --build-arg VERSION="$NEW_VERSION" --build-arg COMMITHASH="$COMMITHASH" \
+  -t "git.hcm.adev/hody/fider:stable" -t "git.hcm.adev/hody/fider:$NEW_VERSION" \
+  . 2>&1 | tee /tmp/build.log
+docker push "git.hcm.adev/hody/fider:stable"
+docker push "git.hcm.adev/hody/fider:$NEW_VERSION"
+git push origin hcm-theme && git push origin "$NEW_VERSION"
+```
+
+**Cutover on VM 204** (requires explicit "go on prod" approval in chat):
+
+```bash
+# From laptop, two-hop deploy
+ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> "cd /opt/fider && docker compose pull && docker compose up -d && sleep 5 && docker logs fider-fider-1 2>&1 | tail -40"'
+```
+
+Watch the logs for `running migration 202606231500` then `server started`. The first request after restart will JIT-compile the new SSR bundle (typically <30 s).
+
+**Verify** — `https://ideas.hcm.adev/` returns 200, hover the version footer to check the `v0.35.0-hcm.3` tag, hit `/admin/statuses` and confirm the six built-ins seeded.
+
+**Rollback path** (if migration breaks or smoke test fails):
+
+```bash
+# 1. Stop the new container
+ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> "cd /opt/fider && docker compose down"'
+# 2. Restore the DB dump from step 1 of the pre-cutover checklist
+ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> "cd /opt/fider && docker compose up -d db && sleep 5 && gunzip -c /root/fider-pre-phase2-<timestamp>.sql.gz | docker compose exec -T db psql -U postgres fider"'
+# 3. Retag :stable to the previous v0.35.0-hcm.2 image and redeploy
+docker pull git.hcm.adev/hody/fider:v0.35.0-hcm.2
+docker tag  git.hcm.adev/hody/fider:v0.35.0-hcm.2 git.hcm.adev/hody/fider:stable
+docker push git.hcm.adev/hody/fider:stable
+ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> "cd /opt/fider && docker compose pull && docker compose up -d"'
+```
+
+If the Proxmox snapshot is more recent than any data you'd lose, restoring the snapshot is the fastest path — VM goes back to its pre-cutover state in ~30 seconds.
+
+---
+
 ## 6. Rolling back
 
 > [!important] If you tagged the previous release, rollback is a one-liner on the VM.
