@@ -421,8 +421,6 @@ func findSimilarPosts(ctx context.Context, q *query.FindSimilarPosts) error {
 
 func searchPosts(ctx context.Context, q *query.SearchPosts) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, user *entity.User) error {
-		innerQuery := buildPostQuery(user, "p.tenant_id = $1 AND p.status_slug = ANY($2)", q.ModerationFilter)
-
 		if q.Tags == nil {
 			q.Tags = []string{}
 		}
@@ -457,8 +455,11 @@ func searchPosts(ctx context.Context, q *query.SearchPosts) error {
 
 			searchPredicate := fmt.Sprintf(`q.search @@ %s OR q.search @@ %s`, tsQueryExpr, tsQuerySimple)
 
-			condition, statuses, _ := getViewData(*q, 4)
+			view := getViewData(*q, 4)
+			innerCondition, statusArray := buildStatusFilter(view)
+			innerQuery := buildPostQuery(user, "p.tenant_id = $1 AND "+innerCondition, q.ModerationFilter)
 
+			condition := view.Condition
 			if q.MyPostsOnly && user != nil {
 				condition += " AND user_id = " + strconv.Itoa(user.ID)
 			}
@@ -470,14 +471,17 @@ func searchPosts(ctx context.Context, q *query.SearchPosts) error {
 				LIMIT %s
 			`, innerQuery, searchPredicate, condition, score, q.Limit)
 
-			params := []interface{}{tenant.ID, pq.Array(statuses), tsQuery}
+			params := []interface{}{tenant.ID, pq.Array(statusArray), tsQuery}
 			if len(q.Tags) > 0 && !q.NoTagsOnly {
 				params = append(params, pq.Array(q.Tags))
 			}
 			err = trx.Select(&posts, sql, params...)
 		} else {
-			condition, statuses, sort := getViewData(*q, 3)
+			view := getViewData(*q, 3)
+			innerCondition, statusArray := buildStatusFilter(view)
+			innerQuery := buildPostQuery(user, "p.tenant_id = $1 AND "+innerCondition, q.ModerationFilter)
 
+			condition := view.Condition
 			if q.MyPostsOnly && user != nil {
 				condition += " AND user_id = " + strconv.Itoa(user.ID)
 			}
@@ -487,8 +491,8 @@ func searchPosts(ctx context.Context, q *query.SearchPosts) error {
 				WHERE 1 = 1 %s
 				ORDER BY %s DESC
 				LIMIT %s
-			`, innerQuery, condition, sort, q.Limit)
-			params := []interface{}{tenant.ID, pq.Array(statuses)}
+			`, innerQuery, condition, view.Sort, q.Limit)
+			params := []interface{}{tenant.ID, pq.Array(statusArray)}
 			if len(q.Tags) > 0 && !q.NoTagsOnly {
 				params = append(params, pq.Array(q.Tags))
 			}
