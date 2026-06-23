@@ -46,8 +46,10 @@ export default class ManageBannerPage extends AdminBasePage<ManageBannerPageProp
     }
   }
 
-  private save = async (e: ButtonClickEvent) => {
-    e.preventEnable()
+  // The Button auto-re-enables after onClick resolves unless we call
+  // event.preventEnable() — we want it to re-enable here, so the event is
+  // intentionally untouched.
+  private save = async (_e: ButtonClickEvent) => {
     this.setState({ busy: true, error: undefined })
     const result = await actions.updateTenantSiteBanner({
       enabled: this.state.enabled,

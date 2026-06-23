@@ -118,8 +118,10 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
     })
   }
 
-  private save = async (e: ButtonClickEvent) => {
-    e.preventEnable()
+  // The Button auto-re-enables when onClick resolves unless we call
+  // event.preventEnable() — we want a clickable button after save so the
+  // event stays untouched.
+  private save = async (_e: ButtonClickEvent) => {
     this.setState({ busy: true, error: undefined })
 
     if (this.state.editingId !== null) {
