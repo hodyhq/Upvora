@@ -28,15 +28,15 @@ var statusKinds = map[string]bool{
 // is non-NULL only for the rows that map to the original PostStatus enum so
 // existing posts continue to resolve through the join.
 var builtInStatusSeeds = []dbEntities.Status{
-	{Slug: "open", Label: "Open", Kind: "open", Color: "blue", Icon: "lightbulb", ShowOnHome: false, Filterable: true, SortOrder: 10, IsSystem: true, IsActive: true, LegacyEnum: ptrInt(0)},
-	{Slug: "planned", Label: "Planned", Kind: "active", Color: "blue", Icon: "thumbsup", ShowOnHome: true, Filterable: true, SortOrder: 20, IsSystem: true, IsActive: true, LegacyEnum: ptrInt(4)},
-	{Slug: "started", Label: "Started", Kind: "active", Color: "blue", Icon: "sparkles-outline", ShowOnHome: true, Filterable: true, SortOrder: 30, IsSystem: true, IsActive: true, LegacyEnum: ptrInt(1)},
-	{Slug: "completed", Label: "Completed", Kind: "closed-completed", Color: "green", Icon: "check-circle", ShowOnHome: true, Filterable: true, SortOrder: 40, IsSystem: true, IsActive: true, LegacyEnum: ptrInt(2)},
-	{Slug: "declined", Label: "Declined", Kind: "closed-declined", Color: "red", Icon: "thumbsdown", ShowOnHome: true, Filterable: true, SortOrder: 50, IsSystem: true, IsActive: true, LegacyEnum: ptrInt(3)},
-	{Slug: "duplicate", Label: "Duplicate", Kind: "duplicate", Color: "yellow", Icon: "duplicate", ShowOnHome: true, Filterable: true, SortOrder: 60, IsSystem: true, IsActive: true, LegacyEnum: ptrInt(5)},
+	{Slug: "open", Label: "Open", Kind: "open", Color: "blue", Icon: "lightbulb", ShowOnHome: false, Filterable: true, SortOrder: 10, IsSystem: true, IsActive: true, LegacyEnum: nullInt(0)},
+	{Slug: "planned", Label: "Planned", Kind: "active", Color: "blue", Icon: "thumbsup", ShowOnHome: true, Filterable: true, SortOrder: 20, IsSystem: true, IsActive: true, LegacyEnum: nullInt(4)},
+	{Slug: "started", Label: "Started", Kind: "active", Color: "blue", Icon: "sparkles-outline", ShowOnHome: true, Filterable: true, SortOrder: 30, IsSystem: true, IsActive: true, LegacyEnum: nullInt(1)},
+	{Slug: "completed", Label: "Completed", Kind: "closed-completed", Color: "green", Icon: "check-circle", ShowOnHome: true, Filterable: true, SortOrder: 40, IsSystem: true, IsActive: true, LegacyEnum: nullInt(2)},
+	{Slug: "declined", Label: "Declined", Kind: "closed-declined", Color: "red", Icon: "thumbsdown", ShowOnHome: true, Filterable: true, SortOrder: 50, IsSystem: true, IsActive: true, LegacyEnum: nullInt(3)},
+	{Slug: "duplicate", Label: "Duplicate", Kind: "duplicate", Color: "yellow", Icon: "duplicate", ShowOnHome: true, Filterable: true, SortOrder: 60, IsSystem: true, IsActive: true, LegacyEnum: nullInt(5)},
 }
 
-func ptrInt(v int) *int { return &v }
+func nullInt(v int64) sql.NullInt64 { return sql.NullInt64{Int64: v, Valid: true} }
 
 func listActiveStatusesForTenant(ctx context.Context, q *query.ListActiveStatusesForTenant) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
