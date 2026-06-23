@@ -1,5 +1,24 @@
 import { User } from "./identity"
 
+// Status mirrors entity.Status from the Go server. Provided per-tenant on
+// session bootstrap as fider.session.tenant.statuses. The admin UI lets
+// tenants extend this catalogue beyond the built-in 6 (feedback.fider.io/111).
+export type StatusKind = "open" | "active" | "closed-completed" | "closed-declined" | "duplicate"
+
+export interface Status {
+  id: number
+  slug: string
+  label: string
+  kind: StatusKind
+  color: string
+  icon: string
+  showOnHome: boolean
+  filterable: boolean
+  sortOrder: number
+  isSystem: boolean
+  isActive: boolean
+}
+
 export interface Post {
   id: number
   number: number
