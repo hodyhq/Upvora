@@ -24,26 +24,26 @@ var statusKinds = map[string]bool{
 	"duplicate":        true,
 }
 
-// builtInStatusSeeds defines the rows seeded for every new tenant. legacy_enum
-// is non-NULL only for the rows that map to the original PostStatus enum so
-// existing posts continue to resolve through the join.
+// builtInStatusSeeds defines the six rows seeded for every new tenant. The
+// "deleted" status doesn't appear here — it's an internal-only tombstone the
+// app writes via the DeletePost handler.
 var builtInStatusSeeds = []dbEntities.Status{
-	{Slug: "open", Label: "Open", Kind: "open", Color: "blue", Icon: "lightbulb", ShowOnHome: false, Filterable: true, SortOrder: 10, IsSystem: true, IsActive: true, LegacyEnum: nullInt(0)},
-	{Slug: "planned", Label: "Planned", Kind: "active", Color: "blue", Icon: "thumbsup", ShowOnHome: true, Filterable: true, SortOrder: 20, IsSystem: true, IsActive: true, LegacyEnum: nullInt(4)},
-	{Slug: "started", Label: "Started", Kind: "active", Color: "blue", Icon: "sparkles-outline", ShowOnHome: true, Filterable: true, SortOrder: 30, IsSystem: true, IsActive: true, LegacyEnum: nullInt(1)},
-	{Slug: "completed", Label: "Completed", Kind: "closed-completed", Color: "green", Icon: "check-circle", ShowOnHome: true, Filterable: true, SortOrder: 40, IsSystem: true, IsActive: true, LegacyEnum: nullInt(2)},
-	{Slug: "declined", Label: "Declined", Kind: "closed-declined", Color: "red", Icon: "thumbsdown", ShowOnHome: true, Filterable: true, SortOrder: 50, IsSystem: true, IsActive: true, LegacyEnum: nullInt(3)},
-	{Slug: "duplicate", Label: "Duplicate", Kind: "duplicate", Color: "yellow", Icon: "duplicate", ShowOnHome: true, Filterable: true, SortOrder: 60, IsSystem: true, IsActive: true, LegacyEnum: nullInt(5)},
+	{Slug: "open", Label: "Open", Kind: "open", Color: "blue", Icon: "lightbulb", ShowOnHome: false, Filterable: true, SortOrder: 10, IsSystem: true, IsActive: true},
+	{Slug: "planned", Label: "Planned", Kind: "active", Color: "blue", Icon: "thumbsup", ShowOnHome: true, Filterable: true, SortOrder: 20, IsSystem: true, IsActive: true},
+	{Slug: "started", Label: "Started", Kind: "active", Color: "blue", Icon: "sparkles-outline", ShowOnHome: true, Filterable: true, SortOrder: 30, IsSystem: true, IsActive: true},
+	{Slug: "completed", Label: "Completed", Kind: "closed-completed", Color: "green", Icon: "check-circle", ShowOnHome: true, Filterable: true, SortOrder: 40, IsSystem: true, IsActive: true},
+	{Slug: "declined", Label: "Declined", Kind: "closed-declined", Color: "red", Icon: "thumbsdown", ShowOnHome: true, Filterable: true, SortOrder: 50, IsSystem: true, IsActive: true},
+	{Slug: "duplicate", Label: "Duplicate", Kind: "duplicate", Color: "yellow", Icon: "duplicate", ShowOnHome: true, Filterable: true, SortOrder: 60, IsSystem: true, IsActive: true},
 }
 
-func nullInt(v int64) sql.NullInt64 { return sql.NullInt64{Int64: v, Valid: true} }
+const statusSelectCols = `id, tenant_id, slug, label, kind, color, icon, show_on_home, filterable,
+		sort_order, is_system, is_active, created_at, updated_at`
 
 func listActiveStatusesForTenant(ctx context.Context, q *query.ListActiveStatusesForTenant) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
 		rows := []*dbEntities.Status{}
 		err := trx.Select(&rows, `
-			SELECT id, tenant_id, slug, label, kind, color, icon, show_on_home, filterable,
-			       sort_order, is_system, is_active, legacy_enum, created_at, updated_at
+			SELECT `+statusSelectCols+`
 			FROM statuses
 			WHERE tenant_id = $1 AND is_active = TRUE
 			ORDER BY sort_order, id
@@ -63,8 +63,7 @@ func getStatusByID(ctx context.Context, q *query.GetStatusByID) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
 		row := dbEntities.Status{}
 		err := trx.Get(&row, `
-			SELECT id, tenant_id, slug, label, kind, color, icon, show_on_home, filterable,
-			       sort_order, is_system, is_active, legacy_enum, created_at, updated_at
+			SELECT `+statusSelectCols+`
 			FROM statuses
 			WHERE tenant_id = $1 AND id = $2
 		`, tenant.ID, q.ID)
@@ -83,8 +82,7 @@ func getStatusBySlug(ctx context.Context, q *query.GetStatusBySlug) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
 		row := dbEntities.Status{}
 		err := trx.Get(&row, `
-			SELECT id, tenant_id, slug, label, kind, color, icon, show_on_home, filterable,
-			       sort_order, is_system, is_active, legacy_enum, created_at, updated_at
+			SELECT `+statusSelectCols+`
 			FROM statuses
 			WHERE tenant_id = $1 AND slug = $2
 		`, tenant.ID, q.Slug)
@@ -101,22 +99,15 @@ func getStatusBySlug(ctx context.Context, q *query.GetStatusBySlug) error {
 
 func countPostsByStatusID(ctx context.Context, q *query.CountPostsByStatus) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
-		// Posts still store the legacy int enum. Translate the target status's
-		// legacy_enum (or skip — custom statuses have no posts yet in phase 1).
-		var legacy sql.NullInt64
-		err := trx.Scalar(&legacy, `SELECT legacy_enum FROM statuses WHERE tenant_id = $1 AND id = $2`, tenant.ID, q.StatusID)
+		var slug string
+		err := trx.Scalar(&slug, `SELECT slug FROM statuses WHERE tenant_id = $1 AND id = $2`, tenant.ID, q.StatusID)
 		if err == sql.ErrNoRows {
 			return app.ErrNotFound
 		}
 		if err != nil {
-			return errors.Wrap(err, "failed to look up legacy_enum for status %d", q.StatusID)
+			return errors.Wrap(err, "failed to look up slug for status %d", q.StatusID)
 		}
-		if !legacy.Valid {
-			// Custom (non-system) status. No posts in phase 1 since posts.status is still int.
-			q.Result = 0
-			return nil
-		}
-		count, err := trx.Count(`SELECT COUNT(*) FROM posts WHERE tenant_id = $1 AND status = $2`, tenant.ID, legacy.Int64)
+		count, err := trx.Count(`SELECT COUNT(*) FROM posts WHERE tenant_id = $1 AND status_slug = $2`, tenant.ID, slug)
 		if err != nil {
 			return errors.Wrap(err, "failed to count posts for status %d", q.StatusID)
 		}
@@ -138,8 +129,7 @@ func createStatus(ctx context.Context, c *cmd.CreateStatus) error {
 		err := trx.Get(&row, `
 			INSERT INTO statuses (tenant_id, slug, label, kind, color, icon, show_on_home, filterable, sort_order, is_system, is_active)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, FALSE, TRUE)
-			RETURNING id, tenant_id, slug, label, kind, color, icon, show_on_home, filterable,
-			          sort_order, is_system, is_active, legacy_enum, created_at, updated_at
+			RETURNING `+statusSelectCols+`
 		`, tenant.ID, slug, c.Label, c.Kind, c.Color, c.Icon, c.ShowOnHome, c.Filterable, c.SortOrder)
 		if err != nil {
 			return errors.Wrap(err, "failed to create status")
@@ -190,10 +180,10 @@ func seedTenantStatuses(ctx context.Context, c *cmd.SeedTenantStatuses) error {
 	return using(ctx, func(trx *dbx.Trx, _ *entity.Tenant, _ *entity.User) error {
 		for _, seed := range builtInStatusSeeds {
 			_, err := trx.Execute(`
-				INSERT INTO statuses (tenant_id, slug, label, kind, color, icon, show_on_home, filterable, sort_order, is_system, is_active, legacy_enum)
-				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+				INSERT INTO statuses (tenant_id, slug, label, kind, color, icon, show_on_home, filterable, sort_order, is_system, is_active)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 				ON CONFLICT (tenant_id, slug) DO NOTHING
-			`, c.TenantID, seed.Slug, seed.Label, seed.Kind, seed.Color, seed.Icon, seed.ShowOnHome, seed.Filterable, seed.SortOrder, seed.IsSystem, seed.IsActive, seed.LegacyEnum)
+			`, c.TenantID, seed.Slug, seed.Label, seed.Kind, seed.Color, seed.Icon, seed.ShowOnHome, seed.Filterable, seed.SortOrder, seed.IsSystem, seed.IsActive)
 			if err != nil {
 				return errors.Wrap(err, "failed to seed status %q for tenant %d", seed.Slug, c.TenantID)
 			}

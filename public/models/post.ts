@@ -26,11 +26,12 @@ export interface Post {
   title: string
   description: string
   createdAt: string
-  // Legacy int-enum-derived string ("open", "started", ...). Use statusSlug
-  // when present — it carries the authoritative tenant-defined slug, which
-  // can be a custom status that has no built-in enum mapping.
+  // Tenant-defined slug. Built-in or admin-added; matches a row in
+  // tenant.statuses for color/label resolution.
   status: string
-  statusSlug?: string
+  // Semantic kind joined from the statuses table. Empty for the special
+  // "deleted" sentinel which has no row in the catalogue.
+  statusKind?: string
   user: User
   hasVoted: boolean
   response: PostResponse | null
@@ -40,10 +41,9 @@ export interface Post {
   isApproved: boolean
 }
 
-// Returns the effective status slug for a post — prefers statusSlug
-// (tenant-defined), falls back to the legacy status field for compatibility
-// with old payloads.
-export const postStatusValue = (p: Pick<Post, "status" | "statusSlug">): string => p.statusSlug || p.status
+// Returns the effective status slug for a post. Kept as a small helper so
+// callers stay forward-compatible if the shape evolves again.
+export const postStatusValue = (p: Pick<Post, "status">): string => p.status
 
 export class PostStatus {
   constructor(public title: string, public value: string, public show: boolean, public closed: boolean, public filterable: boolean) {}

@@ -8,7 +8,6 @@ import (
 
 	"github.com/getfider/fider/app/models/dto"
 	"github.com/getfider/fider/app/models/entity"
-	"github.com/getfider/fider/app/models/enum"
 	"github.com/getfider/fider/app/models/query"
 	"github.com/getfider/fider/app/pkg/bus"
 	"github.com/getfider/fider/app/pkg/env"
@@ -246,9 +245,8 @@ type SetResponse struct {
 	OriginalNumber int    `json:"originalNumber"`
 
 	// Resolved during Validate
-	Original     *entity.Post
-	StatusEnum   enum.PostStatus // legacy_enum if backed by built-in, else 0
-	StatusSlug   string          // normalized slug
+	Original   *entity.Post
+	StatusSlug string // normalized slug
 }
 
 // IsAuthorized returns true if current user is authorized to perform this action
@@ -277,13 +275,6 @@ func (action *SetResponse) Validate(ctx context.Context, user *entity.User) *val
 	}
 
 	action.StatusSlug = getStatus.Result.Slug
-	// Fall back to PostOpen (0) for custom statuses without a legacy enum mapping.
-	// posts.status_slug is the source of truth; the int column is kept in sync
-	// for the existing code paths that still consult it.
-	action.StatusEnum = enum.PostStatus(0)
-	if name, ok := lookupEnumBySlug(action.StatusSlug); ok {
-		action.StatusEnum = name
-	}
 
 	if action.StatusSlug == "duplicate" {
 		if action.OriginalNumber == action.Number {
@@ -306,28 +297,6 @@ func (action *SetResponse) Validate(ctx context.Context, user *entity.User) *val
 	}
 
 	return result
-}
-
-// lookupEnumBySlug returns the legacy PostStatus enum value for a known
-// built-in slug. Custom slugs return ok=false; the caller stores 0/PostOpen
-// in posts.status for backwards-compat code paths and treats status_slug
-// as the source of truth for resolution.
-func lookupEnumBySlug(slug string) (enum.PostStatus, bool) {
-	switch slug {
-	case "open":
-		return enum.PostOpen, true
-	case "started":
-		return enum.PostStarted, true
-	case "completed":
-		return enum.PostCompleted, true
-	case "declined":
-		return enum.PostDeclined, true
-	case "planned":
-		return enum.PostPlanned, true
-	case "duplicate":
-		return enum.PostDuplicate, true
-	}
-	return 0, false
 }
 
 // DeletePost represents the action of an administrator deleting an existing Post

@@ -36,19 +36,20 @@ func MapLocaleToTSConfig(locale string) string {
 	return enum.MapLocaleToTSConfig(locale)
 }
 
-func getViewData(query query.SearchPosts, tagsPlaceholder int) (string, []enum.PostStatus, string) {
+func getViewData(query query.SearchPosts, tagsPlaceholder int) (string, []string, string) {
 	var (
 		condition string
 		sort      string
 	)
 	statusFilters := query.Statuses
 	if len(statusFilters) == 0 {
-		// Use a sensible default list of status filters
-		statusFilters = []enum.PostStatus{
-			enum.PostOpen,
-			enum.PostStarted,
-			enum.PostPlanned,
-		}
+		// Default list — Open + the two "in progress" built-ins. Tenants that
+		// add custom statuses with kind=active aren't picked up here because the
+		// caller passes slug-strings; a kind-based filter would require an
+		// additional JOIN. Admins can explicitly filter to surface their custom
+		// statuses, and the deprecated /api/v1/posts?view=… endpoints below
+		// likewise stick to built-in slugs.
+		statusFilters = []string{"open", "started", "planned"}
 	}
 
 	if query.MyVotesOnly {
@@ -69,28 +70,22 @@ func getViewData(query query.SearchPosts, tagsPlaceholder int) (string, []enum.P
 	case "planned":
 		// Deprecated: Use status filters instead
 		sort = "response_date"
-		statusFilters = []enum.PostStatus{enum.PostPlanned}
+		statusFilters = []string{"planned"}
 	case "started":
 		// Deprecated: Use status filters instead
 		sort = "response_date"
-		statusFilters = []enum.PostStatus{enum.PostStarted}
+		statusFilters = []string{"started"}
 	case "completed":
 		// Deprecated: Use status filters instead
 		sort = "response_date"
-		statusFilters = []enum.PostStatus{enum.PostCompleted}
+		statusFilters = []string{"completed"}
 	case "declined":
 		// Deprecated: Use status filters instead
 		sort = "response_date"
-		statusFilters = []enum.PostStatus{enum.PostDeclined}
+		statusFilters = []string{"declined"}
 	case "all":
 		sort = "id"
-		statusFilters = []enum.PostStatus{
-			enum.PostOpen,
-			enum.PostStarted,
-			enum.PostPlanned,
-			enum.PostCompleted,
-			enum.PostDeclined,
-		}
+		statusFilters = []string{"open", "started", "planned", "completed", "declined"}
 	case "trending":
 		fallthrough
 	default:

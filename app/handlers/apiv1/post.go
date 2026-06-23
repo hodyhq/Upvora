@@ -5,7 +5,6 @@ import (
 	"github.com/getfider/fider/app/metrics"
 	"github.com/getfider/fider/app/models/cmd"
 	"github.com/getfider/fider/app/models/entity"
-	"github.com/getfider/fider/app/models/enum"
 	"github.com/getfider/fider/app/models/query"
 	"github.com/getfider/fider/app/pkg/bus"
 	"github.com/getfider/fider/app/pkg/env"
@@ -175,7 +174,6 @@ func SetResponse() web.HandlerFunc {
 			return c.Failure(err)
 		}
 
-		prevStatus := getPost.Result.Status
 		prevStatusSlug := getPost.Result.StatusSlug
 
 		var command bus.Msg
@@ -185,7 +183,6 @@ func SetResponse() web.HandlerFunc {
 			command = &cmd.SetPostResponse{
 				Post:       getPost.Result,
 				Text:       action.Text,
-				Status:     action.StatusEnum,
 				StatusSlug: action.StatusSlug,
 			}
 		}
@@ -194,7 +191,7 @@ func SetResponse() web.HandlerFunc {
 			return c.Failure(err)
 		}
 
-		c.Enqueue(tasks.NotifyAboutStatusChange(getPost.Result, prevStatus, prevStatusSlug))
+		c.Enqueue(tasks.NotifyAboutStatusChange(getPost.Result, prevStatusSlug))
 
 		return c.Ok(web.Map{})
 	}
@@ -211,7 +208,6 @@ func DeletePost() web.HandlerFunc {
 		err := bus.Dispatch(c, &cmd.SetPostResponse{
 			Post:       action.Post,
 			Text:       action.Text,
-			Status:     enum.PostDeleted,
 			StatusSlug: "deleted",
 		})
 		if err != nil {
