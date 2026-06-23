@@ -240,12 +240,15 @@ func (action *AddNewComment) Validate(ctx context.Context, user *entity.User) *v
 
 // SetResponse represents the action to update an post response
 type SetResponse struct {
-	Number         int             `route:"number"`
-	Status         enum.PostStatus `json:"status"`
-	Text           string          `json:"text"`
-	OriginalNumber int             `json:"originalNumber"`
+	Number         int    `route:"number"`
+	Status         string `json:"status"` // slug from tenant.statuses
+	Text           string `json:"text"`
+	OriginalNumber int    `json:"originalNumber"`
 
-	Original *entity.Post
+	// Resolved during Validate
+	Original     *entity.Post
+	StatusEnum   enum.PostStatus // legacy_enum if backed by built-in, else 0
+	StatusSlug   string          // normalized slug
 }
 
 // IsAuthorized returns true if current user is authorized to perform this action
@@ -257,13 +260,32 @@ func (action *SetResponse) IsAuthorized(ctx context.Context, user *entity.User) 
 func (action *SetResponse) Validate(ctx context.Context, user *entity.User) *validate.Result {
 	result := validate.Success()
 
-	// Only known statuses are settable via this action. PostDeleted is reserved
-	// for the deletion flow, never set through SetResponse.
-	if action.Status == enum.PostDeleted || action.Status.Name() == "unknown" {
+	action.Status = strings.TrimSpace(strings.ToLower(action.Status))
+	if action.Status == "" || action.Status == "deleted" {
 		result.AddFieldFailure("status", propertyIsInvalid(ctx, "status"))
+		return result
 	}
 
-	if action.Status == enum.PostDuplicate {
+	// Look up the slug in the tenant's status catalogue. Any active row is
+	// acceptable; the catalogue is admin-curated and may include custom
+	// statuses beyond the built-in enum.
+	getStatus := &query.GetStatusBySlug{Slug: action.Status}
+	err := bus.Dispatch(ctx, getStatus)
+	if err != nil || getStatus.Result == nil || !getStatus.Result.IsActive {
+		result.AddFieldFailure("status", propertyIsInvalid(ctx, "status"))
+		return result
+	}
+
+	action.StatusSlug = getStatus.Result.Slug
+	// Fall back to PostOpen (0) for custom statuses without a legacy enum mapping.
+	// posts.status_slug is the source of truth; the int column is kept in sync
+	// for the existing code paths that still consult it.
+	action.StatusEnum = enum.PostStatus(0)
+	if name, ok := lookupEnumBySlug(action.StatusSlug); ok {
+		action.StatusEnum = name
+	}
+
+	if action.StatusSlug == "duplicate" {
 		if action.OriginalNumber == action.Number {
 			result.AddFieldFailure("originalNumber", i18n.T(ctx, "validation.custom.selfduplicate"))
 		}
@@ -284,6 +306,30 @@ func (action *SetResponse) Validate(ctx context.Context, user *entity.User) *val
 	}
 
 	return result
+}
+
+// lookupEnumBySlug returns the legacy PostStatus enum value for a known
+// built-in slug. Custom slugs return ok=false; the caller stores 0/PostOpen
+// in posts.status for backwards-compat code paths and treats status_slug
+// as the source of truth for resolution.
+func lookupEnumBySlug(slug string) (enum.PostStatus, bool) {
+	switch slug {
+	case "open":
+		return enum.PostOpen, true
+	case "started":
+		return enum.PostStarted, true
+	case "completed":
+		return enum.PostCompleted, true
+	case "declined":
+		return enum.PostDeclined, true
+	case "planned":
+		return enum.PostPlanned, true
+	case "duplicate":
+		return enum.PostDuplicate, true
+	case "review":
+		return enum.PostReview, true
+	}
+	return 0, false
 }
 
 // DeletePost represents the action of an administrator deleting an existing Post

@@ -178,13 +178,14 @@ func SetResponse() web.HandlerFunc {
 		prevStatus := getPost.Result.Status
 
 		var command bus.Msg
-		if action.Status == enum.PostDuplicate {
+		if action.StatusSlug == "duplicate" {
 			command = &cmd.MarkPostAsDuplicate{Post: getPost.Result, Original: action.Original}
 		} else {
 			command = &cmd.SetPostResponse{
-				Post:   getPost.Result,
-				Text:   action.Text,
-				Status: action.Status,
+				Post:       getPost.Result,
+				Text:       action.Text,
+				Status:     action.StatusEnum,
+				StatusSlug: action.StatusSlug,
 			}
 		}
 
@@ -207,9 +208,10 @@ func DeletePost() web.HandlerFunc {
 		}
 
 		err := bus.Dispatch(c, &cmd.SetPostResponse{
-			Post:   action.Post,
-			Text:   action.Text,
-			Status: enum.PostDeleted,
+			Post:       action.Post,
+			Text:       action.Text,
+			Status:     enum.PostDeleted,
+			StatusSlug: "deleted",
 		})
 		if err != nil {
 			return c.Failure(err)

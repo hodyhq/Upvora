@@ -150,9 +150,9 @@ func setPostResponse(ctx context.Context, c *cmd.SetPostResponse) error {
 
 		_, err := trx.Execute(`
 		UPDATE posts
-		SET response = $3, original_id = NULL, response_date = $4, response_user_id = $5, status = $6
+		SET response = $3, original_id = NULL, response_date = $4, response_user_id = $5, status = $6, status_slug = $7
 		WHERE id = $1 and tenant_id = $2
-		`, c.Post.ID, tenant.ID, c.Text, respondedAt, user.ID, c.Status)
+		`, c.Post.ID, tenant.ID, c.Text, respondedAt, user.ID, c.Status, c.StatusSlug)
 		if err != nil {
 			return errors.Wrap(err, "failed to update post's response")
 		}
@@ -189,7 +189,7 @@ func markPostAsDuplicate(ctx context.Context, c *cmd.MarkPostAsDuplicate) error 
 
 		_, err = trx.Execute(`
 		UPDATE posts
-		SET response = '', original_id = $3, response_date = $4, response_user_id = $5, status = $6
+		SET response = '', original_id = $3, response_date = $4, response_user_id = $5, status = $6, status_slug = 'duplicate'
 		WHERE id = $1 and tenant_id = $2
 		`, c.Post.ID, tenant.ID, c.Original.ID, respondedAt, user.ID, enum.PostDuplicate)
 		if err != nil {

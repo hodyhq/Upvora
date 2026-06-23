@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { PostStatus, Tag } from "@fider/models"
+import { Tag, statusListFor } from "@fider/models"
 import { Checkbox, Dropdown, Icon } from "@fider/components"
 import { HStack } from "@fider/components/layout"
 import HeroIconFilter from "@fider/assets/images/heroicons-filter.svg"
@@ -101,15 +101,20 @@ export const PostFilter = (props: PostFilterProps) => {
     options.push({ value: true, label: i18n._({ id: "home.postfilter.option.myposts", message: "My Posts" }), type: "myPosts" })
   }
 
-  PostStatus.All.filter((s) => s.filterable && props.countPerStatus[s.value]).forEach((s) => {
-    const id = `enum.poststatus.${s.value.toString()}`
-    options.push({
-      label: i18n._(id, { message: s.title }),
-      value: s.value,
-      count: props.countPerStatus[s.value],
-      type: "status",
+  // Prefer the tenant's configured status catalogue (feedback.fider.io/111).
+  // statusListFor falls back to PostStatus.All when tenant.statuses is empty,
+  // so this keeps current behavior for sites that haven't run the migration.
+  statusListFor(fider.session.tenant)
+    .filter((s) => s.filterable && props.countPerStatus[s.value])
+    .forEach((s) => {
+      const id = `enum.poststatus.${s.value}`
+      options.push({
+        label: i18n._(id, { message: s.label }),
+        value: s.value,
+        count: props.countPerStatus[s.value],
+        type: "status",
+      })
     })
-  })
 
   // Add Pending status for collaborators and admins
   if (fider.session.isAuthenticated && fider.session.user.isCollaborator) {

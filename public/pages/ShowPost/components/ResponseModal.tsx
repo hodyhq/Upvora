@@ -1,9 +1,9 @@
 import React from "react"
 
 import { Modal, Button, DisplayError, Select, Form, TextArea, Field, SelectOption } from "@fider/components"
-import { Post, PostStatus } from "@fider/models"
+import { Post, PostStatus, statusListFor } from "@fider/models"
 
-import { actions, Failure } from "@fider/services"
+import { actions, Failure, Fider } from "@fider/services"
 import { PostSearch } from "./PostSearch"
 import { i18n } from "@lingui/core"
 import { Trans } from "@lingui/react/macro"
@@ -58,11 +58,17 @@ export class ResponseModal extends React.Component<ResponseModalProps, ResponseM
   }
 
   public render() {
-    const options = PostStatus.All.map((s) => {
-      const id = `enum.poststatus.${s.value.toString()}`
+    // Prefer the tenant's configured status catalogue (feedback.fider.io/111).
+    // Falls back to the static PostStatus.All for tenants whose statuses haven't
+    // been seeded yet (e.g. fresh installs that haven't run the migration).
+    const statusList = statusListFor(Fider.session.tenant)
+    const options = statusList.map((s) => {
+      const id = `enum.poststatus.${s.value}`
       return {
-        value: s.value.toString(),
-        label: i18n._(id, { message: s.title }),
+        value: s.value,
+        // Translation key wins when present; falls back to the tenant-defined
+        // label (which is what custom statuses use).
+        label: i18n._(id, { message: s.label }),
       }
     })
 

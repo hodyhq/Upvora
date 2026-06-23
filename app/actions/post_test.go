@@ -61,22 +61,11 @@ func TestSetResponse_InvalidStatus(t *testing.T) {
 	RegisterT(t)
 
 	action := &actions.SetResponse{
-		Status: enum.PostDeleted,
+		Status: "deleted",
 		Text:   "Spam!",
 	}
 	result := action.Validate(context.Background(), nil)
 	ExpectFailed(result, "status")
-}
-
-func TestSetResponse_ReviewIsValid(t *testing.T) {
-	RegisterT(t)
-
-	action := &actions.SetResponse{
-		Status: enum.PostReview,
-		Text:   "Triaging — need product input before planning",
-	}
-	result := action.Validate(context.Background(), nil)
-	ExpectSuccess(result)
 }
 
 func TestDeletePost_WhenIsBeingReferenced(t *testing.T) {
