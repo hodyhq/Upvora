@@ -8,7 +8,6 @@ import HeroIconSparkles from "@fider/assets/images/heroicons-sparkles-outline.sv
 import HeroIconLightBulb from "@fider/assets/images/heroicons-lightbulb.svg"
 import HeroIconThumbsUp from "@fider/assets/images/heroicons-thumbsup.svg"
 import HeroIconThumbsDown from "@fider/assets/images/heroicons-thumbsdown.svg"
-import HeroIconEye from "@fider/assets/images/heroicons-eye.svg"
 import { HStack, VStack } from "./layout"
 import { Trans } from "@lingui/react/macro"
 import { useFider } from "@fider/hooks"
@@ -111,8 +110,6 @@ const getLozengeProps = (
       return { icon: HeroIconThumbsUp, ...colorPalette.blue }
     case PostStatus.Started:
       return { icon: HeroIconSparkles, ...colorPalette.blue }
-    case PostStatus.Review:
-      return { icon: HeroIconEye, ...colorPalette.blue }
     case PostStatus.Open:
       return { icon: HeroIconLightBulb, ...colorPalette.blue }
     default:
@@ -124,14 +121,12 @@ const getStatusTranslation = (status: PostStatus, tenantStatus: Status | null): 
   // Tenant catalogue label wins for custom slugs — i18n has no catalog entry
   // for admin-named statuses, so falling back to <Trans> would render the raw
   // message-id (e.g. "enum.poststatus.parked").
-  if (tenantStatus && !["open", "review", "planned", "started", "completed", "declined", "duplicate", "deleted"].includes(tenantStatus.slug)) {
+  if (tenantStatus && !["open", "planned", "started", "completed", "declined", "duplicate", "deleted"].includes(tenantStatus.slug)) {
     return <>{tenantStatus.label}</>
   }
   switch (status) {
     case PostStatus.Open:
       return <Trans id="enum.poststatus.open">Open</Trans>
-    case PostStatus.Review:
-      return <Trans id="enum.poststatus.review">Review</Trans>
     case PostStatus.Planned:
       return <Trans id="enum.poststatus.planned">Planned</Trans>
     case PostStatus.Started:

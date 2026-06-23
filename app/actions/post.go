@@ -326,8 +326,6 @@ func lookupEnumBySlug(slug string) (enum.PostStatus, bool) {
 		return enum.PostPlanned, true
 	case "duplicate":
 		return enum.PostDuplicate, true
-	case "review":
-		return enum.PostReview, true
 	}
 	return 0, false
 }
