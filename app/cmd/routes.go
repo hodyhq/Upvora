@@ -168,6 +168,7 @@ func routes(r *web.Engine) *web.Engine {
 		ui.Get("/admin/users", handlers.ManageMembers())
 		ui.Get("/admin/tags", handlers.ManageTags())
 		ui.Get("/admin/statuses", handlers.ManageStatuses())
+			ui.Get("/admin/banner", handlers.ManageBanner())
 		ui.Get("/admin/authentication", handlers.ManageAuthentication())
 		ui.Get("/_api/admin/oauth/:provider", handlers.GetOAuthConfig())
 
