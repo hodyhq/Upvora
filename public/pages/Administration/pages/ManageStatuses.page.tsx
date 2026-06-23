@@ -56,7 +56,7 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
   constructor(props: ManageStatusesPageProps) {
     super(props)
     this.state = {
-      statuses: props.statuses,
+      statuses: props.statuses ?? [],
       isAdding: false,
       draftSlug: "",
       draftLabel: "",
