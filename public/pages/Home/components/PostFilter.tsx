@@ -166,7 +166,7 @@ export const PostFilter = (props: PostFilterProps) => {
               <Checkbox field={fieldKey} checked={isChecked}>
                 <HStack spacing={2}>
                   <span className={isChecked ? "text-semibold" : ""}>{o.label}</span>
-                  {o.count && o.count > 0 && <span className="bg-gray-200 inline-block rounded-full px-1 w-min-4 text-2xs text-center">{o.count}</span>}
+                  {(o.count ?? 0) > 0 && <span className="bg-gray-200 inline-block rounded-full px-1 w-min-4 text-2xs text-center">{o.count}</span>}
                 </HStack>
               </Checkbox>
             </Dropdown.ListItem>
