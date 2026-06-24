@@ -21,6 +21,7 @@ interface ManageStatusesPageState {
   draftColor: string
   draftIcon: string
   draftShowOnHome: boolean
+  draftShowOnRoadmap: boolean
   draftFilterable: boolean
   draftSortOrder: number
   error?: Failure
@@ -68,6 +69,7 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
       draftColor: "blue",
       draftIcon: "lightbulb",
       draftShowOnHome: true,
+      draftShowOnRoadmap: false,
       draftFilterable: true,
       draftSortOrder: 100,
       busy: false,
@@ -84,6 +86,7 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
       draftColor: "blue",
       draftIcon: "lightbulb",
       draftShowOnHome: true,
+      draftShowOnRoadmap: false,
       draftFilterable: true,
       draftSortOrder: 100,
       error: undefined,
@@ -100,6 +103,7 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
       draftColor: status.color,
       draftIcon: status.icon,
       draftShowOnHome: status.showOnHome,
+      draftShowOnRoadmap: status.showOnRoadmap,
       draftFilterable: status.filterable,
       draftSortOrder: status.sortOrder,
       error: undefined,
@@ -131,6 +135,7 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
         color: this.state.draftColor,
         icon: this.state.draftIcon,
         showOnHome: this.state.draftShowOnHome,
+        showOnRoadmap: this.state.draftShowOnRoadmap,
         filterable: this.state.draftFilterable,
         sortOrder: this.state.draftSortOrder,
         isActive: existing ? existing.isActive : true,
@@ -146,6 +151,7 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
                     color: this.state.draftColor,
                     icon: this.state.draftIcon,
                     showOnHome: this.state.draftShowOnHome,
+                    showOnRoadmap: this.state.draftShowOnRoadmap,
                     filterable: this.state.draftFilterable,
                     sortOrder: this.state.draftSortOrder,
                   }
@@ -169,6 +175,7 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
       color: this.state.draftColor,
       icon: this.state.draftIcon,
       showOnHome: this.state.draftShowOnHome,
+      showOnRoadmap: this.state.draftShowOnRoadmap,
       filterable: this.state.draftFilterable,
       sortOrder: this.state.draftSortOrder,
     })
@@ -189,6 +196,7 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
       color: status.color,
       icon: status.icon,
       showOnHome: status.showOnHome,
+      showOnRoadmap: status.showOnRoadmap,
       filterable: status.filterable,
       sortOrder: status.sortOrder,
       isActive: !status.isActive,
@@ -237,6 +245,7 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
               <th><Trans id="admin.statuses.table.kind">Kind</Trans></th>
               <th><Trans id="admin.statuses.table.color">Color</Trans></th>
               <th><Trans id="admin.statuses.table.home">Home</Trans></th>
+              <th><Trans id="admin.statuses.table.roadmap">Roadmap</Trans></th>
               <th><Trans id="admin.statuses.table.filter">Filter</Trans></th>
               <th><Trans id="admin.statuses.table.active">Active</Trans></th>
               <th />
@@ -257,6 +266,7 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
                 <td>{s.kind}</td>
                 <td>{s.color}</td>
                 <td>{s.showOnHome ? i18n._({ id: "admin.statuses.table.yes", message: "yes" }) : "—"}</td>
+                <td>{s.showOnRoadmap ? i18n._({ id: "admin.statuses.table.yes", message: "yes" }) : "—"}</td>
                 <td>{s.filterable ? i18n._({ id: "admin.statuses.table.yes", message: "yes" }) : "—"}</td>
                 <td>
                   <Toggle active={s.isActive} onToggle={() => this.toggleActive(s)} />
@@ -321,6 +331,12 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
                 <Toggle active={this.state.draftShowOnHome} onToggle={(v) => this.setState({ draftShowOnHome: v })} />
                 <span className="text-sm">
                   <Trans id="admin.statuses.form.showonhome">Show posts in this status on the home page</Trans>
+                </span>
+              </HStack>
+              <HStack spacing={4}>
+                <Toggle active={this.state.draftShowOnRoadmap} onToggle={(v) => this.setState({ draftShowOnRoadmap: v })} />
+                <span className="text-sm">
+                  <Trans id="admin.statuses.form.showonroadmap">Publish posts in this status to the Roadmap page</Trans>
                 </span>
               </HStack>
               <HStack spacing={4}>

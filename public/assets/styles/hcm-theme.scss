@@ -33,12 +33,12 @@ body[data-theme="light"] {
 #p-home .p-home__add-idea-btn {
   width: 100%;
   margin: 0 0 24px;
-  padding: 20px;
+  padding: 14px 18px;
   border: 2px solid $hcm-green-mid !important;
   border-radius: 12px !important;
   background-color: var(--colors-white) !important;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
   letter-spacing: 0.01em;
   line-height: 1.2;
@@ -52,13 +52,13 @@ body[data-theme="light"] {
   }
 
   .p-home__add-idea-icon {
-    width: 40px !important;
-    height: 40px !important;
+    width: 28px !important;
+    height: 28px !important;
     transition: color 0.15s ease;
   }
 
   span {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 500;
     transition: color 0.15s ease;
   }

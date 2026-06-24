@@ -4,14 +4,15 @@ import "github.com/getfider/fider/app/models/entity"
 
 // CreateStatus inserts a custom status row for the current tenant.
 type CreateStatus struct {
-	Slug       string
-	Label      string
-	Kind       string
-	Color      string
-	Icon       string
-	ShowOnHome bool
-	Filterable bool
-	SortOrder  int
+	Slug          string
+	Label         string
+	Kind          string
+	Color         string
+	Icon          string
+	ShowOnHome    bool
+	ShowOnRoadmap bool
+	Filterable    bool
+	SortOrder     int
 
 	Result *entity.Status
 }
@@ -20,14 +21,15 @@ type CreateStatus struct {
 // System statuses (is_system=true) can be re-labeled / re-colored / reordered
 // but the Slug and Kind are immutable to preserve enum-compat behavior.
 type UpdateStatus struct {
-	ID         int
-	Label      string
-	Color      string
-	Icon       string
-	ShowOnHome bool
-	Filterable bool
-	SortOrder  int
-	IsActive   bool
+	ID            int
+	Label         string
+	Color         string
+	Icon          string
+	ShowOnHome    bool
+	ShowOnRoadmap bool
+	Filterable    bool
+	SortOrder     int
+	IsActive      bool
 }
 
 // DeleteStatus removes a status. Refused for system rows; refused if any post

@@ -21,8 +21,9 @@ type Status struct {
 	Kind       string    `json:"kind"`
 	Color      string    `json:"color"`
 	Icon       string    `json:"icon"`
-	ShowOnHome bool      `json:"showOnHome"`
-	Filterable bool      `json:"filterable"`
+	ShowOnHome    bool `json:"showOnHome"`
+	ShowOnRoadmap bool `json:"showOnRoadmap"`
+	Filterable    bool `json:"filterable"`
 	SortOrder  int       `json:"sortOrder"`
 	IsSystem   bool      `json:"isSystem"`
 	IsActive   bool      `json:"isActive"`

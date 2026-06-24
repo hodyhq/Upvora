@@ -13,6 +13,7 @@ export interface Status {
   color: string
   icon: string
   showOnHome: boolean
+  showOnRoadmap: boolean
   filterable: boolean
   sortOrder: number
   isSystem: boolean

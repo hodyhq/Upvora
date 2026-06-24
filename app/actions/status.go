@@ -26,14 +26,15 @@ var allowedStatusColors = map[string]bool{
 
 // CreateStatus is the admin action to add a new custom status.
 type CreateStatus struct {
-	Slug       string `json:"slug" format:"lower"`
-	Label      string `json:"label"`
-	Kind       string `json:"kind"`
-	Color      string `json:"color"`
-	Icon       string `json:"icon"`
-	ShowOnHome bool   `json:"showOnHome"`
-	Filterable bool   `json:"filterable"`
-	SortOrder  int    `json:"sortOrder"`
+	Slug          string `json:"slug" format:"lower"`
+	Label         string `json:"label"`
+	Kind          string `json:"kind"`
+	Color         string `json:"color"`
+	Icon          string `json:"icon"`
+	ShowOnHome    bool   `json:"showOnHome"`
+	ShowOnRoadmap bool   `json:"showOnRoadmap"`
+	Filterable    bool   `json:"filterable"`
+	SortOrder     int    `json:"sortOrder"`
 }
 
 func (action *CreateStatus) IsAuthorized(ctx context.Context, user *entity.User) bool {
@@ -82,14 +83,15 @@ func (action *CreateStatus) Validate(ctx context.Context, user *entity.User) *va
 // the URL; Slug and Kind are not editable here (immutable to preserve any
 // outstanding posts and webhook integrations).
 type UpdateStatus struct {
-	ID         int    `route:"id"`
-	Label      string `json:"label"`
-	Color      string `json:"color"`
-	Icon       string `json:"icon"`
-	ShowOnHome bool   `json:"showOnHome"`
-	Filterable bool   `json:"filterable"`
-	SortOrder  int    `json:"sortOrder"`
-	IsActive   bool   `json:"isActive"`
+	ID            int    `route:"id"`
+	Label         string `json:"label"`
+	Color         string `json:"color"`
+	Icon          string `json:"icon"`
+	ShowOnHome    bool   `json:"showOnHome"`
+	ShowOnRoadmap bool   `json:"showOnRoadmap"`
+	Filterable    bool   `json:"filterable"`
+	SortOrder     int    `json:"sortOrder"`
+	IsActive      bool   `json:"isActive"`
 }
 
 func (action *UpdateStatus) IsAuthorized(ctx context.Context, user *entity.User) bool {

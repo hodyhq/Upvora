@@ -8,6 +8,7 @@ export interface CreateStatusInput {
   color: string
   icon: string
   showOnHome: boolean
+  showOnRoadmap: boolean
   filterable: boolean
   sortOrder: number
 }
@@ -17,6 +18,7 @@ export interface UpdateStatusInput {
   color: string
   icon: string
   showOnHome: boolean
+  showOnRoadmap: boolean
   filterable: boolean
   sortOrder: number
   isActive: boolean

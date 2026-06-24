@@ -14,8 +14,9 @@ type Status struct {
 	Kind       string    `db:"kind"`
 	Color      string    `db:"color"`
 	Icon       string    `db:"icon"`
-	ShowOnHome bool      `db:"show_on_home"`
-	Filterable bool      `db:"filterable"`
+	ShowOnHome    bool `db:"show_on_home"`
+	ShowOnRoadmap bool `db:"show_on_roadmap"`
+	Filterable    bool `db:"filterable"`
 	SortOrder  int       `db:"sort_order"`
 	IsSystem   bool      `db:"is_system"`
 	IsActive   bool      `db:"is_active"`
@@ -34,8 +35,9 @@ func (s *Status) ToModel() *entity.Status {
 		Kind:       s.Kind,
 		Color:      s.Color,
 		Icon:       s.Icon,
-		ShowOnHome: s.ShowOnHome,
-		Filterable: s.Filterable,
+		ShowOnHome:    s.ShowOnHome,
+		ShowOnRoadmap: s.ShowOnRoadmap,
+		Filterable:    s.Filterable,
 		SortOrder:  s.SortOrder,
 		IsSystem:   s.IsSystem,
 		IsActive:   s.IsActive,

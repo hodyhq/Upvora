@@ -5,6 +5,7 @@ import (
 	"github.com/getfider/fider/app/models/cmd"
 	"github.com/getfider/fider/app/models/query"
 	"github.com/getfider/fider/app/pkg/bus"
+	"github.com/getfider/fider/app/pkg/validate"
 	"github.com/getfider/fider/app/pkg/web"
 )
 
@@ -30,14 +31,15 @@ func CreateStatus() web.HandlerFunc {
 		}
 
 		create := &cmd.CreateStatus{
-			Slug:       action.Slug,
-			Label:      action.Label,
-			Kind:       action.Kind,
-			Color:      action.Color,
-			Icon:       action.Icon,
-			ShowOnHome: action.ShowOnHome,
-			Filterable: action.Filterable,
-			SortOrder:  action.SortOrder,
+			Slug:          action.Slug,
+			Label:         action.Label,
+			Kind:          action.Kind,
+			Color:         action.Color,
+			Icon:          action.Icon,
+			ShowOnHome:    action.ShowOnHome,
+			ShowOnRoadmap: action.ShowOnRoadmap,
+			Filterable:    action.Filterable,
+			SortOrder:     action.SortOrder,
 		}
 		if err := bus.Dispatch(c, create); err != nil {
 			return c.Failure(err)
@@ -55,14 +57,15 @@ func UpdateStatus() web.HandlerFunc {
 		}
 
 		update := &cmd.UpdateStatus{
-			ID:         action.ID,
-			Label:      action.Label,
-			Color:      action.Color,
-			Icon:       action.Icon,
-			ShowOnHome: action.ShowOnHome,
-			Filterable: action.Filterable,
-			SortOrder:  action.SortOrder,
-			IsActive:   action.IsActive,
+			ID:            action.ID,
+			Label:         action.Label,
+			Color:         action.Color,
+			Icon:          action.Icon,
+			ShowOnHome:    action.ShowOnHome,
+			ShowOnRoadmap: action.ShowOnRoadmap,
+			Filterable:    action.Filterable,
+			SortOrder:     action.SortOrder,
+			IsActive:      action.IsActive,
 		}
 		if err := bus.Dispatch(c, update); err != nil {
 			return c.Failure(err)
@@ -84,13 +87,17 @@ func DeleteStatus() web.HandlerFunc {
 			return c.Failure(err)
 		}
 		if count.Result > 0 {
-			return c.BadRequest(web.Map{
-				"error": "Cannot delete: posts are still using this status. Reassign them first.",
-			})
+			// Surface as a validation failure so the admin UI's generic
+			// result.error.errors[0].message lookup finds it.
+			result := validate.Success()
+			result.AddFieldFailure("status", "Cannot delete: posts are still using this status. Reassign them first.")
+			return c.HandleValidation(result)
 		}
 
 		if err := bus.Dispatch(c, &cmd.DeleteStatus{ID: action.ID}); err != nil {
-			return c.Failure(err)
+			result := validate.Success()
+			result.AddFieldFailure("status", err.Error())
+			return c.HandleValidation(result)
 		}
 		return c.Ok(web.Map{})
 	}
