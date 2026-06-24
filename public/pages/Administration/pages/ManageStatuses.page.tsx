@@ -208,34 +208,37 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
     }
   }
 
-  // Swap sortOrder values with the adjacent row to move this status up/down
-  // in the catalogue. Direction is -1 for up (earlier / smaller sortOrder),
-  // +1 for down. Hits updateStatus twice and reorders local state on success.
+  // Move this status above (direction=-1) or below (direction=+1) its visible
+  // neighbor. Instead of swapping sortOrder with the neighbor (which is a
+  // no-op when both rows share the same value — common because the form
+  // defaults to sortOrder=100), assign the moved row a sortOrder that puts
+  // it explicitly on the requested side of the neighbor. Only one
+  // updateStatus call per click.
   private move = async (status: Status, direction: -1 | 1) => {
-    const ordered = [...this.state.statuses].sort((a, b) => a.sortOrder - b.sortOrder)
+    const ordered = [...this.state.statuses].sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id)
     const idx = ordered.findIndex((s) => s.id === status.id)
     const neighborIdx = idx + direction
     if (idx < 0 || neighborIdx < 0 || neighborIdx >= ordered.length) return
 
     const neighbor = ordered[neighborIdx]
-    const a = { ...status, sortOrder: neighbor.sortOrder }
-    const b = { ...neighbor, sortOrder: status.sortOrder }
-    const payload = (s: Status) => ({
-      label: s.label,
-      color: s.color,
-      icon: s.icon,
-      showOnHome: s.showOnHome,
-      showOnRoadmap: s.showOnRoadmap,
-      filterable: s.filterable,
-      sortOrder: s.sortOrder,
-      isActive: s.isActive,
+    const newSortOrder = direction === -1 ? neighbor.sortOrder - 1 : neighbor.sortOrder + 1
+    const updated: Status = { ...status, sortOrder: newSortOrder }
+
+    const result = await actions.updateStatus(status.id, {
+      label: updated.label,
+      color: updated.color,
+      icon: updated.icon,
+      showOnHome: updated.showOnHome,
+      showOnRoadmap: updated.showOnRoadmap,
+      filterable: updated.filterable,
+      sortOrder: updated.sortOrder,
+      isActive: updated.isActive,
     })
-    const [r1, r2] = await Promise.all([actions.updateStatus(a.id, payload(a)), actions.updateStatus(b.id, payload(b))])
-    if (!r1.ok || !r2.ok) return
+    if (!result.ok) return
     this.setState({
       statuses: this.state.statuses
-        .map((s) => (s.id === a.id ? a : s.id === b.id ? b : s))
-        .sort((x, y) => x.sortOrder - y.sortOrder),
+        .map((s) => (s.id === status.id ? updated : s))
+        .sort((x, y) => x.sortOrder - y.sortOrder || x.id - y.id),
     })
   }
 
