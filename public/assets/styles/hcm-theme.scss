@@ -101,6 +101,23 @@ body[data-theme="dark"] #p-home .p-home__add-idea-btn {
 }
 
 // ============================================================================
+// Idea cards — tighten Fider stock (padding 24x28, radius 20) to match the
+// dense list density prod used on hcm-theme. Title 15px, description 13px.
+// ============================================================================
+.c-posts-container__post {
+  padding: 12px 14px !important;
+  border-radius: 8px !important;
+  margin-bottom: 8px !important;
+}
+.c-posts-container__post-title {
+  font-size: 15px !important;
+  font-weight: 600;
+}
+.c-posts-container__postdescription {
+  font-size: 13px !important;
+}
+
+// ============================================================================
 // Global primary buttons + links — green brand color, otherwise unchanged.
 // ============================================================================
 .c-button--primary {
