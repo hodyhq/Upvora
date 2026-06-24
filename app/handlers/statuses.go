@@ -3,9 +3,11 @@ package handlers
 import (
 	"github.com/getfider/fider/app/actions"
 	"github.com/getfider/fider/app/models/cmd"
+	"github.com/getfider/fider/app/models/dto"
 	"github.com/getfider/fider/app/models/enum"
 	"github.com/getfider/fider/app/models/query"
 	"github.com/getfider/fider/app/pkg/bus"
+	"github.com/getfider/fider/app/pkg/log"
 	"github.com/getfider/fider/app/pkg/validate"
 	"github.com/getfider/fider/app/pkg/web"
 )
@@ -81,6 +83,7 @@ func UpdateStatus() web.HandlerFunc {
 // the IsAuthorized check inline.
 func DeleteStatus() web.HandlerFunc {
 	return func(c *web.Context) error {
+		log.Infof(c, "HCM-DEBUG DeleteStatus entered for path=@{path}", dto.Props{"path": c.Request.URL.Path})
 		id, err := c.ParamAsInt("id")
 		if err != nil {
 			r := validate.Success()
