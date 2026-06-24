@@ -447,15 +447,17 @@ Roll back. See next section.
 
 ---
 
-## 5b. Phase 2 cutover (v0.35.0-hcm.3, one-time)
+## 5b. Phase 2 + v0.36.0 cutover (v0.36.0-hcm.1, one-time)
 
-> [!warning] This section only applies to the **first** cutover that ships the custom-statuses feature (Phase 2). It runs DDL migrations that drop the legacy `posts.status` int column and `statuses.legacy_enum`. Once Phase 2 is in production, the regular procedure in §2 covers everything; this section can be deleted.
+> [!warning] This section only applies to the **first** cutover that ships custom statuses end-to-end + the upstream v0.36.0 roadmap-v2 release. It runs DDL migrations that drop the legacy `posts.status` int column and `statuses.legacy_enum`, plus adds tenant deletion and description-template columns. Once it lands, the regular procedure in §2 covers everything; this section can be deleted.
 
 **What's different from a normal release.**
 
-- Migrations `202606231200`..`202606231500` are DDL changes: a new `statuses` table, a new `posts.status_slug` column with backfill, a defensive collapse of the HCM-only `PostReview=7` enum value, then a DROP of `posts.status` and `statuses.legacy_enum`.
-- Once those migrations apply, you cannot start an older image again — the new code is the only thing that knows about `status_slug`. **You must back up the DB before pulling the new image** so rollback is possible.
+- HCM Phase 2 migrations `202606231200`..`202606231500`: new `statuses` table, new `posts.status_slug` column with backfill, defensive collapse of the HCM-only `PostReview=7` enum, then a DROP of `posts.status` and `statuses.legacy_enum`, plus `statuses.show_on_roadmap` (admin opt-in for each lane on the Roadmap page).
+- Upstream v0.36.0 migrations `202606101200` + `202606121200` were tagged before our hcm-beta ones; **migration `202606241400`** catches them up with `IF NOT EXISTS` guards so the tenant gets `description_template` + `scheduled_deletion_at` + `deletion_requested_by` + `deletion_cancel_key`.
+- Once those migrations apply, you cannot start an older image again — the new code is the only thing that knows about `status_slug` and the new tenant columns. **You must back up the DB before pulling the new image** so rollback is possible.
 - Webhook payload gains `post_status_slug`, `post_status_kind`, `post_status_label`, `post_old_status_slug`, `post_old_status_label`. The legacy `post_status`/`post_old_status` keys are gone. If Plane (or any other receiver) maps on the legacy key, update it before cutover.
+- v0.36.0 adds /roadmap (auto-unlocked for self-hosted), better tag admin, and a self-service Danger Zone for tenant deletion. Danger Zone is gated to multi-host mode upstream, so it stays hidden on ideas.hcm.adev.
 
 **Pre-cutover checklist** — run in order:
 
@@ -478,7 +480,7 @@ Roll back. See next section.
 ```bash
 git checkout hcm-theme
 git merge hcm-beta                                # bring Phase 2 commits in
-NEW_VERSION="v0.35.0-hcm.3"
+NEW_VERSION="v0.36.0-hcm.1"
 COMMITHASH=$(git rev-parse --short hcm-theme)
 git tag "$NEW_VERSION"
 set -o pipefail
@@ -513,7 +515,7 @@ ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> "cd /opt/fi
 ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> "cd /opt/fider && docker compose pull && docker compose up -d && sleep 5 && docker logs fider-fider-1 2>&1 | tail -40"'
 ```
 
-Watch the logs for `running migration 202606231500` then `server started`. The first request after restart will JIT-compile the new SSR bundle (typically <30 s).
+Watch the logs for `running migration 202606241500` (the last new one) then `server started`. The catch-up migration `202606241400` and the show-on-roadmap migration `202606241500` are the two extras vs. a plain `:beta` pull. The first request after restart will JIT-compile the new SSR bundle (typically <30 s).
 
 **Step C3 — verify smoke test (still in maintenance — admins not bypassed).** Until maintenance is off you cannot hit the home page through a browser, so verify via the host shell:
 
@@ -531,7 +533,7 @@ ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> "sed -i \"/
 # expect: http 200
 ```
 
-**Verify** — `https://ideas.hcm.adev/` returns 200, hover the version footer to check the `v0.35.0-hcm.3` tag, hit `/admin/statuses` and confirm the six built-ins seeded.
+**Verify** — `https://ideas.hcm.adev/` returns 200, hover the version footer to check the `v0.36.0-hcm.1` tag, hit `/admin/statuses` and confirm the six built-ins seeded, `/roadmap` renders the Planned/Started/Completed lanes, and Plane receives a `post_status_slug` payload on the next status change.
 
 **Rollback path** (if migration breaks or smoke test fails):
 
