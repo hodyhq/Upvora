@@ -29,6 +29,7 @@ export interface UpdateTenantSettingsRequest {
   invitation: string
   welcomeMessage: string
   welcomeHeader: string
+  descriptionTemplate: string
   cname: string
   locale: string
 }
@@ -39,6 +40,16 @@ export const updateTenantSettings = async (request: UpdateTenantSettingsRequest)
 
 export const updateTenantAdvancedSettings = async (customCSS: string, allowedSchemes: string): Promise<Result> => {
   return await http.post("/_api/admin/settings/advanced", { customCSS, allowedSchemes })
+}
+
+export interface UpdateTenantSiteBannerRequest {
+  enabled: boolean
+  message: string
+  variant: string
+}
+
+export const updateTenantSiteBanner = async (request: UpdateTenantSiteBannerRequest): Promise<Result> => {
+  return await http.post("/_api/admin/settings/site-banner", request)
 }
 
 export const updateTenantPrivacy = async (request: PrivacySettingsPageState): Promise<Result> => {
@@ -134,4 +145,16 @@ export const setSystemProviderStatus = async (provider: string, isEnabled: boole
 
 export const resendSignUpEmail = async (): Promise<Result> => {
   return await http.post("/_api/signup/resend", {})
+}
+
+export interface RequestTenantDeletionResponse {
+  scheduledDeletionAt: string
+}
+
+export const requestTenantDeletion = async (subdomain: string): Promise<Result<RequestTenantDeletionResponse>> => {
+  return await http.delete<RequestTenantDeletionResponse>("/_api/admin/tenant", { subdomain })
+}
+
+export const cancelTenantDeletion = async (): Promise<Result> => {
+  return await http.post("/_api/admin/tenant/cancel-deletion")
 }

@@ -447,6 +447,112 @@ Roll back. See next section.
 
 ---
 
+## 5b. Phase 2 + v0.36.0 cutover (v0.36.0-hcm.1, one-time)
+
+> [!warning] This section only applies to the **first** cutover that ships custom statuses end-to-end + the upstream v0.36.0 roadmap-v2 release. It runs DDL migrations that drop the legacy `posts.status` int column and `statuses.legacy_enum`, plus adds tenant deletion and description-template columns. Once it lands, the regular procedure in §2 covers everything; this section can be deleted.
+
+**What's different from a normal release.**
+
+- HCM Phase 2 migrations `202606231200`..`202606231500`: new `statuses` table, new `posts.status_slug` column with backfill, defensive collapse of the HCM-only `PostReview=7` enum, then a DROP of `posts.status` and `statuses.legacy_enum`, plus `statuses.show_on_roadmap` (admin opt-in for each lane on the Roadmap page).
+- Upstream v0.36.0 migrations `202606101200` + `202606121200` were tagged before our hcm-beta ones; **migration `202606241400`** catches them up with `IF NOT EXISTS` guards so the tenant gets `description_template` + `scheduled_deletion_at` + `deletion_requested_by` + `deletion_cancel_key`.
+- Once those migrations apply, you cannot start an older image again — the new code is the only thing that knows about `status_slug` and the new tenant columns. **You must back up the DB before pulling the new image** so rollback is possible.
+- Webhook payload gains `post_status_slug`, `post_status_kind`, `post_status_label`, `post_old_status_slug`, `post_old_status_label`. The legacy `post_status`/`post_old_status` keys are gone. If Plane (or any other receiver) maps on the legacy key, update it before cutover.
+- v0.36.0 adds /roadmap (auto-unlocked for self-hosted), better tag admin, and a self-service Danger Zone for tenant deletion. Danger Zone is gated to multi-host mode upstream, so it stays hidden on ideas.hcm.adev.
+
+**Pre-cutover checklist** — run in order:
+
+1. **Back up the prod DB on VM 204.** Compose includes the postgres service; dump the live volume to a host file:
+   ```bash
+   ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> "cd /opt/fider && docker compose exec -T db pg_dump -U postgres fider | gzip > /root/fider-pre-phase2-$(date +%Y%m%d-%H%M).sql.gz"'
+   ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> ls -lh /root/fider-pre-phase2-*.sql.gz'
+   ```
+2. **Snapshot the VM in Proxmox** so the whole disk is reversible if the migration corrupts anything unforeseen:
+   ```
+   Proxmox web UI → VM 204 → Snapshots → Take Snapshot → name: pre-phase2-<date>
+   ```
+   Or `qm snapshot 204 pre-phase2-$(date +%Y%m%d-%H%M) --vmstate 1` from the host.
+3. **Set `WEBHOOK_ALLOW_PRIVATE_IPS=true`** in `/opt/fider/docker-compose.yml`'s `fider` service env block (Plane lives on a private network; PR #0 makes the SSRF block opt-out). Restart will pick this up when we recompose below.
+4. **Update the Plane webhook** to consume `post_status_slug` instead of `post_status` (or duplicate the mapping). The legacy keys are removed in v0.35.0-hcm.3.
+5. **Confirm beta has run the same image stable** for at least 24h with no regressions. Beta = ideas-beta.hcm.adev, VM 214, running `git.hcm.adev/hody/fider:beta`.
+
+**Build and tag the release image** (on laptop, on `hcm-theme` after merging `hcm-beta` in):
+
+```bash
+git checkout hcm-theme
+git merge hcm-beta                                # bring Phase 2 commits in
+NEW_VERSION="v0.36.0-hcm.1"
+COMMITHASH=$(git rev-parse --short hcm-theme)
+git tag "$NEW_VERSION"
+set -o pipefail
+docker build --build-arg VERSION="$NEW_VERSION" --build-arg COMMITHASH="$COMMITHASH" \
+  -t "git.hcm.adev/hody/fider:stable" -t "git.hcm.adev/hody/fider:$NEW_VERSION" \
+  . 2>&1 | tee /tmp/build.log
+docker push "git.hcm.adev/hody/fider:stable"
+docker push "git.hcm.adev/hody/fider:$NEW_VERSION"
+git push origin hcm-theme && git push origin "$NEW_VERSION"
+```
+
+**Cutover on VM 204** (requires explicit "go on prod" approval in chat):
+
+**Step C1 — turn on maintenance mode (optional but recommended).** Locks the site behind Fider's built-in 503 page while the migration runs (~30 s on a paged-out VM, instant on warm cache). Append to `services.fider.environment` in `/opt/fider/docker-compose.yml`:
+
+```yaml
+      MAINTENANCE: "true"
+      MAINTENANCE_MESSAGE: "Brief maintenance — back at 1:00 PM EDT."
+      MAINTENANCE_UNTIL: "2026-06-24T17:00:00Z"   # ISO-8601 in UTC; 17:00Z = 1pm EDT
+```
+
+Then recreate the container — this picks up the env change without pulling the new image yet:
+
+```bash
+ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> "cd /opt/fider && docker compose up -d && sleep 4 && curl -sS https://ideas.hcm.adev/ -o /dev/null -w \"http %{http_code}\n\""'
+# expect: http 503
+```
+
+**Step C2 — pull the new image and apply migrations.**
+
+```bash
+ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> "cd /opt/fider && docker compose pull && docker compose up -d && sleep 5 && docker logs fider-fider-1 2>&1 | tail -40"'
+```
+
+Watch the logs for `running migration 202606241500` (the last new one) then `server started`. The catch-up migration `202606241400` and the show-on-roadmap migration `202606241500` are the two extras vs. a plain `:beta` pull. The first request after restart will JIT-compile the new SSR bundle (typically <30 s).
+
+**Step C3 — verify smoke test (still in maintenance — admins not bypassed).** Until maintenance is off you cannot hit the home page through a browser, so verify via the host shell:
+
+```bash
+ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> "docker exec fider-fider-1 wget -qO- http://localhost:3000/_health && docker logs fider-fider-1 2>&1 | tail -5"'
+# expect: OK
+```
+
+`_health` is the only route that doesn't go through the maintenance middleware. Container running + `OK` body + log line `server started` is enough to take maintenance off.
+
+**Step C4 — disable maintenance and verify the live site.** Strip the three vars and recreate:
+
+```bash
+ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> "sed -i \"/MAINTENANCE:/d;/MAINTENANCE_MESSAGE:/d;/MAINTENANCE_UNTIL:/d\" /opt/fider/docker-compose.yml && cd /opt/fider && docker compose up -d && sleep 4 && curl -sS https://ideas.hcm.adev/ -o /dev/null -w \"http %{http_code}\n\""'
+# expect: http 200
+```
+
+**Verify** — `https://ideas.hcm.adev/` returns 200, hover the version footer to check the `v0.36.0-hcm.1` tag, hit `/admin/statuses` and confirm the six built-ins seeded, `/roadmap` renders the Planned/Started/Completed lanes, and Plane receives a `post_status_slug` payload on the next status change.
+
+**Rollback path** (if migration breaks or smoke test fails):
+
+```bash
+# 1. Stop the new container
+ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> "cd /opt/fider && docker compose down"'
+# 2. Restore the DB dump from step 1 of the pre-cutover checklist
+ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> "cd /opt/fider && docker compose up -d db && sleep 5 && gunzip -c /root/fider-pre-phase2-<timestamp>.sql.gz | docker compose exec -T db psql -U postgres fider"'
+# 3. Retag :stable to the previous v0.35.0-hcm.2 image and redeploy
+docker pull git.hcm.adev/hody/fider:v0.35.0-hcm.2
+docker tag  git.hcm.adev/hody/fider:v0.35.0-hcm.2 git.hcm.adev/hody/fider:stable
+docker push git.hcm.adev/hody/fider:stable
+ssh -i ~/.ssh/compass_deploy root@10.10.40.200 'ssh root@<vm-204-ip> "cd /opt/fider && docker compose pull && docker compose up -d"'
+```
+
+If the Proxmox snapshot is more recent than any data you'd lose, restoring the snapshot is the fastest path — VM goes back to its pre-cutover state in ~30 seconds.
+
+---
+
 ## 6. Rolling back
 
 > [!important] If you tagged the previous release, rollback is a one-liner on the VM.

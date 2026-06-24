@@ -129,10 +129,17 @@ func routes(r *web.Engine) *web.Engine {
 	r.Post("/_api/signin/verify", handlers.VerifySignInCode())
 	r.Post("/_api/signin/resend", handlers.ResendSignInCode())
 
+	// Cancel a scheduled site deletion. Authorised by the unguessable key in the emailed link
+	// alone, so it must stay reachable without authentication (it only restores access).
+	if !env.IsSingleHostMode() {
+		r.Get("/admin/danger-zone/cancel", handlers.CancelTenantDeletion())
+	}
+
 	// Block if it's private tenant with unauthenticated user
 	r.Use(middlewares.CheckTenantPrivacy())
 
 	r.Get("/", handlers.Index())
+	r.Get("/roadmap", handlers.RoadmapPage())
 	r.Get("/posts/:number", handlers.PostDetails())
 	r.Get("/posts/:number/:slug", handlers.PostDetails())
 
@@ -167,6 +174,8 @@ func routes(r *web.Engine) *web.Engine {
 		ui.Get("/admin/invitations", handlers.Page("Invitations · Site Settings", "", "Administration/pages/Invitations.page"))
 		ui.Get("/admin/users", handlers.ManageMembers())
 		ui.Get("/admin/tags", handlers.ManageTags())
+		ui.Get("/admin/statuses", handlers.ManageStatuses())
+			ui.Get("/admin/banner", handlers.ManageBanner())
 		ui.Get("/admin/authentication", handlers.ManageAuthentication())
 		ui.Get("/_api/admin/oauth/:provider", handlers.GetOAuthConfig())
 
@@ -179,6 +188,14 @@ func routes(r *web.Engine) *web.Engine {
 
 		// From this step, only Administrators are allowed
 		ui.Use(middlewares.IsAuthorized(enum.RoleAdministrator))
+
+		// Danger Zone — delete the entire site. Hosted multi-tenant only; owner-only is
+		// enforced inside the handlers.
+		if !env.IsSingleHostMode() {
+			ui.Get("/admin/danger-zone", handlers.DangerZonePage())
+			ui.Delete("/_api/admin/tenant", handlers.RequestTenantDeletion())
+			ui.Post("/_api/admin/tenant/cancel-deletion", handlers.CancelTenantDeletionByOwner())
+		}
 
 		ui.Get("/admin/export", handlers.Page("Export · Site Settings", "", "Administration/pages/Export.page"))
 		ui.Get("/admin/export/posts.csv", handlers.ExportPostsToCSV())
@@ -196,6 +213,11 @@ func routes(r *web.Engine) *web.Engine {
 		ui.Post("/_api/admin/settings/advanced", handlers.UpdateAdvancedSettings())
 		ui.Post("/_api/admin/settings/privacy", handlers.UpdatePrivacySettings())
 		ui.Post("/_api/admin/settings/emailauth", handlers.UpdateEmailAuthAllowed())
+		ui.Post("/_api/admin/settings/site-banner", handlers.UpdateSiteBanner())
+		ui.Get("/_api/admin/statuses", handlers.ListStatuses())
+		ui.Post("/_api/admin/statuses", handlers.CreateStatus())
+		ui.Put("/_api/admin/statuses/:id", handlers.UpdateStatus())
+		ui.Delete("/_api/admin/statuses/:id", handlers.DeleteStatus())
 		ui.Post("/_api/admin/oauth", handlers.SaveOAuthConfig())
 		ui.Post("/_api/admin/oauth/:provider/status", handlers.SetSystemProviderStatus())
 		ui.Post("/_api/admin/roles/:role/users", handlers.ChangeUserRole())

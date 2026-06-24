@@ -1,9 +1,14 @@
 // ============================================================================
-// HCM brand theme — instructions/instructions.md STEP 2/3
-// Works in both light and dark mode.
-// Brand-color rules apply in BOTH modes; surface rules are scoped under
-// body[data-theme="light"] or body[data-theme="dark"].
-// Mirror changes here into the flattened root-level hcm-theme.css.
+// HCM brand theme — slim edition.
+//
+// Originally re-skinned every surface (welcome card, idea cards, vote counter,
+// post-detail panels, action col, etc.). After A/B'ing against stock Fider, we
+// decided everything HCM-specific except the green primary button and the
+// outlined CTA on the home page was unnecessary divergence. This file now
+// owns only those two button surfaces; the rest is stock Fider styling.
+//
+// Keep this in sync with the flattened hcm-theme.css emergency-fallback in
+// docs/HCM-Fider-Theme.md.
 // ============================================================================
 
 // HCM brand
@@ -11,77 +16,33 @@ $hcm-green-bright: #00f7a5;
 $hcm-green-mid:    #008859;
 $hcm-green-dark:   #004c2c;
 
-// Dark surfaces
-$hcm-dark-bg:        #111111;
-$hcm-dark-panel:     #161616;
-$hcm-dark-border:    #1e1e1e;
-$hcm-dark-input:     #0d1f17;
-$hcm-dark-input-bd:  #1e3329;
-
-// Light surfaces
-$hcm-light-bg:       #fafafa;
-$hcm-light-panel:    #ffffff;
-$hcm-light-border:   #e5e5e5;
-$hcm-light-input:    #f0fff8;
-$hcm-light-input-bd: $hcm-green-mid;
-
 // ============================================================================
-// 3.1 Layout — 340px fixed left + flex right, 24px gap, 20px page padding
+// Body background — Fider stock uses --colors-gray-100 = #fcfafa (a warm
+// cream). Override to a near-white #fcfcfc so cards retain contrast but the
+// page reads more crisp than Fider's stock cream.
 // ============================================================================
-#p-home {
-  padding: 20px !important;
-
-  @media (min-width: 992px) {
-    grid-template-columns: 340px 1fr !important;
-    column-gap: 24px !important;
-    row-gap: 0 !important;
-  }
-
-  .p-home__welcome-col,
-  .p-home__posts-col {
-    grid-column: auto !important;
-  }
+body[data-theme="light"] {
+  --colors-gray-100: #fcfcfc;
 }
 
 // ============================================================================
-// 3.2 Welcome panel — single card containing welcome text + submit zone
+// Home page "Submit Your Idea" outlined CTA — green border on white panel,
+// 18px medium-weight text + 40x40 icon to match Fider stock proportions.
+// Fills green with white text on hover (HCM brand accent).
 // ============================================================================
-.p-home__welcome-card {
-  border-radius: 12px;
-  padding: 24px;
-  border: 1px solid transparent;
-}
-
-body[data-theme="light"] .p-home__welcome-card {
-  background-color: $hcm-light-panel;
-  border-color: $hcm-light-border;
-}
-body[data-theme="dark"] .p-home__welcome-card {
-  background-color: $hcm-dark-panel;
-  border-color: $hcm-dark-border;
-}
-
-// ============================================================================
-// 3.3 Submit zone — at bottom of welcome card. The existing add-idea button
-// is the click target (opens the ShareFeedback modal); CSS gives it the
-// labelled-input + Submit-button look.
-// ============================================================================
-// Outlined CTA button — green border + green text by default, fills on hover.
-// !important on border/background because Home.page.scss redeclares them
-// at the same specificity and gets bundled after this file.
 #p-home .p-home__add-idea-btn {
   width: 100%;
   margin: 0 0 24px;
-  padding: 14px 24px;
+  padding: 14px 18px;
   border: 2px solid $hcm-green-mid !important;
-  border-radius: 10px !important;
-  background-color: transparent !important;
+  border-radius: 12px !important;
+  background-color: var(--colors-white) !important;
   cursor: pointer;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.01em;
-  line-height: 1;
-  box-shadow: none;
+  line-height: 1.2;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08);
   transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
 
   > * {
@@ -91,18 +52,21 @@ body[data-theme="dark"] .p-home__welcome-card {
   }
 
   .p-home__add-idea-icon {
-    width: 20px;
-    height: 20px;
+    width: 28px !important;
+    height: 28px !important;
     transition: color 0.15s ease;
   }
 
-  span { font-size: 16px; font-weight: 600; transition: color 0.15s ease; }
+  span {
+    font-size: 16px;
+    font-weight: 500;
+    transition: color 0.15s ease;
+  }
 
   &:active { transform: translateY(1px); }
   &:focus { outline: 3px solid rgba($hcm-green-bright, 0.4); outline-offset: 2px; }
 }
 
-// Light mode: green outline + green text → fills green with white text on hover.
 body[data-theme="light"] #p-home .p-home__add-idea-btn {
   color: $hcm-green-mid;
   .p-home__add-idea-icon { color: $hcm-green-mid !important; }
@@ -112,16 +76,17 @@ body[data-theme="light"] #p-home .p-home__add-idea-btn {
     background-color: $hcm-green-mid !important;
     border-color: $hcm-green-mid !important;
     color: #ffffff;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
     .p-home__add-idea-icon { color: #ffffff !important; }
     span { color: #ffffff !important; }
   }
 }
 
-// Dark mode: bright green outline + bright green text → fills green with white text on hover.
 body[data-theme="dark"] #p-home .p-home__add-idea-btn {
+  background-color: var(--colors-gray-200) !important;
   border-color: $hcm-green-bright !important;
   color: $hcm-green-bright;
+  box-shadow: none;
   .p-home__add-idea-icon { color: $hcm-green-bright !important; }
   span { color: $hcm-green-bright !important; }
 
@@ -136,203 +101,24 @@ body[data-theme="dark"] #p-home .p-home__add-idea-btn {
 }
 
 // ============================================================================
-// 3.4 Vote counter — 40px column, 32x32 square button + count below
-// VoteCounter.tsx now renders <button> and <.c-vote-counter__count> as siblings.
-// ============================================================================
-.c-vote-counter {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  width: 40px;
-  flex-shrink: 0;
-}
-
-.c-vote-counter__button {
-  width: 32px !important;
-  height: 32px !important;
-  min-width: 32px;
-  padding: 0 !important;
-  border-radius: 7px !important;
-  border-width: 1px !important;
-  border-style: solid !important;
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  gap: 0 !important;
-  box-shadow: none !important;
-  cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
-}
-
-.c-vote-counter__icon {
-  width: 16px !important;
-  height: 16px !important;
-}
-
-.c-vote-counter__count {
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  line-height: 1;
-}
-
-body[data-theme="light"] {
-  .c-vote-counter__button {
-    background-color: $hcm-light-input !important;
-    border-color: $hcm-green-mid !important;
-    .c-vote-counter__icon { color: $hcm-green-mid !important; }
-    &:hover { background-color: rgba(0, 247, 165, 0.15) !important; }
-  }
-  .c-vote-counter__button--voted {
-    background-color: $hcm-green-mid !important;
-    .c-vote-counter__icon { color: #ffffff !important; }
-  }
-  .c-vote-counter__count { color: $hcm-green-mid !important; }
-}
-
-body[data-theme="dark"] {
-  .c-vote-counter__button {
-    background-color: $hcm-dark-input !important;
-    border-color: $hcm-dark-input-bd !important;
-    .c-vote-counter__icon { color: $hcm-green-bright !important; }
-    &:hover { background-color: lighten($hcm-dark-input, 4%) !important; }
-  }
-  .c-vote-counter__button--voted {
-    background-color: $hcm-green-dark !important;
-    border-color: $hcm-green-bright !important;
-    .c-vote-counter__icon { color: $hcm-green-bright !important; }
-  }
-  .c-vote-counter__count { color: $hcm-green-bright !important; }
-}
-
-// Larger variant used on the post-detail page
-.c-vote-counter__button--large {
-  width: 48px !important;
-  height: 48px !important;
-  min-width: 48px;
-  .c-vote-counter__icon { width: 22px !important; height: 22px !important; }
-}
-.c-vote-counter--large .c-vote-counter__count,
-.c-vote-counter__button--large + .c-vote-counter__count { font-size: 15px !important; }
-
-// Hide the "Voted!" inline indicator on list cards (spec 3.4)
-.c-posts-container__post .text-blue-600 { display: none !important; }
-
-// ============================================================================
-// 3.5 Idea cards
+// Idea cards — tighten Fider stock (padding 24x28, radius 20) to match the
+// dense list density prod used on hcm-theme. Title 15px, description 13px.
 // ============================================================================
 .c-posts-container__post {
-  border: 1px solid transparent !important;
-  border-radius: 8px !important;
   padding: 12px 14px !important;
+  border-radius: 8px !important;
   margin-bottom: 8px !important;
-  transition: border-color 0.15s ease;
 }
-
 .c-posts-container__post-title {
-  font-size: 14px !important;
-  font-weight: 500 !important;
+  font-size: 15px !important;
+  font-weight: 600;
 }
-
 .c-posts-container__postdescription {
   font-size: 13px !important;
 }
 
-body[data-theme="light"] .c-posts-container__post {
-  background-color: $hcm-light-panel !important;
-  border-color: $hcm-light-border !important;
-  &:hover { border-color: $hcm-green-mid !important; }
-}
-
-body[data-theme="dark"] .c-posts-container__post {
-  background-color: $hcm-dark-panel !important;
-  border-color: $hcm-dark-border !important;
-  &:hover { border-color: $hcm-dark-input-bd !important; }
-
-  .c-posts-container__post-title { color: #e6e6e6 !important; }
-  .c-posts-container__postdescription { color: #9a9a9a !important; }
-}
-
 // ============================================================================
-// 3.6 Status tags — applied via the ResponseLozenge wrapper.
-// The lozenge renders an HStack with `rounded-full p-1 px-3 border` plus
-// dynamic bg-*/text-*/border-* classes per status. We override per status.
-// ============================================================================
-
-// Reshape all status pills (regardless of color) to the small spec dimensions
-.rounded-full.border {
-  &[class*="bg-purple"],
-  &[class*="bg-yellow"],
-  &[class*="bg-orange"],
-  &[class*="bg-green"],
-  &[class*="bg-red"],
-  &[class*="bg-blue"] {
-    border-radius: 4px !important;
-    padding: 2px 8px !important;
-    font-size: 11px;
-
-    span { font-size: 11px !important; font-weight: 500 !important; }
-  }
-}
-
-// Plane substage label appended inside the lozenge (e.g. "Started · In Beta Testing")
-.c-status-substage {
-  opacity: 0.8;
-  font-weight: 500 !important;
-  text-transform: none !important;  // preserve original casing from Plane
-  letter-spacing: 0;
-  margin-left: 2px;
-}
-
-// Planned: dark mode -> dark-input bg + mid green text;
-// light mode -> rgba(0,136,89,0.1) + mid green text.
-.bg-purple-100 { background-color: $hcm-dark-input !important; }
-.text-purple-800, .text-purple-700, .c-status-col--planned { color: $hcm-green-mid !important; }
-.border-purple-300, .border-purple-200 { border-color: rgba($hcm-green-mid, 0.45) !important; }
-
-// Started: dark mode -> dark-input bg + bright green text;
-// light mode -> rgba(0,247,165,0.15) + mid green text.
-.bg-yellow-100, .bg-orange-100 { background-color: $hcm-dark-input !important; }
-.text-yellow-800, .text-orange-800, .c-status-col--started { color: $hcm-green-bright !important; }
-.border-yellow-300, .border-orange-300 { border-color: rgba($hcm-green-bright, 0.35) !important; }
-
-// Completed
-.bg-green-100 { background-color: $hcm-green-dark !important; }
-.text-green-800, .c-status-col--completed { color: $hcm-green-bright !important; }
-.border-green-300 { border-color: $hcm-green-mid !important; }
-
-// Light-mode-specific overrides for above
-body[data-theme="light"] {
-  .bg-purple-100 { background-color: rgba(0, 136, 89, 0.1) !important; }
-  .bg-yellow-100, .bg-orange-100 { background-color: rgba(0, 247, 165, 0.15) !important; }
-  .text-yellow-800, .text-orange-800, .c-status-col--started { color: $hcm-green-mid !important; }
-  .bg-green-100 { background-color: rgba(0, 136, 89, 0.1) !important; }
-  .text-green-800, .c-status-col--completed { color: $hcm-green-mid !important; }
-}
-
-// ============================================================================
-// 3.7 Sort dropdown handle — keep Fider's <Dropdown> but reskin it
-// ============================================================================
-.c-post-sort-btn {
-  font-size: 12px;
-  font-weight: 500;
-  padding: 4px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-body[data-theme="light"] .c-post-sort-btn {
-  color: #6b7280;
-  &:hover { color: $hcm-green-mid; }
-}
-body[data-theme="dark"] .c-post-sort-btn {
-  color: #9a9a9a;
-  &:hover { color: $hcm-green-bright; }
-}
-
-// ============================================================================
-// 3.8 Primary buttons globally
+// Global primary buttons + links — green brand color, otherwise unchanged.
 // ============================================================================
 .c-button--primary {
   background-color: $hcm-green-mid !important;
@@ -346,262 +132,30 @@ body[data-theme="dark"] .c-post-sort-btn {
 .c-button--link { color: $hcm-green-mid !important; }
 
 // ============================================================================
-// Broader surface treatment per mode
+// Site banner — admin-toggleable, rendered above the page header.
+// Five variants; brand picks up the primary green.
 // ============================================================================
-body[data-theme="light"] {
-  background-color: $hcm-light-bg;
-  #p-home { background-color: $hcm-light-bg; }
+.site-banner {
+  display: block;
+  width: 100%;
+  padding: 10px 24px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+
+  &--info    { background: #0EA5E9; color: #FFFFFF; }
+  &--success { background: #16A34A; color: #FFFFFF; }
+  &--warning { background: #FBBF24; color: #111111; }
+  &--danger  { background: #DC2626; color: #FFFFFF; }
+  &--brand   { background: $hcm-green-mid; color: #FFFFFF; }
 }
 
-body[data-theme="dark"] {
-  background-color: $hcm-dark-bg !important;
-  color: #e6e6e6;
-  #p-home { background-color: $hcm-dark-bg !important; color: #e6e6e6; }
-
-  .bg-white { background-color: $hcm-dark-bg !important; }
-  .bg-gray-50,
-  .bg-gray-100 { background-color: $hcm-dark-panel !important; }
-  .text-gray-500,
-  .text-gray-600,
-  .text-gray-700,
-  .text-muted { color: #9a9a9a !important; }
-  .text-gray-800,
-  .text-gray-900 { color: #e6e6e6 !important; }
-
-  #c-header {
-    background-color: $hcm-dark-bg !important;
-    border-bottom: 1px solid $hcm-dark-border !important;
-    &[style] { border-bottom: 1px solid $hcm-dark-border !important; }
-    h1.text-header { color: #e6e6e6 !important; }
-    .c-themeswitcher svg, .c-notification svg { color: #9a9a9a !important; }
-  }
-
-  .p-home__welcome-title { color: #e6e6e6 !important; }
-  .p-home__welcome-body,
-  .p-home__welcome-body p { color: #9a9a9a !important; }
-  .p-home__welcome-body a { color: $hcm-green-bright !important; }
-
-  .c-post-filter-btn {
-    background-color: $hcm-dark-panel !important;
-    border: 1px solid $hcm-dark-border !important;
-    color: #9a9a9a !important;
-    border-radius: 8px !important;
-    &:hover { background-color: lighten($hcm-dark-panel, 3%) !important; color: #e6e6e6 !important; }
-  }
-
-  .c-input,
-  .c-input input,
-  input.filter-input,
-  input[type="text"],
-  input[type="search"] {
-    background-color: $hcm-dark-panel !important;
-    border: 1px solid $hcm-dark-border !important;
-    color: #e6e6e6 !important;
-    &::placeholder { color: #6e6e6e !important; }
-    &:focus {
-      border-color: $hcm-green-mid !important;
-      outline: none !important;
-      box-shadow: 0 0 0 3px rgba($hcm-green-bright, 0.1) !important;
-    }
-  }
-
-  .c-button--secondary {
-    background-color: $hcm-dark-panel !important;
-    border-color: $hcm-dark-border !important;
-    color: #e6e6e6 !important;
-    &:hover { background-color: lighten($hcm-dark-panel, 3%) !important; border-color: $hcm-dark-input-bd !important; }
-  }
-}
-
-// ============================================================================
-// Post-detail page (ShowPost + PostDetails component)
-// Same brand surfaces and accents as the home page.
-// ============================================================================
-#p-show-post {
-  // Page-level surface (override default Fider light-gray bg)
-  background-color: transparent !important;
-}
-
-// Common card treatment shared across the page's cards
-.p-show-post__post-card,
-.p-show-post__action-col > .card,
-.c-comment-input-card,
-.c-response-details__card {
-  border: 1px solid transparent !important;
-  border-radius: 12px !important;
-  box-shadow: none !important;
-}
-
-// Response details — make sure the response body (Markdown) is visible.
-// Apply colors to the content wrapper AND to nested Markdown elements
-// (p, li, em, strong) so inherited or default colors don't make the
-// text invisible against the themed card surface.
-.c-response-details__card { padding: 16px 18px !important; flex-grow: 1; }
-.c-response-details__inner { width: 100%; }
-.c-response-details__content {
-  margin-top: 8px !important;
-  line-height: 1.55 !important;
-  font-size: 14px !important;
-}
-.c-response-details__content p,
-.c-response-details__content li,
-.c-response-details__content em,
-.c-response-details__content strong { color: inherit !important; }
-.c-response-details__content a { color: $hcm-green-mid !important; text-decoration: underline; }
-body[data-theme="dark"] .c-response-details__content a { color: $hcm-green-bright !important; }
-
-.p-show-post__title {
-  font-weight: 600 !important;
-  font-size: 18px !important;
-  line-height: 1.3 !important;
-
-  @media (min-width: 768px) { font-size: 24px !important; }
-  @media (min-width: 992px) { font-size: 28px !important; }
-}
-.p-show-post__description,
-.c-response-details__content { line-height: 1.6; }
-
-// Replace the loud blue 5px border-top accent with a subtle brand-green divider
-.p-show-post__actions {
-  border-top: 1px solid transparent !important;
-  padding-top: 16px !important;
-  margin-top: 20px !important;
-}
-
-// Discussion count badge — brand pill instead of blue
-.p-show-post__discussion-count {
-  width: 22px !important;
-  height: 22px !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  line-height: 22px !important;
-}
-
-// Follow button — neutral surface in both modes
-.p-show-post__action-col__follow-button--follow,
-.p-show-post__action-col__follow-button--following {
-  border-radius: 7px !important;
-}
-
-// --------- Light mode ---------
-body[data-theme="light"] {
-  #p-show-post { background-color: $hcm-light-bg !important; }
-
-  .p-show-post__post-card,
-  .p-show-post__action-col > .card,
-  .c-comment-input-card,
-  .c-response-details__card {
-    background-color: $hcm-light-panel !important;
-    border-color: $hcm-light-border !important;
-  }
-
-  .p-show-post__title { color: #111111 !important; }
-  .p-show-post__description,
-  .c-response-details__content { color: #374151 !important; }
-
-  .p-show-post__actions { border-top-color: $hcm-light-border !important; }
-
-  .p-show-post__discussion-count {
-    background-color: rgba(0, 136, 89, 0.1) !important;
-    color: $hcm-green-mid !important;
-  }
-
-  .p-show-post__action-col__follow-button--follow,
-  .p-show-post__action-col__follow-button--following {
-    background-color: $hcm-light-panel !important;
-    border: 1px solid $hcm-light-border !important;
-    color: #374151 !important;
-
-    &:hover {
-      border-color: $hcm-green-mid !important;
-      color: $hcm-green-mid !important;
-    }
-  }
-}
-
-// --------- Dark mode ---------
-body[data-theme="dark"] {
-  #p-show-post { background-color: $hcm-dark-bg !important; color: #e6e6e6; }
-
-  .p-show-post__post-card,
-  .p-show-post__action-col > .card,
-  .c-comment-input-card,
-  .c-response-details__card {
-    background-color: $hcm-dark-panel !important;
-    border-color: $hcm-dark-border !important;
-  }
-
-  .p-show-post__title { color: #e6e6e6 !important; }
-  .p-show-post__description,
-  .c-response-details__content { color: #c9c9c9 !important; }
-
-  .p-show-post__actions { border-top-color: $hcm-dark-border !important; }
-
-  .p-show-post__discussion-count {
-    background-color: $hcm-dark-input !important;
-    color: $hcm-green-bright !important;
-  }
-
-  .p-show-post__action-col__follow-button--follow,
-  .p-show-post__action-col__follow-button--following {
-    background-color: $hcm-dark-panel !important;
-    border: 1px solid $hcm-dark-input-bd !important;
-    color: #e6e6e6 !important;
-
-    &:hover {
-      border-color: $hcm-green-bright !important;
-      color: $hcm-green-bright !important;
-    }
-  }
-}
-
-// ============================================================================
-// Bottom actions bar — outlined ghost buttons that fill on hover (matches the
-// home-page Submit CTA treatment).
-// ============================================================================
-.c-action-button {
-  border: 1px solid transparent !important;
-  border-radius: 8px !important;
-  padding: 6px 12px !important;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
-
-body[data-theme="light"] .c-action-button {
-  color: #4b5563 !important;
-  background-color: transparent !important;
-
-  &:hover {
-    background-color: rgba($hcm-green-mid, 0.08) !important;
-    border-color: $hcm-green-mid !important;
-    color: $hcm-green-mid !important;
-  }
-
-  &--danger {
-    color: #b91c1c !important;
-    &:hover {
-      background-color: rgba(220, 38, 38, 0.08) !important;
-      border-color: #b91c1c !important;
-      color: #b91c1c !important;
-    }
-  }
-}
-
-body[data-theme="dark"] .c-action-button {
-  color: #c9c9c9 !important;
-  background-color: transparent !important;
-
-  &:hover {
-    background-color: rgba($hcm-green-bright, 0.08) !important;
-    border-color: $hcm-green-bright !important;
-    color: $hcm-green-bright !important;
-  }
-
-  &--danger {
-    color: #f87171 !important;
-    &:hover {
-      background-color: rgba(220, 38, 38, 0.12) !important;
-      border-color: #f87171 !important;
-      color: #f87171 !important;
-    }
+@media (max-width: 640px) {
+  .site-banner {
+    padding: 8px 12px;
+    font-size: 13px;
   }
 }
