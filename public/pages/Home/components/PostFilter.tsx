@@ -105,13 +105,17 @@ export const PostFilter = (props: PostFilterProps) => {
   // statusListFor falls back to PostStatus.All when tenant.statuses is empty.
   // statusLabel routes built-in slugs through i18n and uses the tenant-defined
   // label verbatim for custom slugs (no locale entry to translate from).
+  // Show every filterable status — admin-added custom slugs included — even
+  // when no post is currently in that status. The count rendered next to the
+  // label is zero in that case; the filter still works when an admin assigns
+  // the slug to a future post.
   statusListFor(fider.session.tenant)
-    .filter((s) => s.filterable && props.countPerStatus[s.value])
+    .filter((s) => s.filterable)
     .forEach((s) => {
       options.push({
         label: statusLabel(s, (id, fallback) => i18n._(id, { message: fallback })),
         value: s.value,
-        count: props.countPerStatus[s.value],
+        count: props.countPerStatus[s.value] || 0,
         type: "status",
       })
     })
