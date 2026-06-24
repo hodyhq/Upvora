@@ -107,7 +107,10 @@ func countPostsByStatusID(ctx context.Context, q *query.CountPostsByStatus) erro
 		if err != nil {
 			return errors.Wrap(err, "failed to look up slug for status %d", q.StatusID)
 		}
-		count, err := trx.Count(`SELECT COUNT(*) FROM posts WHERE tenant_id = $1 AND status_slug = $2`, tenant.ID, slug)
+		// trx.Count counts the number of rows RETURNED by a query, not the
+		// value of a COUNT(*) aggregate. Use Scalar to read the aggregate.
+		var count int
+		err = trx.Scalar(&count, `SELECT COUNT(*) FROM posts WHERE tenant_id = $1 AND status_slug = $2`, tenant.ID, slug)
 		if err != nil {
 			return errors.Wrap(err, "failed to count posts for status %d", q.StatusID)
 		}
