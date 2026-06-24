@@ -208,6 +208,37 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
     }
   }
 
+  // Swap sortOrder values with the adjacent row to move this status up/down
+  // in the catalogue. Direction is -1 for up (earlier / smaller sortOrder),
+  // +1 for down. Hits updateStatus twice and reorders local state on success.
+  private move = async (status: Status, direction: -1 | 1) => {
+    const ordered = [...this.state.statuses].sort((a, b) => a.sortOrder - b.sortOrder)
+    const idx = ordered.findIndex((s) => s.id === status.id)
+    const neighborIdx = idx + direction
+    if (idx < 0 || neighborIdx < 0 || neighborIdx >= ordered.length) return
+
+    const neighbor = ordered[neighborIdx]
+    const a = { ...status, sortOrder: neighbor.sortOrder }
+    const b = { ...neighbor, sortOrder: status.sortOrder }
+    const payload = (s: Status) => ({
+      label: s.label,
+      color: s.color,
+      icon: s.icon,
+      showOnHome: s.showOnHome,
+      showOnRoadmap: s.showOnRoadmap,
+      filterable: s.filterable,
+      sortOrder: s.sortOrder,
+      isActive: s.isActive,
+    })
+    const [r1, r2] = await Promise.all([actions.updateStatus(a.id, payload(a)), actions.updateStatus(b.id, payload(b))])
+    if (!r1.ok || !r2.ok) return
+    this.setState({
+      statuses: this.state.statuses
+        .map((s) => (s.id === a.id ? a : s.id === b.id ? b : s))
+        .sort((x, y) => x.sortOrder - y.sortOrder),
+    })
+  }
+
   private remove = async (status: Status) => {
     if (status.isSystem) return
     const prompt = i18n._({
@@ -273,6 +304,22 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
                 </td>
                 <td>
                   <HStack spacing={2}>
+                    <Button
+                      variant="tertiary"
+                      size="small"
+                      disabled={[...this.state.statuses].sort((a, b) => a.sortOrder - b.sortOrder)[0]?.id === s.id}
+                      onClick={() => this.move(s, -1)}
+                    >
+                      ↑
+                    </Button>
+                    <Button
+                      variant="tertiary"
+                      size="small"
+                      disabled={[...this.state.statuses].sort((a, b) => a.sortOrder - b.sortOrder).slice(-1)[0]?.id === s.id}
+                      onClick={() => this.move(s, 1)}
+                    >
+                      ↓
+                    </Button>
                     <Button variant="tertiary" size="small" onClick={() => this.openEdit(s)}>
                       <Trans id="admin.statuses.action.edit">Edit</Trans>
                     </Button>

@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/getfider/fider/app/actions"
 	"github.com/getfider/fider/app/models/cmd"
+	"github.com/getfider/fider/app/models/enum"
 	"github.com/getfider/fider/app/models/query"
 	"github.com/getfider/fider/app/pkg/bus"
 	"github.com/getfider/fider/app/pkg/validate"
@@ -75,29 +76,35 @@ func UpdateStatus() web.HandlerFunc {
 }
 
 // DeleteStatus removes a non-system status. Refused if any post still uses it.
+// Note: bypass BindTo for the action because DELETE-with-no-body has tripped
+// content-type validation here in the past; we parse :id directly and run
+// the IsAuthorized check inline.
 func DeleteStatus() web.HandlerFunc {
 	return func(c *web.Context) error {
-		action := new(actions.DeleteStatus)
-		if result := c.BindTo(action); !result.Ok {
-			return c.HandleValidation(result)
+		id, err := c.ParamAsInt("id")
+		if err != nil {
+			r := validate.Success()
+			r.AddFieldFailure("id", "Status id must be an integer.")
+			return c.HandleValidation(r)
+		}
+		if c.User() == nil || c.User().Role != enum.RoleAdministrator {
+			return c.Forbidden()
 		}
 
-		count := &query.CountPostsByStatus{StatusID: action.ID}
+		count := &query.CountPostsByStatus{StatusID: id}
 		if err := bus.Dispatch(c, count); err != nil {
 			return c.Failure(err)
 		}
 		if count.Result > 0 {
-			// Surface as a validation failure so the admin UI's generic
-			// result.error.errors[0].message lookup finds it.
-			result := validate.Success()
-			result.AddFieldFailure("status", "Cannot delete: posts are still using this status. Reassign them first.")
-			return c.HandleValidation(result)
+			r := validate.Success()
+			r.AddFieldFailure("status", "Cannot delete: posts are still using this status. Reassign them first.")
+			return c.HandleValidation(r)
 		}
 
-		if err := bus.Dispatch(c, &cmd.DeleteStatus{ID: action.ID}); err != nil {
-			result := validate.Success()
-			result.AddFieldFailure("status", err.Error())
-			return c.HandleValidation(result)
+		if err := bus.Dispatch(c, &cmd.DeleteStatus{ID: id}); err != nil {
+			r := validate.Success()
+			r.AddFieldFailure("status", err.Error())
+			return c.HandleValidation(r)
 		}
 		return c.Ok(web.Map{})
 	}
