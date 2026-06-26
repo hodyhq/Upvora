@@ -52,13 +52,14 @@ func UpdateSettings() web.HandlerFunc {
 				Folder: "logos",
 			},
 			&cmd.UpdateTenantSettings{
-				Logo:           action.Logo,
-				Title:          action.Title,
-				Invitation:     action.Invitation,
-				WelcomeMessage: action.WelcomeMessage,
-				WelcomeHeader:  action.WelcomeHeader,
-				CNAME:          action.CNAME,
-				Locale:         action.Locale,
+				Logo:                action.Logo,
+				Title:               action.Title,
+				Invitation:          action.Invitation,
+				WelcomeMessage:      action.WelcomeMessage,
+				WelcomeHeader:       action.WelcomeHeader,
+				DescriptionTemplate: action.DescriptionTemplate,
+				CNAME:               action.CNAME,
+				Locale:              action.Locale,
 			},
 		); err != nil {
 			return c.Failure(err)
@@ -87,6 +88,26 @@ func UpdateAdvancedSettings() web.HandlerFunc {
 		if err := bus.Dispatch(c, &cmd.UpdateTenantAdvancedSettings{
 			CustomCSS:      action.CustomCSS,
 			AllowedSchemes: action.AllowedSchemes,
+		}); err != nil {
+			return c.Failure(err)
+		}
+
+		return c.Ok(web.Map{})
+	}
+}
+
+// UpdateSiteBanner toggles and edits the site-wide banner shown above the header.
+func UpdateSiteBanner() web.HandlerFunc {
+	return func(c *web.Context) error {
+		action := new(actions.UpdateTenantSiteBanner)
+		if result := c.BindTo(action); !result.Ok {
+			return c.HandleValidation(result)
+		}
+
+		if err := bus.Dispatch(c, &cmd.UpdateTenantSiteBanner{
+			Enabled: action.Enabled,
+			Message: action.Message,
+			Variant: action.Variant,
 		}); err != nil {
 			return c.Failure(err)
 		}

@@ -3,6 +3,7 @@ package dbEntities
 import (
 	"github.com/getfider/fider/app/models/entity"
 	"github.com/getfider/fider/app/models/enum"
+	"github.com/getfider/fider/app/pkg/dbx"
 	"github.com/getfider/fider/app/pkg/env"
 )
 
@@ -14,6 +15,7 @@ type Tenant struct {
 	Invitation            string `db:"invitation"`
 	WelcomeMessage        string `db:"welcome_message"`
 	WelcomeHeader         string `db:"welcome_header"`
+	DescriptionTemplate   string `db:"description_template"`
 	Status                int    `db:"status"`
 	Locale                string `db:"locale"`
 	IsPrivate             bool   `db:"is_private"`
@@ -23,9 +25,13 @@ type Tenant struct {
 	IsEmailAuthAllowed    bool   `db:"is_email_auth_allowed"`
 	IsFeedEnabled         bool   `db:"is_feed_enabled"`
 	PreventIndexing       bool   `db:"prevent_indexing"`
-	IsModerationEnabled   bool   `db:"is_moderation_enabled"`
-	IsPro                 bool   `db:"is_pro"`
-	HasPaddleSubscription bool   `db:"has_paddle_subscription"`
+	IsModerationEnabled   bool         `db:"is_moderation_enabled"`
+	IsPro                 bool         `db:"is_pro"`
+	HasPaddleSubscription bool         `db:"has_paddle_subscription"`
+	ScheduledDeletionAt   dbx.NullTime `db:"scheduled_deletion_at"`
+	SiteBannerEnabled     bool         `db:"site_banner_enabled"`
+	SiteBannerMessage     string       `db:"site_banner_message"`
+	SiteBannerVariant     string       `db:"site_banner_variant"`
 }
 
 func (t *Tenant) ToModel() *entity.Tenant {
@@ -48,6 +54,7 @@ func (t *Tenant) ToModel() *entity.Tenant {
 		Invitation:          t.Invitation,
 		WelcomeMessage:      t.WelcomeMessage,
 		WelcomeHeader:       t.WelcomeHeader,
+		DescriptionTemplate: t.DescriptionTemplate,
 		Status:              enum.TenantStatus(t.Status),
 		Locale:              t.Locale,
 		IsPrivate:           t.IsPrivate,
@@ -59,6 +66,13 @@ func (t *Tenant) ToModel() *entity.Tenant {
 		PreventIndexing:     t.PreventIndexing,
 		IsModerationEnabled: isPro && t.IsModerationEnabled,
 		IsPro:               isPro,
+		SiteBannerEnabled:   t.SiteBannerEnabled,
+		SiteBannerMessage:   t.SiteBannerMessage,
+		SiteBannerVariant:   t.SiteBannerVariant,
+	}
+
+	if t.ScheduledDeletionAt.Valid {
+		tenant.ScheduledDeletionAt = &t.ScheduledDeletionAt.Time
 	}
 
 	return tenant
