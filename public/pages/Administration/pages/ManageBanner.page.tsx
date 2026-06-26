@@ -1,5 +1,5 @@
 import React from "react"
-import { Button, ButtonClickEvent, Form, Select, SelectOption, TextArea, Toggle } from "@fider/components"
+import { Button, Form, Select, SelectOption, TextArea, Toggle } from "@fider/components"
 import { HStack, VStack } from "@fider/components/layout"
 import { actions, Failure, notify } from "@fider/services"
 import { i18n } from "@lingui/core"
@@ -49,7 +49,7 @@ export default class ManageBannerPage extends AdminBasePage<ManageBannerPageProp
   // The Button auto-re-enables after onClick resolves unless we call
   // event.preventEnable() — we want it to re-enable here, so the event is
   // intentionally untouched.
-  private save = async (_e: ButtonClickEvent) => {
+  private save = async () => {
     this.setState({ busy: true, error: undefined })
     const result = await actions.updateTenantSiteBanner({
       enabled: this.state.enabled,
@@ -74,7 +74,17 @@ export default class ManageBannerPage extends AdminBasePage<ManageBannerPageProp
               <p className="text-xs text-muted mb-1">
                 <Trans id="admin.banner.preview">Preview</Trans>
               </p>
-              <div className={`site-banner site-banner--${this.state.variant}`} style={{ padding: "10px 24px", borderRadius: 6, fontWeight: 600, lineHeight: 1.45, textAlign: "center", whiteSpace: "pre-wrap" }}>
+              <div
+                className={`site-banner site-banner--${this.state.variant}`}
+                style={{
+                  padding: "10px 24px",
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  lineHeight: 1.45,
+                  textAlign: "center",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
                 {this.state.message}
               </div>
             </div>
