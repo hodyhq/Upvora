@@ -168,7 +168,7 @@ export const ListPosts = (props: ListPostsProps) => {
               setExpanded(true)
             }}
           >
-            <Trans id="listposts.label.showmore">Show {remainingCount} more</Trans>
+            <Trans id="listposts.label.showmore">Show {0} more</Trans>
           </a>
         </div>
       )}
