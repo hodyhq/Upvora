@@ -220,8 +220,10 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
   }
 
   private remove = async (f: ScorecardField) => {
-    if (f.isSystem) return
-    if (!window.confirm(`Delete field "${f.label}"? Card values that referenced this key stay in place but stop rendering.`)) return
+    const warning = f.isSystem
+      ? `Delete the seeded field "${f.label}"? This is one of the eight scoring dimensions the app shipped with — you can rebuild it later by hand if you change your mind. Card values that referenced this key stay in place but stop rendering.`
+      : `Delete field "${f.label}"? Card values that referenced this key stay in place but stop rendering.`
+    if (!window.confirm(warning)) return
     const result = await actions.deleteScorecardField(f.id)
     if (result.ok) {
       this.setState({ fields: this.state.fields.filter((x) => x.id !== f.id) })
@@ -312,9 +314,7 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
                 <td className="p-2">
                   <HStack spacing={2}>
                     <Button variant="tertiary" size="small" onClick={() => this.openEdit(f)} disabled={!canEdit}>Edit</Button>
-                    {!f.isSystem && (
-                      <Button variant="danger" size="small" onClick={() => this.remove(f)} disabled={!canEdit}>Delete</Button>
-                    )}
+                    <Button variant="danger" size="small" onClick={() => this.remove(f)} disabled={!canEdit}>Delete</Button>
                   </HStack>
                 </td>
               </tr>

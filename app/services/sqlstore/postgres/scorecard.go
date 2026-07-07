@@ -168,20 +168,12 @@ func updateScorecardField(ctx context.Context, c *cmd.UpdateScorecardField) erro
 
 func deleteScorecardField(ctx context.Context, c *cmd.DeleteScorecardField) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
-		var isSystem bool
-		err := trx.Scalar(&isSystem, `SELECT is_system FROM scorecard_fields WHERE tenant_id = $1 AND id = $2`, tenant.ID, c.ID)
-		if err == sql.ErrNoRows {
-			return app.ErrNotFound
-		}
-		if err != nil {
-			return errors.Wrap(err, "failed to look up scorecard field %d", c.ID)
-		}
-		if isSystem {
-			return errors.New("cannot delete a system scorecard field; deactivate it instead")
-		}
-		_, err = trx.Execute(`DELETE FROM scorecard_fields WHERE tenant_id = $1 AND id = $2`, tenant.ID, c.ID)
+		res, err := trx.Execute(`DELETE FROM scorecard_fields WHERE tenant_id = $1 AND id = $2`, tenant.ID, c.ID)
 		if err != nil {
 			return errors.Wrap(err, "failed to delete scorecard field %d", c.ID)
+		}
+		if res == 0 {
+			return app.ErrNotFound
 		}
 		return nil
 	})
