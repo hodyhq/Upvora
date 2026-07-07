@@ -74,6 +74,7 @@ What can we do better? This is the place for you to vote, discuss and share idea
   })
 
   const defaultInvitation = i18n._({ id: "home.form.defaultinvitation", message: "Enter your suggestion here..." })
+  const defaultButtonLabel = i18n._({ id: "home.button.defaultlabel", message: "Submit Your Idea" })
 
   const isLonely = () => {
     const len = Object.keys(props.countPerStatus).length
@@ -153,9 +154,9 @@ What can we do better? This is the place for you to vote, discuss and share idea
           </div>
           <div className="p-home__posts-col">
             <button className="p-home__add-idea-btn" onClick={handleNewPost}>
-              <HStack spacing={2} align="center" justify="center">
+              <HStack spacing={4} align="center">
                 <Icon sprite={IconPlusCircle} className="p-home__add-idea-icon" />
-                <span>Submit Your Idea</span>
+                <span>{fider.session.tenant.invitation || defaultButtonLabel}</span>
               </HStack>
             </button>
             {isLonely() ? (
