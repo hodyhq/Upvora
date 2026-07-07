@@ -218,6 +218,12 @@ func routes(r *web.Engine) *web.Engine {
 		ui.Post("/_api/admin/statuses", handlers.CreateStatus())
 		ui.Put("/_api/admin/statuses/:id", handlers.UpdateStatus())
 		ui.Delete("/_api/admin/statuses/:id", handlers.DeleteStatus())
+
+		ui.Get("/_api/admin/scorecard-fields", handlers.ListScorecardFields())
+		ui.Post("/_api/admin/scorecard-fields", handlers.CreateScorecardField())
+		ui.Put("/_api/admin/scorecard-fields/:id", handlers.UpdateScorecardField())
+		ui.Delete("/_api/admin/scorecard-fields/:id", handlers.DeleteScorecardField())
+		ui.Post("/_api/admin/scorecard-settings", handlers.UpdateScorecardSettings())
 		ui.Post("/_api/admin/oauth", handlers.SaveOAuthConfig())
 		ui.Post("/_api/admin/oauth/:provider/status", handlers.SetSystemProviderStatus())
 		ui.Post("/_api/admin/roles/:role/users", handlers.ChangeUserRole())
