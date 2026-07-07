@@ -227,6 +227,18 @@ func SetResponse() web.HandlerFunc {
 
 		c.Enqueue(tasks.NotifyAboutStatusChange(getPost.Result, prevStatusSlug))
 
+		// Scorecard auto-create trigger: if the tenant has the feature on and
+		// picked this status_slug as the auto-trigger, drop a card for the post.
+		// CreateScorecard is idempotent per (tenant, post_id) so replaying the
+		// same status change never duplicates.
+		tenant := c.Tenant()
+		if tenant != nil && tenant.IsScorecardEnabled && tenant.ScorecardTriggerStatusSlug != "" &&
+			getPost.Result.StatusSlug == tenant.ScorecardTriggerStatusSlug &&
+			prevStatusSlug != tenant.ScorecardTriggerStatusSlug {
+			postID := getPost.Result.ID
+			_ = bus.Dispatch(c, &cmd.CreateScorecard{PostID: &postID, Title: getPost.Result.Title})
+		}
+
 		return c.Ok(web.Map{})
 	}
 }
