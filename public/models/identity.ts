@@ -10,6 +10,7 @@ export interface Tenant {
   welcomeMessage: string
   welcomeHeader: string
   descriptionTemplate: string
+  shareIdeaInstructions: string
   status: TenantStatus
   isPrivate: boolean
   logoBlobKey: string

@@ -154,7 +154,7 @@ What can we do better? This is the place for you to vote, discuss and share idea
           </div>
           <div className="p-home__posts-col">
             <button className="p-home__add-idea-btn" onClick={handleNewPost}>
-              <HStack spacing={4} align="center">
+              <HStack spacing={4} align="center" justify="center">
                 <Icon sprite={IconPlusCircle} className="p-home__add-idea-icon" />
                 <span>{fider.session.tenant.invitation || defaultButtonLabel}</span>
               </HStack>

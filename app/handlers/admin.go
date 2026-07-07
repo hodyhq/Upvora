@@ -52,14 +52,15 @@ func UpdateSettings() web.HandlerFunc {
 				Folder: "logos",
 			},
 			&cmd.UpdateTenantSettings{
-				Logo:                action.Logo,
-				Title:               action.Title,
-				Invitation:          action.Invitation,
-				WelcomeMessage:      action.WelcomeMessage,
-				WelcomeHeader:       action.WelcomeHeader,
-				DescriptionTemplate: action.DescriptionTemplate,
-				CNAME:               action.CNAME,
-				Locale:              action.Locale,
+				Logo:                  action.Logo,
+				Title:                 action.Title,
+				Invitation:            action.Invitation,
+				WelcomeMessage:        action.WelcomeMessage,
+				WelcomeHeader:         action.WelcomeHeader,
+				DescriptionTemplate:   action.DescriptionTemplate,
+				ShareIdeaInstructions: action.ShareIdeaInstructions,
+				CNAME:                 action.CNAME,
+				Locale:                action.Locale,
 			},
 		); err != nil {
 			return c.Failure(err)

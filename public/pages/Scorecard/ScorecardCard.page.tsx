@@ -3,6 +3,7 @@ import { Button, Header, Input, Select, SelectOption, TextArea, Form } from "@fi
 import { HStack, VStack } from "@fider/components/layout"
 import { ScorecardField, Post, User } from "@fider/models"
 import { actions, notify, Fider } from "@fider/services"
+import { ScoreBandHero, computeWeightedScore } from "./ScoreBand"
 
 interface Scorecard {
   id: number
@@ -37,15 +38,6 @@ const parseChoices = (raw: unknown): { value: string }[] => {
 
 const formatDate = (iso?: string): string => (iso ? new Date(iso).toLocaleString() : "—")
 
-const bandForScore = (score: number): { label: string; color: string } => {
-  const t = Fider.session.tenant
-  if (score >= t.scorecardBandStrong) return { label: "Strong Candidate", color: "bg-green-100 text-green-800" }
-  if (score >= t.scorecardBandGood) return { label: "Good Candidate", color: "bg-blue-100 text-blue-800" }
-  if (score >= t.scorecardBandRefine) return { label: "Needs Refinement", color: "bg-yellow-100 text-yellow-800" }
-  if (score >= t.scorecardBandLow) return { label: "Low Priority", color: "bg-orange-100 text-orange-800" }
-  return { label: "Not Recommended", color: "bg-red-100 text-red-800" }
-}
-
 const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
   const fields = (Fider.session.tenant.scorecardFields ?? []).filter((f) => f.isActive)
   const [title, setTitle] = useState(props.scorecard.title)
@@ -54,19 +46,7 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
 
   const setValue = (key: string, v: unknown) => setValues((prev) => ({ ...prev, [key]: v }))
 
-  // Live weighted score: same math as the Go compute. Score fields carry
-  // a 1-5 int in values; missing/0 contributes 0.
-  const { weightedScore, band } = useMemo(() => {
-    let total = 0
-    for (const f of fields) {
-      if (f.type !== "score" || !f.weight) continue
-      const raw = values[f.key]
-      const n = typeof raw === "number" ? raw : parseInt(String(raw ?? "0"), 10) || 0
-      total += n * (f.weight ?? 0)
-    }
-    const score = Math.round(total / 5)
-    return { weightedScore: score, band: bandForScore(score) }
-  }, [values, fields])
+  const weightedScore = useMemo(() => computeWeightedScore(values, fields), [values, fields])
 
   const grouped: Record<string, ScorecardField[]> = {}
   for (const f of fields) {
@@ -181,48 +161,37 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
           <a href="/scorecard" className="text-link text-sm">← All scorecards</a>
 
           {post && (
-            <div className="p-4 bg-white rounded shadow">
-              <VStack spacing={2}>
-                <HStack className="justify-between items-start">
-                  <div>
-                    <h2 className="text-header">{post.title}</h2>
-                    <p className="text-sm text-muted">
-                      Submitted by <strong>{post.user?.name ?? "—"}</strong> on {formatDate(post.createdAt)}
-                    </p>
-                    <p className="text-sm text-muted">
-                      Submitted to <strong>{currentStatusLabel || "—"}</strong> on {formatDate(props.scorecard.createdAt)}
-                    </p>
-                  </div>
-                  <a className="c-button c-button--tertiary" href={`/posts/${post.number}/${post.slug}`} target="_blank" rel="noopener">
-                    View idea →
-                  </a>
-                </HStack>
-                {post.description && <p className="whitespace-pre-wrap">{post.description}</p>}
-                <HStack spacing={4} className="text-sm text-muted">
-                  <span>👍 {(post as any).votesCount ?? 0} votes</span>
-                  <span>💬 {(post as any).commentsCount ?? 0} comments</span>
-                  {Array.isArray(post.tags) && post.tags.length > 0 && (
-                    <span>🏷 {post.tags.join(", ")}</span>
-                  )}
-                </HStack>
-              </VStack>
+            <div style={{ background: "var(--colors-white)", border: "1px solid var(--colors-gray-200)", borderRadius: 10, padding: 20 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 12 }}>
+                <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0, lineHeight: 1.3 }}>{post.title}</h2>
+                <a className="c-button c-button--tertiary" href={`/posts/${post.number}/${post.slug}`} target="_blank" rel="noopener" style={{ whiteSpace: "nowrap" }}>
+                  View idea →
+                </a>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", columnGap: 12, rowGap: 4, fontSize: 13, marginBottom: 12 }}>
+                <span style={{ color: "var(--colors-gray-500)" }}>Submitted by</span>
+                <span><strong>{post.user?.name ?? "—"}</strong> on {formatDate(post.createdAt)}</span>
+                <span style={{ color: "var(--colors-gray-500)" }}>Submitted to</span>
+                <span><strong>{currentStatusLabel || "—"}</strong> on {formatDate(props.scorecard.createdAt)}</span>
+              </div>
+              {post.description && (
+                <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.5, marginBottom: 12 }}>{post.description}</div>
+              )}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: 13, color: "var(--colors-gray-600)" }}>
+                <span>👍 {(post as any).votesCount ?? 0} votes</span>
+                <span>💬 {(post as any).commentsCount ?? 0} comments</span>
+                {Array.isArray(post.tags) && post.tags.length > 0 && (
+                  <span>🏷 {post.tags.join(", ")}</span>
+                )}
+              </div>
             </div>
           )}
 
           <Form>
             <Input field="title" label="Scorecard title" value={title} onChange={setTitle} />
 
-            {/* Weighted score gauge — recomputes on every value change. */}
-            <div className={`p-3 rounded ${band.color}`}>
-              <div className="flex justify-between items-baseline">
-                <strong>Weighted score</strong>
-                <div className="flex items-baseline gap-3">
-                  <span className="text-2xl font-bold">{weightedScore}</span>
-                  <span className="font-semibold">{band.label}</span>
-                </div>
-              </div>
-              <p className="text-xs mt-1">Formula: round(sum(value × weight) / 5) across active scoring dimensions. Bands set in Admin → Scorecard settings.</p>
-            </div>
+            {/* Weighted score hero — colored band panel driven by tenant thresholds. */}
+            <ScoreBandHero score={weightedScore} />
 
             {GROUP_ORDER.map((g) => {
               const rows = grouped[g]

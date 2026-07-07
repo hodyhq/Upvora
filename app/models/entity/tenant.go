@@ -27,6 +27,7 @@ type Tenant struct {
 	PreventIndexing     bool              `json:"preventIndexing"`
 	IsModerationEnabled bool              `json:"isModerationEnabled"`
 	IsPro               bool              `json:"isPro"`
+	ShareIdeaInstructions string          `json:"shareIdeaInstructions"`
 	SiteBannerEnabled   bool              `json:"siteBannerEnabled"`
 	SiteBannerMessage   string            `json:"siteBannerMessage"`
 	SiteBannerVariant   string            `json:"siteBannerVariant"`

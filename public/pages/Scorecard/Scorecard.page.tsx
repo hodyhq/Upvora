@@ -2,12 +2,13 @@ import React from "react"
 import { Button, Header } from "@fider/components"
 import { HStack, VStack } from "@fider/components/layout"
 import { actions, Fider, notify } from "@fider/services"
+import { ScoreBandPill, computeWeightedScore } from "./ScoreBand"
 
 interface ScorecardRecord {
   id: number
   postId?: number
   title: string
-  values: unknown
+  values: Record<string, unknown>
   createdAt: string
   updatedAt: string
 }
@@ -52,35 +53,48 @@ const Scorecard: React.FC<ScorecardPageProps> = (props) => {
           )}
 
           {cards.length === 0 ? (
-            <div className="p-6 text-center bg-white rounded shadow">
+            <div style={{ background: "var(--colors-white)", border: "1px solid var(--colors-gray-200)", borderRadius: 10, padding: 32, textAlign: "center" }}>
               <p className="text-muted">No scorecards yet.</p>
               <p className="text-muted text-sm mt-2">
-                Scorecards get created either automatically (when a post's status changes to one flagged as a scorecard trigger) or manually from a post's detail page (button coming in a later build).
+                Cards get created automatically when a post's status changes to your configured trigger, or manually from the "Score this idea" button on a post's detail page.
               </p>
             </div>
           ) : (
-            <table className="w-full bg-white rounded shadow">
-              <thead>
-                <tr className="text-left text-xs uppercase text-muted">
-                  <th className="p-3">Title</th>
-                  <th className="p-3">Post</th>
-                  <th className="p-3">Updated</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cards.map((c) => (
-                  <tr key={c.id} className="border-t">
-                    <td className="p-3">
-                      <a href={`/scorecard/${c.id}`} className="text-link">
-                        {c.title || `Scorecard #${c.id}`}
-                      </a>
-                    </td>
-                    <td className="p-3 text-sm text-muted">{c.postId != null ? `#${c.postId}` : "—"}</td>
-                    <td className="p-3 text-sm text-muted">{new Date(c.updatedAt).toLocaleString()}</td>
+            <div style={{ background: "var(--colors-white)", border: "1px solid var(--colors-gray-200)", borderRadius: 10, overflow: "hidden" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ background: "var(--colors-gray-50, #f8fafc)", borderBottom: "1px solid var(--colors-gray-200)" }}>
+                    <th style={{ textAlign: "left", padding: "10px 14px", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--colors-gray-500)", fontWeight: 600 }}>Title</th>
+                    <th style={{ textAlign: "left", padding: "10px 14px", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--colors-gray-500)", fontWeight: 600 }}>Score</th>
+                    <th style={{ textAlign: "left", padding: "10px 14px", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--colors-gray-500)", fontWeight: 600 }}>Post</th>
+                    <th style={{ textAlign: "left", padding: "10px 14px", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--colors-gray-500)", fontWeight: 600 }}>Updated</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {cards.map((c, i) => {
+                    const score = computeWeightedScore(c.values, Fider.session.tenant.scorecardFields)
+                    return (
+                      <tr key={c.id} style={{ borderTop: i === 0 ? "none" : "1px solid var(--colors-gray-100)" }}>
+                        <td style={{ padding: "12px 14px" }}>
+                          <a href={`/scorecard/${c.id}`} className="text-link" style={{ fontWeight: 500 }}>
+                            {c.title || `Scorecard #${c.id}`}
+                          </a>
+                        </td>
+                        <td style={{ padding: "12px 14px" }}>
+                          <ScoreBandPill score={score} />
+                        </td>
+                        <td style={{ padding: "12px 14px", fontSize: 13, color: "var(--colors-gray-500)" }}>
+                          {c.postId != null ? (
+                            <a href={`/posts/${c.postId}`} className="text-link" style={{ fontSize: 13 }}>#{c.postId}</a>
+                          ) : "—"}
+                        </td>
+                        <td style={{ padding: "12px 14px", fontSize: 13, color: "var(--colors-gray-500)" }}>{new Date(c.updatedAt).toLocaleString()}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </VStack>
       </div>
