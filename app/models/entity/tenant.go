@@ -30,7 +30,13 @@ type Tenant struct {
 	SiteBannerEnabled   bool              `json:"siteBannerEnabled"`
 	SiteBannerMessage   string            `json:"siteBannerMessage"`
 	SiteBannerVariant   string            `json:"siteBannerVariant"`
+	IsScorecardEnabled  bool              `json:"isScorecardEnabled"`
+	ScorecardBandStrong int               `json:"scorecardBandStrong"`
+	ScorecardBandGood   int               `json:"scorecardBandGood"`
+	ScorecardBandRefine int               `json:"scorecardBandRefine"`
+	ScorecardBandLow    int               `json:"scorecardBandLow"`
 	Statuses            []*Status         `json:"statuses,omitempty"`
+	ScorecardFields     []*ScorecardField `json:"scorecardFields,omitempty"`
 	// ScheduledDeletionAt is set when the account owner has requested deletion of the whole
 	// site. The tenant stays active during the grace window; a background job performs the
 	// hard delete once this time passes. Not exposed to clients.
