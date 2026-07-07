@@ -13,6 +13,7 @@ import (
 	"github.com/getfider/fider/app/pkg/bus"
 	"github.com/getfider/fider/app/pkg/env"
 	"github.com/getfider/fider/app/pkg/errors"
+	"github.com/getfider/fider/app/pkg/log"
 	"github.com/getfider/fider/app/pkg/web"
 	"github.com/getfider/fider/app/tasks"
 )
@@ -238,7 +239,9 @@ func SetResponse() web.HandlerFunc {
 			getPost.Result.StatusSlug == tenant.ScorecardTriggerStatusSlug {
 			postID := getPost.Result.ID
 			if err := bus.Dispatch(c, &cmd.CreateScorecard{PostID: &postID, Title: getPost.Result.Title}); err != nil {
-				_ = bus.Dispatch(c, &cmd.LogError{Err: errors.Wrap(err, "scorecard auto-create failed for post %d", postID)})
+				// Publish (not Dispatch) so a missing listener doesn't crash the
+				// whole PUT — best-effort logging of the underlying failure.
+				log.Error(c, errors.Wrap(err, "scorecard auto-create failed for post %d", postID))
 			}
 		}
 
