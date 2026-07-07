@@ -18,7 +18,7 @@ export interface CreateScorecardFieldRequest {
   key: string
   label: string
   groupKey: string
-  type: "text" | "note" | "date" | "number" | "url" | "choice" | "score"
+  type: "text" | "note" | "date" | "number" | "url" | "choice" | "score" | "user"
   choices?: unknown
   weight?: number
   question?: string
@@ -71,4 +71,8 @@ export interface UpdateScorecardRequest {
 
 export const updateScorecard = async (id: number, req: UpdateScorecardRequest): Promise<Result> => {
   return await http.put(`/_api/scorecards/${id}`, req)
+}
+
+export const deleteScorecard = async (id: number): Promise<Result> => {
+  return await http.delete(`/_api/scorecards/${id}`)
 }

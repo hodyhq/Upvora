@@ -16,6 +16,7 @@ interface Scorecard {
 
 interface ScorecardCardPageProps {
   scorecard: Scorecard
+  assigneeNames?: string[]
 }
 
 const GROUP_ORDER = ["intake", "context", "workflow", "ownership", "classification", "scoring", "decision"] as const
@@ -142,6 +143,27 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
       )
     }
 
+    if (f.type === "user") {
+      const listId = `scorecard-users-${key}`
+      const names = props.assigneeNames ?? []
+      return (
+        <div key={key} className="mb-4">
+          <label className="font-semibold block mb-1">{f.label}</label>
+          <input
+            type="text"
+            list={listId}
+            value={strVal}
+            onChange={(e) => setValue(key, e.target.value)}
+            placeholder="Pick a collaborator/admin or type any name…"
+            className="c-input w-full"
+          />
+          <datalist id={listId}>
+            {names.map((n) => <option key={n} value={n} />)}
+          </datalist>
+        </div>
+      )
+    }
+
     // text, number, url — one-line input; type attr handled by native browser
     return <Input key={key} field={key} label={f.label} value={strVal} onChange={(v) => setValue(key, v)} />
   }
@@ -213,9 +235,27 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
               )
             })}
 
-            <Button variant="primary" onClick={save} disabled={saving}>
-              {saving ? "Saving…" : "Save"}
-            </Button>
+            <HStack spacing={2}>
+              <Button variant="primary" onClick={save} disabled={saving}>
+                {saving ? "Saving…" : "Save"}
+              </Button>
+              {Fider.session.user.isAdministrator && (
+                <Button
+                  variant="danger"
+                  onClick={async () => {
+                    if (!window.confirm(`Delete scorecard "${title}"? This cannot be undone.`)) return
+                    const r = await actions.deleteScorecard(props.scorecard.id)
+                    if (r.ok) {
+                      window.location.href = "/scorecard"
+                    } else {
+                      notify.error("Delete failed.")
+                    }
+                  }}
+                >
+                  Delete scorecard
+                </Button>
+              )}
+            </HStack>
           </Form>
         </VStack>
       </div>

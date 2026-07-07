@@ -145,6 +145,7 @@ func (s Service) Init() {
 	bus.AddHandler(getScorecardByPostID)
 	bus.AddHandler(createScorecard)
 	bus.AddHandler(updateScorecardValues)
+	bus.AddHandler(deleteScorecard)
 
 	bus.AddHandler(getVerificationByKey)
 	bus.AddHandler(getVerificationByEmailAndCode)

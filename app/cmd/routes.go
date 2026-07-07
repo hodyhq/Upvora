@@ -168,6 +168,7 @@ func routes(r *web.Engine) *web.Engine {
 		ui.Get("/scorecard/:id", handlers.ScorecardCardPage())
 		ui.Post("/_api/scorecards", handlers.CreateScorecard())
 		ui.Put("/_api/scorecards/:id", handlers.UpdateScorecard())
+		ui.Delete("/_api/scorecards/:id", handlers.DeleteScorecard())
 
 		// locale is forced to English for administrative pages.
 		// This is meant to be removed when all pages are translated.

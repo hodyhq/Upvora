@@ -67,6 +67,11 @@ type UpdateScorecardValues struct {
 	Values []byte // raw JSON blob
 }
 
+// DeleteScorecard removes a scorecard. Tenant-scoped, admin-only.
+type DeleteScorecard struct {
+	ID int
+}
+
 // SetTenantScorecardSettings toggles the feature on/off, sets the four band
 // thresholds, and picks which status_slug triggers auto-create in one shot.
 // Empty TriggerStatusSlug = no auto-trigger. Called by /admin/scorecard-settings.

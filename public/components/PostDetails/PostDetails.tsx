@@ -451,6 +451,8 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
                       const r = await actions.createScorecard({ postId: post.id })
                       if (r.ok && r.data) {
                         window.location.href = `/scorecard/${r.data.id}`
+                      } else {
+                        notify.error("Could not open scorecard for this idea.")
                       }
                     }}
                   >

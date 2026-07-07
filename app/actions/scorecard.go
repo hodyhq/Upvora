@@ -14,7 +14,7 @@ import (
 var scorecardKeyRegex = regexp.MustCompile(`^[a-z0-9_]+$`)
 
 var allowedScorecardFieldTypes = map[string]bool{
-	"text": true, "note": true, "date": true, "number": true, "url": true, "choice": true, "score": true,
+	"text": true, "note": true, "date": true, "number": true, "url": true, "choice": true, "score": true, "user": true,
 }
 
 var allowedScorecardGroups = map[string]bool{

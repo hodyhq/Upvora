@@ -44,6 +44,7 @@ const typeOptions: SelectOption[] = [
   { value: "url", label: "URL" },
   { value: "choice", label: "Choice — dropdown with pre-set options" },
   { value: "score", label: "Score — 1-5 slider that feeds the weighted score" },
+  { value: "user", label: "User — pick a collaborator/admin or type any name" },
 ]
 
 // Choices come in over the wire as [{value:"A"},{value:"B"}]. Admin edits them

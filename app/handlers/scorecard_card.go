@@ -30,11 +30,21 @@ func ScorecardCardPage() web.HandlerFunc {
 			}
 			// non-fatal: post may have been deleted; header just falls back
 		}
+		// Pull the tenant's collab+admin names for user-typed field autocomplete.
+		// Best-effort — falls back to plain text input if this dispatch errors.
+		userNames := []string{}
+		search := &query.SearchUsers{Roles: []string{"collaborator", "administrator"}, Page: 1, Limit: 500}
+		if uerr := bus.Dispatch(c, search); uerr == nil {
+			for _, u := range search.Result {
+				userNames = append(userNames, u.Name)
+			}
+		}
 		return c.Page(http.StatusOK, web.Props{
 			Page:  "Scorecard/ScorecardCard.page",
 			Title: get.Result.Title,
 			Data: web.Map{
-				"scorecard": get.Result,
+				"scorecard":     get.Result,
+				"assigneeNames": userNames,
 			},
 		})
 	}
@@ -61,6 +71,24 @@ func CreateScorecard() web.HandlerFunc {
 			return c.Failure(err)
 		}
 		return c.Ok(create.Result)
+	}
+}
+
+// DeleteScorecard removes a card. Admin-only — collaborators can create and
+// edit but not delete. DELETE-with-no-body — parse :id inline.
+func DeleteScorecard() web.HandlerFunc {
+	return func(c *web.Context) error {
+		if c.User() == nil || !c.User().IsAdministrator() {
+			return c.Forbidden()
+		}
+		id, err := c.ParamAsInt("id")
+		if err != nil {
+			return c.NotFound()
+		}
+		if err := bus.Dispatch(c, &cmd.DeleteScorecard{ID: id}); err != nil {
+			return c.Failure(err)
+		}
+		return c.Ok(web.Map{})
 	}
 }
 

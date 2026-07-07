@@ -293,6 +293,19 @@ func updateScorecardValues(ctx context.Context, c *cmd.UpdateScorecardValues) er
 	})
 }
 
+func deleteScorecard(ctx context.Context, c *cmd.DeleteScorecard) error {
+	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
+		res, err := trx.Execute(`DELETE FROM scorecards WHERE tenant_id = $1 AND id = $2`, tenant.ID, c.ID)
+		if err != nil {
+			return errors.Wrap(err, "failed to delete scorecard %d", c.ID)
+		}
+		if res == 0 {
+			return app.ErrNotFound
+		}
+		return nil
+	})
+}
+
 func listScorecardsForTenant(ctx context.Context, q *query.ListScorecardsForTenant) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
 		rows := []*dbEntities.Scorecard{}

@@ -38,7 +38,7 @@ export interface ScorecardField {
   key: string
   label: string
   groupKey: string
-  type: "text" | "note" | "date" | "number" | "url" | "choice" | "score"
+  type: "text" | "note" | "date" | "number" | "url" | "choice" | "score" | "user"
   choices?: unknown
   weight?: number
   question?: string
