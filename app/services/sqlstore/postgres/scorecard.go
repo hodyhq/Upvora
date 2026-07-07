@@ -2,8 +2,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
-
 	"github.com/getfider/fider/app"
 	"github.com/getfider/fider/app/models/cmd"
 	"github.com/getfider/fider/app/models/entity"
@@ -87,7 +85,7 @@ func getScorecardFieldByID(ctx context.Context, q *query.GetScorecardFieldByID) 
 			FROM scorecard_fields
 			WHERE tenant_id = $1 AND id = $2
 		`, tenant.ID, q.ID)
-		if err == sql.ErrNoRows {
+		if err == app.ErrNotFound {
 			return app.ErrNotFound
 		}
 		if err != nil {
@@ -202,7 +200,7 @@ func getScorecardByID(ctx context.Context, q *query.GetScorecardByID) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
 		row := dbEntities.Scorecard{}
 		err := trx.Get(&row, `SELECT `+scorecardSelectCols+` FROM scorecards WHERE tenant_id = $1 AND id = $2`, tenant.ID, q.ID)
-		if err == sql.ErrNoRows {
+		if err == app.ErrNotFound {
 			return app.ErrNotFound
 		}
 		if err != nil {
@@ -217,7 +215,7 @@ func getScorecardByPostID(ctx context.Context, q *query.GetScorecardByPostID) er
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
 		row := dbEntities.Scorecard{}
 		err := trx.Get(&row, `SELECT `+scorecardSelectCols+` FROM scorecards WHERE tenant_id = $1 AND post_id = $2`, tenant.ID, q.PostID)
-		if err == sql.ErrNoRows {
+		if err == app.ErrNotFound {
 			return app.ErrNotFound
 		}
 		if err != nil {
@@ -232,6 +230,7 @@ func createScorecard(ctx context.Context, c *cmd.CreateScorecard) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, user *entity.User) error {
 		// Idempotent: if a linked card already exists, return it instead of
 		// inserting a duplicate (the UNIQUE index would refuse it anyway).
+		// trx.Get returns app.ErrNotFound (not sql.ErrNoRows) on empty result.
 		if c.PostID != nil {
 			existing := dbEntities.Scorecard{}
 			err := trx.Get(&existing, `SELECT `+scorecardSelectCols+` FROM scorecards WHERE tenant_id = $1 AND post_id = $2`, tenant.ID, *c.PostID)
@@ -239,7 +238,7 @@ func createScorecard(ctx context.Context, c *cmd.CreateScorecard) error {
 				c.Result = existing.ToModel()
 				return nil
 			}
-			if err != sql.ErrNoRows {
+			if err != app.ErrNotFound {
 				return errors.Wrap(err, "failed to check for existing scorecard on post %d", *c.PostID)
 			}
 		}
