@@ -32,6 +32,11 @@ type Tenant struct {
 	SiteBannerEnabled     bool         `db:"site_banner_enabled"`
 	SiteBannerMessage     string       `db:"site_banner_message"`
 	SiteBannerVariant     string       `db:"site_banner_variant"`
+	IsScorecardEnabled    bool         `db:"is_scorecard_enabled"`
+	ScorecardBandStrong   int          `db:"scorecard_band_strong"`
+	ScorecardBandGood     int          `db:"scorecard_band_good"`
+	ScorecardBandRefine   int          `db:"scorecard_band_refine"`
+	ScorecardBandLow      int          `db:"scorecard_band_low"`
 }
 
 func (t *Tenant) ToModel() *entity.Tenant {
@@ -69,6 +74,11 @@ func (t *Tenant) ToModel() *entity.Tenant {
 		SiteBannerEnabled:   t.SiteBannerEnabled,
 		SiteBannerMessage:   t.SiteBannerMessage,
 		SiteBannerVariant:   t.SiteBannerVariant,
+		IsScorecardEnabled:  t.IsScorecardEnabled,
+		ScorecardBandStrong: t.ScorecardBandStrong,
+		ScorecardBandGood:   t.ScorecardBandGood,
+		ScorecardBandRefine: t.ScorecardBandRefine,
+		ScorecardBandLow:    t.ScorecardBandLow,
 	}
 
 	if t.ScheduledDeletionAt.Valid {

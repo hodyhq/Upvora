@@ -39,6 +39,7 @@ func SingleTenant() web.MiddlewareFunc {
 			if firstTenant.Result != nil && !firstTenant.Result.IsDisabled() {
 				c.SetTenant(firstTenant.Result)
 				attachTenantStatuses(c, firstTenant.Result)
+				attachTenantScorecardFields(c, firstTenant.Result)
 			}
 
 			return next(c)
@@ -61,6 +62,7 @@ func MultiTenant() web.MiddlewareFunc {
 			if byDomain.Result != nil && !byDomain.Result.IsDisabled() {
 				c.SetTenant(byDomain.Result)
 				attachTenantStatuses(c, byDomain.Result)
+				attachTenantScorecardFields(c, byDomain.Result)
 
 				if byDomain.Result.CNAME != "" && !c.IsAjax() {
 					baseURL := web.TenantBaseURL(c, byDomain.Result)
@@ -84,6 +86,16 @@ func attachTenantStatuses(c *web.Context, tenant *entity.Tenant) {
 	q := &query.ListActiveStatusesForTenant{}
 	if err := bus.Dispatch(c, q); err == nil {
 		tenant.Statuses = q.Result
+	}
+}
+
+// attachTenantScorecardFields loads the tenant's active scorecard field
+// catalogue onto tenant.ScorecardFields so the React client receives it on
+// bootstrap. Same non-fatal contract as attachTenantStatuses.
+func attachTenantScorecardFields(c *web.Context, tenant *entity.Tenant) {
+	q := &query.ListScorecardFieldsForTenant{}
+	if err := bus.Dispatch(c, q); err == nil {
+		tenant.ScorecardFields = q.Result
 	}
 }
 
