@@ -7,4 +7,4 @@
 @include theme($dark-colors, '[data-theme="dark"]');
 
 // HCM brand overrides — keep last so they win the cascade.
-@import "hcm-theme.scss";
+@import "site-banner.scss";

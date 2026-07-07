@@ -1,0 +1,30 @@
+// ============================================================================
+// Site banner — admin-toggleable, rendered above the page header by the
+// site-banner feature (see /admin/banner). Five variants; the brand variant
+// picks up --primary-color, so tenants with an overridden brand palette
+// get their brand color for free.
+// ============================================================================
+.site-banner {
+  display: block;
+  width: 100%;
+  padding: 10px 24px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+
+  &--info    { background: #0EA5E9; color: #FFFFFF; }
+  &--success { background: #16A34A; color: #FFFFFF; }
+  &--warning { background: #FBBF24; color: #111111; }
+  &--danger  { background: #DC2626; color: #FFFFFF; }
+  &--brand   { background: var(--primary-color, #0F3EBB); color: #FFFFFF; }
+}
+
+@media (max-width: 640px) {
+  .site-banner {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
