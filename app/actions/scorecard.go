@@ -30,6 +30,8 @@ type CreateScorecardField struct {
 	GroupKey  string          `json:"groupKey"`
 	Type      string          `json:"type"`
 	Choices   json.RawMessage `json:"choices,omitempty"`
+	Weight    *int            `json:"weight,omitempty"`
+	Question  string          `json:"question,omitempty"`
 	SortOrder int             `json:"sortOrder"`
 }
 
@@ -67,12 +69,8 @@ func (a *CreateScorecardField) Validate(ctx context.Context, user *entity.User) 
 		result.AddFieldFailure("type", "Type must be one of: text, note, date, number, url, choice, score.")
 	}
 
-	if a.Type == "score" {
-		// The 8 scoring dimensions are seeded once (is_system=true); admins
-		// edit their weight/question/label via UpdateScorecardField, not add
-		// new score rows here. Adding another would break the weight-sum=100
-		// invariant that drives the compute.
-		result.AddFieldFailure("type", "Adding new score fields is not supported; edit the eight seeded scoring rows instead.")
+	if a.Type == "score" && a.GroupKey != "scoring" {
+		result.AddFieldFailure("groupKey", "Score fields must live in the Scoring group.")
 	}
 
 	if a.Type == "choice" && len(a.Choices) == 0 {

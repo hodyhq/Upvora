@@ -25,6 +25,34 @@ type ScorecardField struct {
 	UpdatedAt  time.Time       `db:"updated_at"`
 }
 
+type Scorecard struct {
+	ID        int             `db:"id"`
+	TenantID  int             `db:"tenant_id"`
+	PostID    sql.NullInt64   `db:"post_id"`
+	Title     string          `db:"title"`
+	Values    string          `db:"values"`
+	CreatedAt time.Time       `db:"created_at"`
+	UpdatedAt time.Time       `db:"updated_at"`
+}
+
+func (s *Scorecard) ToModel() *entity.Scorecard {
+	if s == nil {
+		return nil
+	}
+	m := &entity.Scorecard{
+		ID:        s.ID,
+		Title:     s.Title,
+		Values:    json.RawMessage(s.Values),
+		CreatedAt: s.CreatedAt,
+		UpdatedAt: s.UpdatedAt,
+	}
+	if s.PostID.Valid {
+		pid := int(s.PostID.Int64)
+		m.PostID = &pid
+	}
+	return m
+}
+
 func (f *ScorecardField) ToModel() *entity.ScorecardField {
 	if f == nil {
 		return nil

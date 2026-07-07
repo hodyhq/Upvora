@@ -13,7 +13,7 @@ import (
 // eight seeded scoring dimensions, reorder, deactivate).
 func ManageScorecardFields() web.HandlerFunc {
 	return func(c *web.Context) error {
-		list := &query.ListScorecardFieldsForTenant{}
+		list := &query.ListAllScorecardFieldsForTenant{}
 		if err := bus.Dispatch(c, list); err != nil {
 			return c.Failure(err)
 		}

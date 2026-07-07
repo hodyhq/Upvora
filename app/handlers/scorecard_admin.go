@@ -33,6 +33,8 @@ func CreateScorecardField() web.HandlerFunc {
 			GroupKey:  action.GroupKey,
 			Type:      action.Type,
 			Choices:   action.Choices,
+			Weight:    action.Weight,
+			Question:  action.Question,
 			SortOrder: action.SortOrder,
 		}
 		if err := bus.Dispatch(c, create); err != nil {

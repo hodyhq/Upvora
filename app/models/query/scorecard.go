@@ -3,9 +3,15 @@ package query
 import "github.com/getfider/fider/app/models/entity"
 
 // ListScorecardFieldsForTenant returns every active scorecard field ordered by
-// sort_order. Used both by the admin field-management UI and by the runtime
-// card view. Loaded onto tenant.ScorecardFields by middleware.
+// sort_order. Used at runtime — loaded onto tenant.ScorecardFields by middleware.
 type ListScorecardFieldsForTenant struct {
+	Result []*entity.ScorecardField
+}
+
+// ListAllScorecardFieldsForTenant returns every scorecard field including
+// inactive ones. Used by the admin Manage Scorecard Fields page so admins
+// can reactivate/edit fields they previously turned off.
+type ListAllScorecardFieldsForTenant struct {
 	Result []*entity.ScorecardField
 }
 
@@ -14,4 +20,10 @@ type ListScorecardFieldsForTenant struct {
 type GetScorecardFieldByID struct {
 	ID     int
 	Result *entity.ScorecardField
+}
+
+// ListScorecardsForTenant returns every scorecard for the current tenant,
+// most recently updated first. Used by the /scorecard dashboard page.
+type ListScorecardsForTenant struct {
+	Result []*entity.Scorecard
 }

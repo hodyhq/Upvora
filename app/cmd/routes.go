@@ -164,6 +164,8 @@ func routes(r *web.Engine) *web.Engine {
 		// From this step, only Collaborators and Administrators are allowed
 		ui.Use(middlewares.IsAuthorized(enum.RoleCollaborator, enum.RoleAdministrator))
 
+		ui.Get("/scorecard", handlers.ScorecardPage())
+
 		// locale is forced to English for administrative pages.
 		// This is meant to be removed when all pages are translated.
 		ui.Use(middlewares.SetLocale("en"))

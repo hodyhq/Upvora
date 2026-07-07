@@ -7,14 +7,16 @@ import (
 )
 
 // CreateScorecardField inserts a new admin-defined field on the tenant's
-// scorecard schema. Cannot be used to add another `type=score` row — the 8
-// scoring dimensions are seeded once at tenant creation and are is_system=true.
+// scorecard schema. Score-type rows must land in the scoring group. Weight
+// and Question are only meaningful when Type == "score".
 type CreateScorecardField struct {
 	Key       string
 	Label     string
 	GroupKey  string
 	Type      string
 	Choices   json.RawMessage
+	Weight    *int
+	Question  string
 	SortOrder int
 
 	Result *entity.ScorecardField

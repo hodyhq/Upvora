@@ -17,7 +17,7 @@ interface ManageScorecardFieldsPageState {
   draftLabel: string
   draftGroup: string
   draftType: string
-  draftChoicesJSON: string
+  draftChoicesCSV: string
   draftWeight: string
   draftQuestion: string
   draftSortOrder: number
@@ -32,9 +32,8 @@ const groupOptions: SelectOption[] = [
   { value: "workflow", label: "Workflow" },
   { value: "ownership", label: "Ownership" },
   { value: "classification", label: "Classification" },
+  { value: "scoring", label: "Scoring (weighted 1-5)" },
   { value: "decision", label: "Decision" },
-  // Scoring group is deliberately excluded — new score rows aren't allowed
-  // (would break the weight-sum=100 invariant driving the compute).
 ]
 
 const typeOptions: SelectOption[] = [
@@ -44,7 +43,21 @@ const typeOptions: SelectOption[] = [
   { value: "number", label: "Number" },
   { value: "url", label: "URL" },
   { value: "choice", label: "Choice — dropdown with pre-set options" },
+  { value: "score", label: "Score — 1-5 slider that feeds the weighted score" },
 ]
+
+// Choices come in over the wire as [{value:"A"},{value:"B"}]. Admin edits them
+// as a comma-separated string. These helpers translate between the two shapes.
+const choicesToCsv = (raw: unknown): string => {
+  if (!raw || !Array.isArray(raw)) return ""
+  return raw.map((c: any) => (typeof c === "string" ? c : c?.value ?? "")).filter(Boolean).join(", ")
+}
+const csvToChoices = (s: string): { value: string }[] =>
+  s
+    .split(",")
+    .map((v) => v.trim())
+    .filter((v) => v.length > 0)
+    .map((v) => ({ value: v }))
 
 const slugifyKey = (s: string): string =>
   s
@@ -74,7 +87,7 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
       draftLabel: "",
       draftGroup: "context",
       draftType: "text",
-      draftChoicesJSON: "",
+      draftChoicesCSV: "",
       draftWeight: "",
       draftQuestion: "",
       draftSortOrder: 100,
@@ -91,7 +104,7 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
       draftLabel: "",
       draftGroup: "context",
       draftType: "text",
-      draftChoicesJSON: "",
+      draftChoicesCSV: "",
       draftWeight: "",
       draftQuestion: "",
       draftSortOrder: 100,
@@ -108,7 +121,7 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
       draftLabel: f.label,
       draftGroup: f.groupKey,
       draftType: f.type,
-      draftChoicesJSON: f.choices ? JSON.stringify(f.choices, null, 2) : "",
+      draftChoicesCSV: choicesToCsv(f.choices),
       draftWeight: f.weight != null ? String(f.weight) : "",
       draftQuestion: f.question ?? "",
       draftSortOrder: f.sortOrder,
@@ -128,29 +141,19 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
     })
   }
 
-  private parseChoicesForRequest = (): { ok: true; value?: unknown } | { ok: false; message: string } => {
-    const s = this.state.draftChoicesJSON.trim()
-    if (s === "") return { ok: true, value: undefined }
-    try {
-      const v = JSON.parse(s)
-      if (!Array.isArray(v)) return { ok: false, message: "Choices must be a JSON array." }
-      return { ok: true, value: v }
-    } catch (e) {
-      return { ok: false, message: "Choices must be valid JSON (e.g. [{\"value\":\"A\"},{\"value\":\"B\"}])." }
-    }
-  }
-
   private save = async (_e: ButtonClickEvent) => {
     const s = this.state
     let choicesForReq: unknown = undefined
     if (s.draftType === "choice") {
-      const parsed = this.parseChoicesForRequest()
-      if (!parsed.ok) {
-        this.setState({ error: { errors: [{ field: "choices", message: parsed.message }] } })
+      const parsed = csvToChoices(s.draftChoicesCSV)
+      if (parsed.length === 0) {
+        this.setState({ error: { errors: [{ field: "choices", message: "Enter at least one option (comma-separated)." }] } })
         return
       }
-      choicesForReq = parsed.value
+      choicesForReq = parsed
     }
+
+    const weightForReq = s.draftType === "score" && s.draftWeight !== "" ? parseInt(s.draftWeight, 10) : undefined
 
     this.setState({ busy: true })
     if (s.isAdding) {
@@ -160,6 +163,8 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
         groupKey: s.draftGroup,
         type: s.draftType as any,
         choices: choicesForReq,
+        weight: Number.isNaN(weightForReq as number) ? undefined : weightForReq,
+        question: s.draftType === "score" ? s.draftQuestion : undefined,
         sortOrder: s.draftSortOrder,
       })
       this.setState({ busy: false })
@@ -352,13 +357,14 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
               </>
             )}
 
-            {/* Choices are only meaningful for choice-type rows. */}
+            {/* Choices are only meaningful for choice-type rows. Comma-separated,
+                in the order you want them to appear in the dropdown. */}
             {this.state.draftType === "choice" && (
-              <TextArea
+              <Input
                 field="choices"
-                label={`Choices (JSON array). Example: [{"value":"Approved"},{"value":"Rejected"}]`}
-                value={this.state.draftChoicesJSON}
-                onChange={(v) => this.setState({ draftChoicesJSON: v })}
+                label="Choices (comma-separated, in the order you want)"
+                value={this.state.draftChoicesCSV}
+                onChange={(v) => this.setState({ draftChoicesCSV: v })}
               />
             )}
 

@@ -59,6 +59,26 @@ func listScorecardFieldsForTenant(ctx context.Context, q *query.ListScorecardFie
 	})
 }
 
+func listAllScorecardFieldsForTenant(ctx context.Context, q *query.ListAllScorecardFieldsForTenant) error {
+	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
+		rows := []*dbEntities.ScorecardField{}
+		err := trx.Select(&rows, `
+			SELECT `+scorecardFieldSelectCols+`
+			FROM scorecard_fields
+			WHERE tenant_id = $1
+			ORDER BY sort_order, id
+		`, tenant.ID)
+		if err != nil {
+			return errors.Wrap(err, "failed to list all scorecard fields for tenant %d", tenant.ID)
+		}
+		q.Result = make([]*entity.ScorecardField, len(rows))
+		for i, r := range rows {
+			q.Result[i] = r.ToModel()
+		}
+		return nil
+	})
+}
+
 func getScorecardFieldByID(ctx context.Context, q *query.GetScorecardFieldByID) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
 		row := dbEntities.ScorecardField{}
@@ -86,13 +106,25 @@ func createScorecardField(ctx context.Context, c *cmd.CreateScorecardField) erro
 		} else {
 			choicesArg = nil
 		}
+		var weightArg any
+		if c.Weight != nil {
+			weightArg = *c.Weight
+		} else {
+			weightArg = nil
+		}
+		var questionArg any
+		if c.Question != "" {
+			questionArg = c.Question
+		} else {
+			questionArg = nil
+		}
 		row := dbEntities.ScorecardField{}
 		err := trx.Get(&row, `
 			INSERT INTO scorecard_fields
-				(tenant_id, key, label, group_key, type, choices, sort_order, is_system, is_active)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, FALSE, TRUE)
+				(tenant_id, key, label, group_key, type, choices, weight, question, sort_order, is_system, is_active)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, FALSE, TRUE)
 			RETURNING `+scorecardFieldSelectCols+`
-		`, tenant.ID, c.Key, c.Label, c.GroupKey, c.Type, choicesArg, c.SortOrder)
+		`, tenant.ID, c.Key, c.Label, c.GroupKey, c.Type, choicesArg, weightArg, questionArg, c.SortOrder)
 		if err != nil {
 			return errors.Wrap(err, "failed to create scorecard field")
 		}
@@ -167,6 +199,28 @@ func seedTenantScorecardFields(ctx context.Context, c *cmd.SeedTenantScorecardFi
 			if err != nil {
 				return errors.Wrap(err, "failed to seed scorecard field %q for tenant %d", seed.Key, c.TenantID)
 			}
+		}
+		return nil
+	})
+}
+
+const scorecardSelectCols = `id, tenant_id, post_id, title, values::text AS values, created_at, updated_at`
+
+func listScorecardsForTenant(ctx context.Context, q *query.ListScorecardsForTenant) error {
+	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
+		rows := []*dbEntities.Scorecard{}
+		err := trx.Select(&rows, `
+			SELECT `+scorecardSelectCols+`
+			FROM scorecards
+			WHERE tenant_id = $1
+			ORDER BY updated_at DESC, id DESC
+		`, tenant.ID)
+		if err != nil {
+			return errors.Wrap(err, "failed to list scorecards for tenant %d", tenant.ID)
+		}
+		q.Result = make([]*entity.Scorecard, len(rows))
+		for i, r := range rows {
+			q.Result[i] = r.ToModel()
 		}
 		return nil
 	})
