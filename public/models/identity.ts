@@ -22,6 +22,30 @@ export interface Tenant {
   // request. Undefined for old Fider builds / unmigrated tenants — runtime
   // code must fall back to the hardcoded PostStatus enum in that case.
   statuses?: Status[]
+  // Scorecard feature toggle + band thresholds + admin-configurable field
+  // catalogue. When isScorecardEnabled is false, nothing renders.
+  isScorecardEnabled: boolean
+  scorecardBandStrong: number
+  scorecardBandGood: number
+  scorecardBandRefine: number
+  scorecardBandLow: number
+  scorecardFields?: ScorecardField[]
+}
+
+export interface ScorecardField {
+  id: number
+  key: string
+  label: string
+  groupKey: string
+  type: "text" | "note" | "date" | "number" | "url" | "choice" | "score"
+  choices?: unknown
+  weight?: number
+  question?: string
+  sortOrder: number
+  isSystem: boolean
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 export enum TenantStatus {
