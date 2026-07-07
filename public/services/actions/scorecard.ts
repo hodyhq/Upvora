@@ -45,3 +45,30 @@ export const updateScorecardField = async (id: number, req: UpdateScorecardField
 export const deleteScorecardField = async (id: number): Promise<Result> => {
   return await http.delete(`/_api/admin/scorecard-fields/${id}`)
 }
+
+export interface ScorecardRecord {
+  id: number
+  postId?: number
+  title: string
+  values: Record<string, unknown>
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateScorecardRequest {
+  postId?: number
+  title?: string
+}
+
+export const createScorecard = async (req: CreateScorecardRequest): Promise<Result<ScorecardRecord>> => {
+  return await http.post<ScorecardRecord>("/_api/scorecards", req)
+}
+
+export interface UpdateScorecardRequest {
+  title: string
+  values: Record<string, unknown>
+}
+
+export const updateScorecard = async (id: number, req: UpdateScorecardRequest): Promise<Result> => {
+  return await http.put(`/_api/scorecards/${id}`, req)
+}

@@ -1,7 +1,7 @@
 import React from "react"
-import { Header } from "@fider/components"
-import { VStack } from "@fider/components/layout"
-import { Fider } from "@fider/services"
+import { Button, Header } from "@fider/components"
+import { HStack, VStack } from "@fider/components/layout"
+import { actions, Fider, notify } from "@fider/services"
 
 interface ScorecardRecord {
   id: number
@@ -25,10 +25,25 @@ const Scorecard: React.FC<ScorecardPageProps> = (props) => {
       <Header />
       <div id="p-scorecard" className="page container">
         <VStack spacing={4}>
-          <div>
-            <h1 className="text-header">Scorecard</h1>
-            <p className="text-muted">Committee-scored review of ideas — weighted across the scoring dimensions defined in Admin → Scorecard Fields.</p>
-          </div>
+          <HStack className="justify-between items-baseline">
+            <div>
+              <h1 className="text-header">Scorecard</h1>
+              <p className="text-muted">Committee-scored review of ideas — weighted across the scoring dimensions defined in Admin → Scorecard Fields.</p>
+            </div>
+            <Button
+              variant="primary"
+              onClick={async () => {
+                const r = await actions.createScorecard({})
+                if (r.ok && r.data) {
+                  window.location.href = `/scorecard/${r.data.id}`
+                } else {
+                  notify.error("Could not create scorecard.")
+                }
+              }}
+            >
+              + New scorecard
+            </Button>
+          </HStack>
 
           {featureOff && (
             <div className="p-3 rounded bg-yellow-100 text-yellow-800">

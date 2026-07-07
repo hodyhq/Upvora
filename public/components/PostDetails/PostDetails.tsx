@@ -444,6 +444,20 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
                   </ActionButton>
                 )}
 
+                {Fider.session.isAuthenticated && Fider.session.user.isCollaborator && Fider.session.tenant.isScorecardEnabled && (
+                  <ActionButton
+                    icon={IconChat}
+                    onClick={async () => {
+                      const r = await actions.createScorecard({ postId: post.id })
+                      if (r.ok && r.data) {
+                        window.location.href = `/scorecard/${r.data.id}`
+                      }
+                    }}
+                  >
+                    <Trans id="action.scorecard">Score this idea</Trans>
+                  </ActionButton>
+                )}
+
                 {Fider.session.tenant.isFeedEnabled && (
                   <ActionButton icon={IconRSS} onClick={onActionSelected("feed")}>
                     <Trans id="action.commentsfeed">Comment Feed</Trans>

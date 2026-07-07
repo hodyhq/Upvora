@@ -27,3 +27,16 @@ type GetScorecardFieldByID struct {
 type ListScorecardsForTenant struct {
 	Result []*entity.Scorecard
 }
+
+// GetScorecardByID fetches one scorecard by primary key, tenant-scoped.
+type GetScorecardByID struct {
+	ID     int
+	Result *entity.Scorecard
+}
+
+// GetScorecardByPostID fetches the scorecard linked to a given post, if any.
+// Returns ErrNotFound when no card exists for the post yet.
+type GetScorecardByPostID struct {
+	PostID int
+	Result *entity.Scorecard
+}

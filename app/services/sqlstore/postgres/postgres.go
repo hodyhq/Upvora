@@ -141,6 +141,10 @@ func (s Service) Init() {
 	bus.AddHandler(seedTenantScorecardFields)
 	bus.AddHandler(setTenantScorecardSettings)
 	bus.AddHandler(listScorecardsForTenant)
+	bus.AddHandler(getScorecardByID)
+	bus.AddHandler(getScorecardByPostID)
+	bus.AddHandler(createScorecard)
+	bus.AddHandler(updateScorecardValues)
 
 	bus.AddHandler(getVerificationByKey)
 	bus.AddHandler(getVerificationByEmailAndCode)

@@ -198,6 +198,101 @@ func seedTenantScorecardFields(ctx context.Context, c *cmd.SeedTenantScorecardFi
 
 const scorecardSelectCols = `id, tenant_id, post_id, title, values::text AS values, created_at, updated_at`
 
+func getScorecardByID(ctx context.Context, q *query.GetScorecardByID) error {
+	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
+		row := dbEntities.Scorecard{}
+		err := trx.Get(&row, `SELECT `+scorecardSelectCols+` FROM scorecards WHERE tenant_id = $1 AND id = $2`, tenant.ID, q.ID)
+		if err == sql.ErrNoRows {
+			return app.ErrNotFound
+		}
+		if err != nil {
+			return errors.Wrap(err, "failed to get scorecard by id %d", q.ID)
+		}
+		q.Result = row.ToModel()
+		return nil
+	})
+}
+
+func getScorecardByPostID(ctx context.Context, q *query.GetScorecardByPostID) error {
+	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
+		row := dbEntities.Scorecard{}
+		err := trx.Get(&row, `SELECT `+scorecardSelectCols+` FROM scorecards WHERE tenant_id = $1 AND post_id = $2`, tenant.ID, q.PostID)
+		if err == sql.ErrNoRows {
+			return app.ErrNotFound
+		}
+		if err != nil {
+			return errors.Wrap(err, "failed to get scorecard for post %d", q.PostID)
+		}
+		q.Result = row.ToModel()
+		return nil
+	})
+}
+
+func createScorecard(ctx context.Context, c *cmd.CreateScorecard) error {
+	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, user *entity.User) error {
+		// Idempotent: if a linked card already exists, return it instead of
+		// inserting a duplicate (the UNIQUE index would refuse it anyway).
+		if c.PostID != nil {
+			existing := dbEntities.Scorecard{}
+			err := trx.Get(&existing, `SELECT `+scorecardSelectCols+` FROM scorecards WHERE tenant_id = $1 AND post_id = $2`, tenant.ID, *c.PostID)
+			if err == nil {
+				c.Result = existing.ToModel()
+				return nil
+			}
+			if err != sql.ErrNoRows {
+				return errors.Wrap(err, "failed to check for existing scorecard on post %d", *c.PostID)
+			}
+		}
+		var postIDArg any
+		if c.PostID != nil {
+			postIDArg = *c.PostID
+		} else {
+			postIDArg = nil
+		}
+		title := c.Title
+		if title == "" {
+			title = "Untitled scorecard"
+		}
+		var createdByArg any
+		if user != nil {
+			createdByArg = user.ID
+		} else {
+			createdByArg = nil
+		}
+		row := dbEntities.Scorecard{}
+		err := trx.Get(&row, `
+			INSERT INTO scorecards (tenant_id, post_id, title, values, created_by)
+			VALUES ($1, $2, $3, '{}'::JSONB, $4)
+			RETURNING `+scorecardSelectCols+`
+		`, tenant.ID, postIDArg, title, createdByArg)
+		if err != nil {
+			return errors.Wrap(err, "failed to create scorecard")
+		}
+		c.Result = row.ToModel()
+		return nil
+	})
+}
+
+func updateScorecardValues(ctx context.Context, c *cmd.UpdateScorecardValues) error {
+	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
+		values := c.Values
+		if len(values) == 0 {
+			values = []byte("{}")
+		}
+		res, err := trx.Execute(`
+			UPDATE scorecards SET title = $1, values = $2::JSONB, updated_at = NOW()
+			WHERE tenant_id = $3 AND id = $4
+		`, c.Title, string(values), tenant.ID, c.ID)
+		if err != nil {
+			return errors.Wrap(err, "failed to update scorecard %d", c.ID)
+		}
+		if res == 0 {
+			return app.ErrNotFound
+		}
+		return nil
+	})
+}
+
 func listScorecardsForTenant(ctx context.Context, q *query.ListScorecardsForTenant) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
 		rows := []*dbEntities.Scorecard{}

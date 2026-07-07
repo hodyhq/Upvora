@@ -40,4 +40,7 @@ type Scorecard struct {
 	CreatedBy *User           `json:"createdBy,omitempty"`
 	CreatedAt time.Time       `json:"createdAt"`
 	UpdatedAt time.Time       `json:"updatedAt"`
+	// Post is populated when PostID != nil by handlers that stitch it on.
+	// Not persisted; convenience payload for the card view.
+	Post *Post `json:"post,omitempty"`
 }

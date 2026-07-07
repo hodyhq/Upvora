@@ -49,6 +49,24 @@ type SeedTenantScorecardFields struct {
 	TenantID int
 }
 
+// CreateScorecard inserts a new scorecard optionally linked to a post. When
+// PostID is set and a card already exists for that post, the handler is
+// idempotent — it returns the existing card instead of creating a duplicate.
+type CreateScorecard struct {
+	PostID *int
+	Title  string
+
+	Result *entity.Scorecard
+}
+
+// UpdateScorecardValues replaces the values JSON blob for a scorecard, and
+// optionally updates the display title. Tenant-scoped.
+type UpdateScorecardValues struct {
+	ID     int
+	Title  string
+	Values []byte // raw JSON blob
+}
+
 // SetTenantScorecardSettings toggles the feature on/off, sets the four band
 // thresholds, and picks which status_slug triggers auto-create in one shot.
 // Empty TriggerStatusSlug = no auto-trigger. Called by /admin/scorecard-settings.

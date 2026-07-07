@@ -124,6 +124,52 @@ func (a *DeleteScorecardField) Validate(ctx context.Context, user *entity.User) 
 	return validate.Success()
 }
 
+// CreateScorecard is the collaborator+ action to create a new scorecard,
+// optionally linked to a Fider post. Idempotent per (tenant, post) — server
+// returns the existing card if one already exists.
+type CreateScorecard struct {
+	PostID *int   `json:"postId,omitempty"`
+	Title  string `json:"title"`
+}
+
+func (a *CreateScorecard) IsAuthorized(ctx context.Context, user *entity.User) bool {
+	return user != nil && (user.Role == enum.RoleCollaborator || user.Role == enum.RoleAdministrator)
+}
+
+func (a *CreateScorecard) Validate(ctx context.Context, user *entity.User) *validate.Result {
+	result := validate.Success()
+	a.Title = strings.TrimSpace(a.Title)
+	if len(a.Title) > 500 {
+		result.AddFieldFailure("title", "Title must be 500 characters or fewer.")
+	}
+	return result
+}
+
+// UpdateScorecardValues writes the values JSON blob (and optional title).
+type UpdateScorecardValues struct {
+	ID     int             `route:"id"`
+	Title  string          `json:"title"`
+	Values json.RawMessage `json:"values"`
+}
+
+func (a *UpdateScorecardValues) IsAuthorized(ctx context.Context, user *entity.User) bool {
+	return user != nil && (user.Role == enum.RoleCollaborator || user.Role == enum.RoleAdministrator)
+}
+
+func (a *UpdateScorecardValues) Validate(ctx context.Context, user *entity.User) *validate.Result {
+	result := validate.Success()
+	a.Title = strings.TrimSpace(a.Title)
+	if a.Title == "" {
+		result.AddFieldFailure("title", "Title is required.")
+	} else if len(a.Title) > 500 {
+		result.AddFieldFailure("title", "Title must be 500 characters or fewer.")
+	}
+	// values may be empty; JSON validity is verified downstream when Postgres
+	// casts to JSONB (bad JSON returns a DB error which surfaces as 500 — good
+	// enough for an admin-only surface).
+	return result
+}
+
 // UpdateScorecardSettings toggles the feature, sets the 4 band thresholds,
 // and picks the auto-create trigger status. Bands are 0-100 and must be
 // strictly descending (strong > good > refine > low). TriggerStatusSlug is

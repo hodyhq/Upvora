@@ -165,6 +165,9 @@ func routes(r *web.Engine) *web.Engine {
 		ui.Use(middlewares.IsAuthorized(enum.RoleCollaborator, enum.RoleAdministrator))
 
 		ui.Get("/scorecard", handlers.ScorecardPage())
+		ui.Get("/scorecard/:id", handlers.ScorecardCardPage())
+		ui.Post("/_api/scorecards", handlers.CreateScorecard())
+		ui.Put("/_api/scorecards/:id", handlers.UpdateScorecard())
 
 		// locale is forced to English for administrative pages.
 		// This is meant to be removed when all pages are translated.
