@@ -29,6 +29,7 @@ export interface Tenant {
   scorecardBandGood: number
   scorecardBandRefine: number
   scorecardBandLow: number
+  scorecardTriggerStatusSlug: string
   scorecardFields?: ScorecardField[]
 }
 

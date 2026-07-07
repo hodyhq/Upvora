@@ -30,11 +30,12 @@ type Tenant struct {
 	SiteBannerEnabled   bool              `json:"siteBannerEnabled"`
 	SiteBannerMessage   string            `json:"siteBannerMessage"`
 	SiteBannerVariant   string            `json:"siteBannerVariant"`
-	IsScorecardEnabled  bool              `json:"isScorecardEnabled"`
-	ScorecardBandStrong int               `json:"scorecardBandStrong"`
-	ScorecardBandGood   int               `json:"scorecardBandGood"`
-	ScorecardBandRefine int               `json:"scorecardBandRefine"`
-	ScorecardBandLow    int               `json:"scorecardBandLow"`
+	IsScorecardEnabled         bool   `json:"isScorecardEnabled"`
+	ScorecardBandStrong        int    `json:"scorecardBandStrong"`
+	ScorecardBandGood          int    `json:"scorecardBandGood"`
+	ScorecardBandRefine        int    `json:"scorecardBandRefine"`
+	ScorecardBandLow           int    `json:"scorecardBandLow"`
+	ScorecardTriggerStatusSlug string `json:"scorecardTriggerStatusSlug"`
 	Statuses            []*Status         `json:"statuses,omitempty"`
 	ScorecardFields     []*ScorecardField `json:"scorecardFields,omitempty"`
 	// ScheduledDeletionAt is set when the account owner has requested deletion of the whole

@@ -49,12 +49,14 @@ type SeedTenantScorecardFields struct {
 	TenantID int
 }
 
-// SetTenantScorecardSettings toggles the feature on/off and sets the four band
-// thresholds in one shot. Called by the /admin/scorecard-settings page.
+// SetTenantScorecardSettings toggles the feature on/off, sets the four band
+// thresholds, and picks which status_slug triggers auto-create in one shot.
+// Empty TriggerStatusSlug = no auto-trigger. Called by /admin/scorecard-settings.
 type SetTenantScorecardSettings struct {
-	IsEnabled  bool
-	BandStrong int
-	BandGood   int
-	BandRefine int
-	BandLow    int
+	IsEnabled         bool
+	BandStrong        int
+	BandGood          int
+	BandRefine        int
+	BandLow           int
+	TriggerStatusSlug string
 }

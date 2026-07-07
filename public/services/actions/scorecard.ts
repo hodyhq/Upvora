@@ -7,6 +7,7 @@ export interface ScorecardSettings {
   bandGood: number
   bandRefine: number
   bandLow: number
+  triggerStatusSlug: string
 }
 
 export const updateScorecardSettings = async (settings: ScorecardSettings): Promise<Result> => {

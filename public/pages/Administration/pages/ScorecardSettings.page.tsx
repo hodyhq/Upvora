@@ -1,5 +1,5 @@
 import React from "react"
-import { Button, ButtonClickEvent, Toggle, Form, Field, Input } from "@fider/components"
+import { Button, ButtonClickEvent, Toggle, Form, Field, Input, Select, SelectOption } from "@fider/components"
 import { actions, notify, Fider, Failure } from "@fider/services"
 import { AdminBasePage } from "@fider/pages/Administration/components/AdminBasePage"
 
@@ -9,6 +9,7 @@ interface ScorecardSettingsState {
   bandGood: number
   bandRefine: number
   bandLow: number
+  triggerStatusSlug: string
   error?: Failure
 }
 
@@ -26,6 +27,7 @@ export default class ScorecardSettingsPage extends AdminBasePage<any, ScorecardS
       bandGood: Fider.session.tenant.scorecardBandGood,
       bandRefine: Fider.session.tenant.scorecardBandRefine,
       bandLow: Fider.session.tenant.scorecardBandLow,
+      triggerStatusSlug: Fider.session.tenant.scorecardTriggerStatusSlug ?? "",
     }
   }
 
@@ -44,6 +46,7 @@ export default class ScorecardSettingsPage extends AdminBasePage<any, ScorecardS
       bandGood: this.state.bandGood,
       bandRefine: this.state.bandRefine,
       bandLow: this.state.bandLow,
+      triggerStatusSlug: this.state.triggerStatusSlug,
     })
     if (result.ok) {
       notify.success("Scorecard settings saved.")
@@ -54,15 +57,30 @@ export default class ScorecardSettingsPage extends AdminBasePage<any, ScorecardS
   }
 
   public content() {
+    const statusOptions: SelectOption[] = [
+      { value: "", label: "— No auto-trigger — cards are created manually" },
+      ...(Fider.session.tenant.statuses ?? []).filter((s) => s.isActive).map((s) => ({ value: s.slug, label: s.label })),
+    ]
     return (
       <Form error={this.state.error}>
         <Field label="Enable scorecard">
           <Toggle disabled={!Fider.session.user.isAdministrator} active={this.state.isEnabled} onToggle={this.toggle} />
           <p className="text-muted mt-1">
-            When enabled, collaborators and administrators see a Scorecard page for reviewing and scoring ideas across eight weighted dimensions. Visitors
+            When enabled, collaborators and administrators see a Scorecard page for reviewing and scoring ideas across the weighted dimensions you define. Visitors
             never see it.
           </p>
         </Field>
+
+        <Select
+          field="triggerStatusSlug"
+          label="Auto-create trigger status"
+          defaultValue={this.state.triggerStatusSlug}
+          options={statusOptions}
+          onChange={(o) => this.setState({ triggerStatusSlug: o!.value })}
+        />
+        <p className="text-muted -mt-2">
+          When a post's status changes to this one, a scorecard is automatically created and linked to it. Change the list of statuses at <a href="/admin/statuses" className="text-link">Site Settings → Statuses</a>. Select "No auto-trigger" if you'd rather create every scorecard by hand.
+        </p>
 
         <p className="text-muted mt-4">
           Band thresholds decide how a weighted score (0–100) maps to a label. Must be strictly descending: Strong &gt; Good &gt; Needs Refinement &gt; Low.

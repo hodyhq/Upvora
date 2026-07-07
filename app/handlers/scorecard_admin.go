@@ -95,11 +95,12 @@ func UpdateScorecardSettings() web.HandlerFunc {
 			return c.HandleValidation(result)
 		}
 		set := &cmd.SetTenantScorecardSettings{
-			IsEnabled:  action.IsEnabled,
-			BandStrong: action.BandStrong,
-			BandGood:   action.BandGood,
-			BandRefine: action.BandRefine,
-			BandLow:    action.BandLow,
+			IsEnabled:         action.IsEnabled,
+			BandStrong:        action.BandStrong,
+			BandGood:          action.BandGood,
+			BandRefine:        action.BandRefine,
+			BandLow:           action.BandLow,
+			TriggerStatusSlug: action.TriggerStatusSlug,
 		}
 		if err := bus.Dispatch(c, set); err != nil {
 			return c.Failure(err)

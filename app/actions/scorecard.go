@@ -124,14 +124,17 @@ func (a *DeleteScorecardField) Validate(ctx context.Context, user *entity.User) 
 	return validate.Success()
 }
 
-// UpdateScorecardSettings toggles the feature and sets the 4 band thresholds.
-// Bands are 0-100 and must be strictly descending (strong > good > refine > low).
+// UpdateScorecardSettings toggles the feature, sets the 4 band thresholds,
+// and picks the auto-create trigger status. Bands are 0-100 and must be
+// strictly descending (strong > good > refine > low). TriggerStatusSlug is
+// optional (empty = no auto-trigger).
 type UpdateScorecardSettings struct {
-	IsEnabled  bool `json:"isEnabled"`
-	BandStrong int  `json:"bandStrong"`
-	BandGood   int  `json:"bandGood"`
-	BandRefine int  `json:"bandRefine"`
-	BandLow    int  `json:"bandLow"`
+	IsEnabled         bool   `json:"isEnabled"`
+	BandStrong        int    `json:"bandStrong"`
+	BandGood          int    `json:"bandGood"`
+	BandRefine        int    `json:"bandRefine"`
+	BandLow           int    `json:"bandLow"`
+	TriggerStatusSlug string `json:"triggerStatusSlug"`
 }
 
 func (a *UpdateScorecardSettings) IsAuthorized(ctx context.Context, user *entity.User) bool {

@@ -220,15 +220,22 @@ func listScorecardsForTenant(ctx context.Context, q *query.ListScorecardsForTena
 
 func setTenantScorecardSettings(ctx context.Context, c *cmd.SetTenantScorecardSettings) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
+		var triggerArg any
+		if c.TriggerStatusSlug != "" {
+			triggerArg = c.TriggerStatusSlug
+		} else {
+			triggerArg = nil
+		}
 		_, err := trx.Execute(`
 			UPDATE tenants SET
 				is_scorecard_enabled = $1,
 				scorecard_band_strong = $2,
 				scorecard_band_good = $3,
 				scorecard_band_refine = $4,
-				scorecard_band_low = $5
-			WHERE id = $6
-		`, c.IsEnabled, c.BandStrong, c.BandGood, c.BandRefine, c.BandLow, tenant.ID)
+				scorecard_band_low = $5,
+				scorecard_trigger_status_slug = $6
+			WHERE id = $7
+		`, c.IsEnabled, c.BandStrong, c.BandGood, c.BandRefine, c.BandLow, triggerArg, tenant.ID)
 		if err != nil {
 			return errors.Wrap(err, "failed to update scorecard settings for tenant %d", tenant.ID)
 		}
@@ -237,6 +244,7 @@ func setTenantScorecardSettings(ctx context.Context, c *cmd.SetTenantScorecardSe
 		tenant.ScorecardBandGood = c.BandGood
 		tenant.ScorecardBandRefine = c.BandRefine
 		tenant.ScorecardBandLow = c.BandLow
+		tenant.ScorecardTriggerStatusSlug = c.TriggerStatusSlug
 		return nil
 	})
 }
