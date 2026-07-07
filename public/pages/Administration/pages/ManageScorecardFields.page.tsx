@@ -1,5 +1,5 @@
 import React from "react"
-import { Button, ButtonClickEvent, Field, Form, Input, Select, SelectOption, TextArea, Toggle } from "@fider/components"
+import { Button, Field, Form, Input, Select, SelectOption, TextArea, Toggle } from "@fider/components"
 import { HStack, VStack } from "@fider/components/layout"
 import { ScorecardField } from "@fider/models"
 import { actions, Failure, Fider } from "@fider/services"
@@ -51,7 +51,10 @@ const typeOptions: SelectOption[] = [
 // as a comma-separated string. These helpers translate between the two shapes.
 const choicesToCsv = (raw: unknown): string => {
   if (!raw || !Array.isArray(raw)) return ""
-  return raw.map((c: any) => (typeof c === "string" ? c : c?.value ?? "")).filter(Boolean).join(", ")
+  return raw
+    .map((c: any) => (typeof c === "string" ? c : c?.value ?? ""))
+    .filter(Boolean)
+    .join(", ")
 }
 const csvToChoices = (s: string): { value: string }[] =>
   s
@@ -142,7 +145,7 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
     })
   }
 
-  private save = async (_e: ButtonClickEvent) => {
+  private save = async () => {
     const s = this.state
     let choicesForReq: unknown = undefined
     if (s.draftType === "choice") {
@@ -340,8 +343,8 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
             {/* Group + type are only editable when adding. */}
             {this.state.isAdding ? (
               <>
-                <Select field="groupKey" label="Group" defaultValue={this.state.draftGroup} options={groupOptions} onChange={(o) => this.setState({ draftGroup: o!.value })} />
-                <Select field="type" label="Type" defaultValue={this.state.draftType} options={typeOptions} onChange={(o) => this.setState({ draftType: o!.value })} />
+                <Select field="groupKey" label="Group" defaultValue={this.state.draftGroup} options={groupOptions} onChange={(o) => this.setState({ draftGroup: o?.value ?? "context" })} />
+                <Select field="type" label="Type" defaultValue={this.state.draftType} options={typeOptions} onChange={(o) => this.setState({ draftType: o?.value ?? "text" })} />
               </>
             ) : (
               <>

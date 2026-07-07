@@ -76,7 +76,7 @@ export default class ScorecardSettingsPage extends AdminBasePage<any, ScorecardS
           label="Auto-create trigger status"
           defaultValue={this.state.triggerStatusSlug}
           options={statusOptions}
-          onChange={(o) => this.setState({ triggerStatusSlug: o!.value })}
+          onChange={(o) => this.setState({ triggerStatusSlug: o?.value ?? "" })}
         />
         <p className="text-muted -mt-2">
           When a post's status changes to this one, a scorecard is automatically created and linked to it. Change the list of statuses at <a href="/admin/statuses" className="text-link">Site Settings → Statuses</a>. Select "No auto-trigger" if you'd rather create every scorecard by hand.

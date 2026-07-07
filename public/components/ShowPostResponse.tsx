@@ -148,7 +148,10 @@ const getStatusTranslation = (status: PostStatus, tenantStatus: Status | null): 
 // the Plane webhook writes the substage label (e.g. "In Beta Testing").
 const extractSubstage = (text?: string): string | null => {
   if (!text) return null
-  const firstLine = text.split("\n").map((l) => l.trim()).find((l) => l.length > 0)
+  const firstLine = text
+    .split("\n")
+    .map((l) => l.trim())
+    .find((l) => l.length > 0)
   if (!firstLine) return null
   // Strip simple markdown bold/italic markers so the bubble reads cleanly.
   const cleaned = firstLine.replace(/[*_`]/g, "").trim()
