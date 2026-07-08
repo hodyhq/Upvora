@@ -12,6 +12,18 @@
     border: 1px solid var(--colors-gray-200);
     border-radius: 6px;
     overflow: hidden;
+
+    // Fider's stock buttons squared off to match the panel language.
+    .c-button {
+      border-radius: 4px;
+      font-size: 13px;
+      padding: 7px 14px;
+
+      &--small {
+        padding: 4px 9px;
+        font-size: 11.5px;
+      }
+    }
   }
 
   // ─────────── chips ───────────
@@ -685,6 +697,47 @@
     &:hover {
       background: transparent;
     }
+  }
+
+  // status callout — the weight-sum banner and similar admin notices
+  &__callout {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--colors-white);
+    border: 1px solid var(--colors-gray-200);
+    border-left: 3px solid #16a34a;
+    border-radius: 0 4px 4px 0;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--colors-gray-700);
+    line-height: 1.5;
+
+    strong {
+      color: var(--colors-gray-900);
+      font-weight: 600;
+    }
+
+    &--warn {
+      border-left-color: #e9a208;
+
+      .c-scorecard__callout-num {
+        color: #78350f;
+        background: #fbf1d8;
+      }
+    }
+  }
+
+  &__callout-num {
+    font-family: $font-code;
+    font-size: 18px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #14532d;
+    background: #e5f4e9;
+    border-radius: 4px;
+    padding: 6px 10px;
+    flex-shrink: 0;
   }
 
   &__order-num {
