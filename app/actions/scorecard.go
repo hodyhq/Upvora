@@ -194,7 +194,7 @@ func (a *UpdateScorecardSettings) Validate(ctx context.Context, user *entity.Use
 			result.AddFieldFailure(name, "Band threshold must be between 0 and 100.")
 		}
 	}
-	if !(a.BandStrong > a.BandGood && a.BandGood > a.BandRefine && a.BandRefine > a.BandLow) {
+	if a.BandStrong <= a.BandGood || a.BandGood <= a.BandRefine || a.BandRefine <= a.BandLow {
 		result.AddFieldFailure("bandStrong", "Band thresholds must be strictly descending: strong > good > refine > low.")
 	}
 	return result

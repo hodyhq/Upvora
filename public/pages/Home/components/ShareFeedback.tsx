@@ -228,7 +228,10 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
             <Trans id="newpost.modal.title">Share your idea...</Trans>
           </h1>
           {fider.session.tenant.shareIdeaInstructions && (
-            <div className="mb-4 p-3" style={{ background: "var(--colors-gray-50, #f8fafc)", border: "1px solid var(--colors-gray-200)", borderRadius: 8, fontSize: 14 }}>
+            <div
+              className="mb-4 p-3"
+              style={{ background: "var(--colors-gray-50, #f8fafc)", border: "1px solid var(--colors-gray-200)", borderRadius: 8, fontSize: 14 }}
+            >
               <Markdown text={fider.session.tenant.shareIdeaInstructions} style="full" />
             </div>
           )}

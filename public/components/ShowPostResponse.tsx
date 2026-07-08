@@ -89,10 +89,7 @@ const iconForKind = (kind: string): SpriteSymbol => {
   }
 }
 
-const getLozengeProps = (
-  status: PostStatus,
-  tenantStatus: Status | null
-): { icon: SpriteSymbol; bg: string; color: string; border: string } => {
+const getLozengeProps = (status: PostStatus, tenantStatus: Status | null): { icon: SpriteSymbol; bg: string; color: string; border: string } => {
   // Tenant catalogue takes precedence — that's where admin-chosen color/kind
   // live for custom statuses (feedback.fider.io/111).
   if (tenantStatus) {
@@ -163,10 +160,9 @@ export const ResponseLozenge = (props: PostResponseProps): JSX.Element | null =>
   const tenantStatus = resolveStatus(Fider.session.tenant, props.status)
   const { icon, bg, color, border } = getLozengeProps(status, tenantStatus)
   const translatedStatus = getStatusTranslation(status, tenantStatus)
-  const substage =
-    props.size === "small" || props.size === "xsmall" || !props.size ? extractSubstage(props.response?.text || undefined) : null
+  const substage = props.size === "small" || props.size === "xsmall" || !props.size ? extractSubstage(props.response?.text || undefined) : null
 
-  if (props.size == "micro") {
+  if (props.size === "micro") {
     return <span className={`${color} text-sm`}>{translatedStatus}</span>
   }
 

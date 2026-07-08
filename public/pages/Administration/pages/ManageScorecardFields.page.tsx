@@ -268,9 +268,7 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
   }
 
   private weightSum(): number {
-    return this.state.fields
-      .filter((f) => f.type === "score" && f.isActive)
-      .reduce((sum, f) => sum + (f.weight ?? 0), 0)
+    return this.state.fields.filter((f) => f.type === "score" && f.isActive).reduce((sum, f) => sum + (f.weight ?? 0), 0)
   }
 
   public content() {
@@ -283,7 +281,9 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
       <VStack spacing={4}>
         <div className={`p-3 rounded ${weightSumOK ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
           <strong>Weighted-score input:</strong> active scoring weights sum to <strong>{weightSum}</strong>
-          {weightSumOK ? " (100 — good)." : " — must equal 100 for the weighted score to hit 0-100 correctly. Edit the weights of the eight scoring rows to rebalance."}
+          {weightSumOK
+            ? " (100 — good)."
+            : " — must equal 100 for the weighted score to hit 0-100 correctly. Edit the weights of the eight scoring rows to rebalance."}
         </div>
 
         <table className="w-full">
@@ -304,8 +304,12 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
               <tr key={f.id} className={f.isActive ? "" : "text-muted"}>
                 <td className="p-2">
                   <HStack spacing={1}>
-                    <Button variant="tertiary" size="small" onClick={() => this.move(f, -1)} disabled={!canEdit}>↑</Button>
-                    <Button variant="tertiary" size="small" onClick={() => this.move(f, 1)} disabled={!canEdit}>↓</Button>
+                    <Button variant="tertiary" size="small" onClick={() => this.move(f, -1)} disabled={!canEdit}>
+                      ↑
+                    </Button>
+                    <Button variant="tertiary" size="small" onClick={() => this.move(f, 1)} disabled={!canEdit}>
+                      ↓
+                    </Button>
                     <span className="text-xs text-muted">{f.sortOrder}</span>
                   </HStack>
                 </td>
@@ -317,8 +321,12 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
                 <td className="p-2 text-xs">{f.isSystem ? "yes" : ""}</td>
                 <td className="p-2">
                   <HStack spacing={2}>
-                    <Button variant="tertiary" size="small" onClick={() => this.openEdit(f)} disabled={!canEdit}>Edit</Button>
-                    <Button variant="danger" size="small" onClick={() => this.remove(f)} disabled={!canEdit}>Delete</Button>
+                    <Button variant="tertiary" size="small" onClick={() => this.openEdit(f)} disabled={!canEdit}>
+                      Edit
+                    </Button>
+                    <Button variant="danger" size="small" onClick={() => this.remove(f)} disabled={!canEdit}>
+                      Delete
+                    </Button>
                   </HStack>
                 </td>
               </tr>
@@ -335,7 +343,12 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
 
             {/* Key is only editable when adding. On edit, show read-only. */}
             {this.state.isAdding ? (
-              <Input field="key" label="Key (machine name — lowercase letters, digits, underscores)" value={this.state.draftKey} onChange={(v) => this.setState({ draftKey: slugifyKey(v) })} />
+              <Input
+                field="key"
+                label="Key (machine name — lowercase letters, digits, underscores)"
+                value={this.state.draftKey}
+                onChange={(v) => this.setState({ draftKey: slugifyKey(v) })}
+              />
             ) : (
               <Input field="key" label="Key" value={this.state.draftKey} disabled />
             )}
@@ -343,8 +356,20 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
             {/* Group + type are only editable when adding. */}
             {this.state.isAdding ? (
               <>
-                <Select field="groupKey" label="Group" defaultValue={this.state.draftGroup} options={groupOptions} onChange={(o) => this.setState({ draftGroup: o?.value ?? "context" })} />
-                <Select field="type" label="Type" defaultValue={this.state.draftType} options={typeOptions} onChange={(o) => this.setState({ draftType: o?.value ?? "text" })} />
+                <Select
+                  field="groupKey"
+                  label="Group"
+                  defaultValue={this.state.draftGroup}
+                  options={groupOptions}
+                  onChange={(o) => this.setState({ draftGroup: o?.value ?? "context" })}
+                />
+                <Select
+                  field="type"
+                  label="Type"
+                  defaultValue={this.state.draftType}
+                  options={typeOptions}
+                  onChange={(o) => this.setState({ draftType: o?.value ?? "text" })}
+                />
               </>
             ) : (
               <>
@@ -356,8 +381,18 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
             {/* Weight + question are only meaningful for score-type rows. */}
             {this.state.draftType === "score" && (
               <>
-                <Input field="weight" label="Weight (0-100; active weights across all scoring rows must sum to 100)" value={this.state.draftWeight} onChange={(v) => this.setState({ draftWeight: v.replace(/[^0-9]/g, "") })} />
-                <TextArea field="question" label="Question (shown next to the 1-5 slider on the card page)" value={this.state.draftQuestion} onChange={(v) => this.setState({ draftQuestion: v })} />
+                <Input
+                  field="weight"
+                  label="Weight (0-100; active weights across all scoring rows must sum to 100)"
+                  value={this.state.draftWeight}
+                  onChange={(v) => this.setState({ draftWeight: v.replace(/[^0-9]/g, "") })}
+                />
+                <TextArea
+                  field="question"
+                  label="Question (shown next to the 1-5 slider on the card page)"
+                  value={this.state.draftQuestion}
+                  onChange={(v) => this.setState({ draftQuestion: v })}
+                />
               </>
             )}
 
@@ -372,7 +407,12 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
               />
             )}
 
-            <Input field="sortOrder" label="Sort order (lower shows first within its group)" value={String(this.state.draftSortOrder)} onChange={(v) => this.setState({ draftSortOrder: parseInt(v || "0", 10) || 0 })} />
+            <Input
+              field="sortOrder"
+              label="Sort order (lower shows first within its group)"
+              value={String(this.state.draftSortOrder)}
+              onChange={(v) => this.setState({ draftSortOrder: parseInt(v || "0", 10) || 0 })}
+            />
 
             {!this.state.isAdding && (
               <Field label="Active">
@@ -382,17 +422,22 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
             )}
 
             <HStack spacing={2}>
-              <Button variant="primary" onClick={this.save} disabled={this.state.busy || !canEdit}>Save</Button>
-              <Button variant="tertiary" onClick={this.cancel}>Cancel</Button>
+              <Button variant="primary" onClick={this.save} disabled={this.state.busy || !canEdit}>
+                Save
+              </Button>
+              <Button variant="tertiary" onClick={this.cancel}>
+                Cancel
+              </Button>
             </HStack>
           </Form>
         )}
 
         {!this.state.isAdding && this.state.editingId == null && (
-          <Button variant="primary" onClick={this.openAdd} disabled={!canEdit}>Add a field</Button>
+          <Button variant="primary" onClick={this.openAdd} disabled={!canEdit}>
+            Add a field
+          </Button>
         )}
       </VStack>
     )
   }
 }
-

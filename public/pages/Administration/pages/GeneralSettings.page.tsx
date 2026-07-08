@@ -21,7 +21,17 @@ const GeneralSettingsPage = () => {
   const [error, setError] = useState<Failure | undefined>(undefined)
 
   const handleSave = async (e: ButtonClickEvent) => {
-    const result = await actions.updateTenantSettings({ title, cname, welcomeMessage, welcomeHeader, descriptionTemplate, shareIdeaInstructions, invitation, logo, locale })
+    const result = await actions.updateTenantSettings({
+      title,
+      cname,
+      welcomeMessage,
+      welcomeHeader,
+      descriptionTemplate,
+      shareIdeaInstructions,
+      invitation,
+      logo,
+      locale,
+    })
     if (result.ok) {
       e.preventEnable()
       location.href = `/`
@@ -95,7 +105,10 @@ const GeneralSettingsPage = () => {
           disabled={!fider.session.user.isAdministrator}
           onChange={setShareIdeaInstructions}
         >
-          <p className="text-muted">Optional Markdown shown at the top of the "Share your idea" modal, right under the header. Guide submitters on what to include (context, screenshots, expected outcome, etc.).</p>
+          <p className="text-muted">
+            Optional Markdown shown at the top of the &quot;Share your idea&quot; modal, right under the header. Guide submitters on what to include (context,
+            screenshots, expected outcome, etc.).
+          </p>
         </TextArea>
 
         <Input

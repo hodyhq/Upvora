@@ -1,5 +1,5 @@
 import React from "react"
-import { Button, ButtonClickEvent, Toggle, Form, Field, Input, Select, SelectOption } from "@fider/components"
+import { Button, Toggle, Form, Field, Input, Select, SelectOption } from "@fider/components"
 import { actions, notify, Fider, Failure } from "@fider/services"
 import { AdminBasePage } from "@fider/pages/Administration/components/AdminBasePage"
 
@@ -39,7 +39,7 @@ export default class ScorecardSettingsPage extends AdminBasePage<any, ScorecardS
     this.setState({ [key]: Number.isNaN(n) ? 0 : n } as any)
   }
 
-  private save = async (_e: ButtonClickEvent) => {
+  private save = async () => {
     const result = await actions.updateScorecardSettings({
       isEnabled: this.state.isEnabled,
       bandStrong: this.state.bandStrong,
@@ -66,8 +66,8 @@ export default class ScorecardSettingsPage extends AdminBasePage<any, ScorecardS
         <Field label="Enable scorecard">
           <Toggle disabled={!Fider.session.user.isAdministrator} active={this.state.isEnabled} onToggle={this.toggle} />
           <p className="text-muted mt-1">
-            When enabled, collaborators and administrators see a Scorecard page for reviewing and scoring ideas across the weighted dimensions you define. Visitors
-            never see it.
+            When enabled, collaborators and administrators see a Scorecard page for reviewing and scoring ideas across the weighted dimensions you define.
+            Visitors never see it.
           </p>
         </Field>
 
@@ -79,7 +79,11 @@ export default class ScorecardSettingsPage extends AdminBasePage<any, ScorecardS
           onChange={(o) => this.setState({ triggerStatusSlug: o?.value ?? "" })}
         />
         <p className="text-muted -mt-2">
-          When a post's status changes to this one, a scorecard is automatically created and linked to it. Change the list of statuses at <a href="/admin/statuses" className="text-link">Site Settings → Statuses</a>. Select "No auto-trigger" if you'd rather create every scorecard by hand.
+          When a post&apos;s status changes to this one, a scorecard is automatically created and linked to it. Change the list of statuses at{" "}
+          <a href="/admin/statuses" className="text-link">
+            Site Settings → Statuses
+          </a>
+          . Select &quot;No auto-trigger&quot; if you&apos;d rather create every scorecard by hand.
         </p>
 
         <p className="text-muted mt-4">
