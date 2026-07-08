@@ -316,7 +316,12 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
             <div className="c-scorecard__gauge-track">
               <div className="c-scorecard__gauge-bar">
                 {BAND_SEGMENTS.map((seg) => (
-                  <div key={seg} className={`c-scorecard__gauge-seg c-scorecard__gauge-seg--${seg} ${band.key === seg ? "c-scorecard__gauge-seg--lit" : ""}`} />
+                  <div
+                    key={seg}
+                    className={`c-scorecard__gauge-seg c-scorecard__gauge-seg--${seg} ${
+                      weightedScore > 0 && band.key === seg ? "c-scorecard__gauge-seg--lit" : ""
+                    }`}
+                  />
                 ))}
               </div>
               <div className="c-scorecard__gauge-marker" style={{ left: `${Math.min(100, Math.max(0, weightedScore))}%` }}>
@@ -332,10 +337,21 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
               </div>
             </div>
             <div className="c-scorecard__gauge-band">
-              <span className={`c-scorecard__chip c-scorecard__chip--${band.key}`}>{band.label}</span>
-              <div className="c-scorecard__gauge-hint">
-                {band.threshold > 0 ? `band threshold ≥ ${band.threshold}` : `below ${Fider.session.tenant.scorecardBandLow}`}
-              </div>
+              {weightedScore === 0 ? (
+                // A card with nothing scored is "Not scored", not the bottom
+                // band — stage 5 starts at 1.
+                <>
+                  <span className="c-scorecard__chip c-scorecard__chip--neutral c-scorecard__chip--plain">Not scored</span>
+                  <div className="c-scorecard__gauge-hint">score any dimension to place this card</div>
+                </>
+              ) : (
+                <>
+                  <span className={`c-scorecard__chip c-scorecard__chip--${band.key}`}>{band.label}</span>
+                  <div className="c-scorecard__gauge-hint">
+                    {band.threshold > 0 ? `band threshold ≥ ${band.threshold}` : `below ${Fider.session.tenant.scorecardBandLow}`}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
