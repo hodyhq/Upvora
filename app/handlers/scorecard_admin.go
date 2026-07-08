@@ -100,6 +100,11 @@ func UpdateScorecardSettings() web.HandlerFunc {
 			BandGood:          action.BandGood,
 			BandRefine:        action.BandRefine,
 			BandLow:           action.BandLow,
+			BandStrongLabel:   action.BandStrongLabel,
+			BandGoodLabel:     action.BandGoodLabel,
+			BandRefineLabel:   action.BandRefineLabel,
+			BandLowLabel:      action.BandLowLabel,
+			BandNoneLabel:     action.BandNoneLabel,
 			TriggerStatusSlug: action.TriggerStatusSlug,
 		}
 		if err := bus.Dispatch(c, set); err != nil {

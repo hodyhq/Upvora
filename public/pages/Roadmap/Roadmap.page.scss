@@ -17,15 +17,20 @@
   @include media("lg") {
     flex-direction: row;
     flex-wrap: nowrap;
+    gap: spacing(3);
     overflow-x: auto;
     overflow-y: visible;
     align-items: flex-start;
     // Hide the default scrollbar while keeping the surface scrollable.
     scrollbar-width: thin;
 
+    // Fluid lanes with a floor: up to 5 columns fit the xl container (1140px)
+    // side by side; fewer columns stretch wider, more overflow into a
+    // horizontal scroll instead of crushing below 218px.
     > .c-roadmap-column {
-      flex: 0 0 300px;
-      min-width: 300px;
+      flex: 1 1 240px;
+      min-width: 218px;
+      max-width: 340px;
     }
   }
 }
@@ -41,6 +46,41 @@
     padding-bottom: spacing(2);
     margin-bottom: spacing(3);
     border-bottom: 2px solid var(--colors-gray-300);
+  }
+
+  // Status chip in the scorecard design language: squared tag, dot, tinted
+  // background from the admin-chosen status color.
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.015em;
+    padding: 3px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+
+    &::before {
+      content: "";
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    &--blue   { background: #e3ecf9; color: #1e3a8a; }
+    &--green  { background: #e5f4e9; color: #14532d; }
+    &--yellow { background: #fbf1d8; color: #78350f; }
+    &--red    { background: #fae3e3; color: #7f1d1d; }
+    &--gray   { background: var(--colors-gray-200); color: var(--colors-gray-700); }
+
+    @include dark-mode {
+      &--blue   { background: #16223f; color: #9bb8f4; }
+      &--green  { background: #12301f; color: #7ee3a6; }
+      &--yellow { background: #32240b; color: #f0c878; }
+      &--red    { background: #331414; color: #f0a0a0; }
+    }
   }
 
   &__count {

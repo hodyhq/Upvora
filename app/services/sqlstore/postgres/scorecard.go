@@ -424,9 +424,16 @@ func setTenantScorecardSettings(ctx context.Context, c *cmd.SetTenantScorecardSe
 				scorecard_band_good = $3,
 				scorecard_band_refine = $4,
 				scorecard_band_low = $5,
-				scorecard_trigger_status_slug = $6
-			WHERE id = $7
-		`, c.IsEnabled, c.BandStrong, c.BandGood, c.BandRefine, c.BandLow, triggerArg, tenant.ID)
+				scorecard_band_strong_label = $6,
+				scorecard_band_good_label = $7,
+				scorecard_band_refine_label = $8,
+				scorecard_band_low_label = $9,
+				scorecard_band_none_label = $10,
+				scorecard_trigger_status_slug = $11
+			WHERE id = $12
+		`, c.IsEnabled, c.BandStrong, c.BandGood, c.BandRefine, c.BandLow,
+			c.BandStrongLabel, c.BandGoodLabel, c.BandRefineLabel, c.BandLowLabel, c.BandNoneLabel,
+			triggerArg, tenant.ID)
 		if err != nil {
 			return errors.Wrap(err, "failed to update scorecard settings for tenant %d", tenant.ID)
 		}

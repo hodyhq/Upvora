@@ -4,7 +4,7 @@ import IconCheckCircle from "@fider/assets/images/heroicons-check-circle.svg"
 
 import React, { useState, useCallback } from "react"
 import { Post, Status, Tag } from "@fider/models"
-import { Header, Button, Icon, ResponseLozenge, ShowTag, Moment } from "@fider/components"
+import { Header, Button, Icon, ShowTag, Moment } from "@fider/components"
 import { VStack, HStack } from "@fider/components/layout"
 import { useFider, usePostOverlay } from "@fider/hooks"
 import { actions } from "@fider/services"
@@ -23,6 +23,8 @@ interface RoadmapPageProps {
 
 interface RoadmapColumnProps {
   status: string
+  statusLabel: string
+  statusColor: string
   kind?: string
   posts: Post[]
   tags: Tag[]
@@ -93,7 +95,7 @@ const RoadmapColumn = (props: RoadmapColumnProps) => {
   return (
     <div className="c-roadmap-column">
       <div className="c-roadmap-column__header">
-        <ResponseLozenge status={props.status} response={null} />
+        <span className={`c-roadmap-column__chip c-roadmap-column__chip--${props.statusColor || "blue"}`}>{props.statusLabel}</span>
         <span className="c-roadmap-column__count">{props.posts.length}</span>
       </div>
       <div className="c-roadmap-column__body">
@@ -178,6 +180,8 @@ const RoadmapBoard = (props: RoadmapPageProps) => {
               <RoadmapColumn
                 key={col.status.slug}
                 status={col.status.slug}
+                statusLabel={col.status.label}
+                statusColor={col.status.color}
                 kind={col.status.kind}
                 posts={col.posts}
                 tags={tags}
@@ -218,7 +222,7 @@ const SkeletonCard = () => (
 const SkeletonColumn = ({ status }: { status: string }) => (
   <div className="c-roadmap-column">
     <div className="c-roadmap-column__header">
-      <ResponseLozenge status={status} response={null} />
+      <span className="c-roadmap-column__chip c-roadmap-column__chip--gray">{status}</span>
     </div>
     <div className="c-roadmap-column__body">
       <SkeletonCard />

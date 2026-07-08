@@ -38,8 +38,13 @@ type Tenant struct {
 	IsScorecardEnabled         bool           `db:"is_scorecard_enabled"`
 	ScorecardBandStrong        int            `db:"scorecard_band_strong"`
 	ScorecardBandGood          int            `db:"scorecard_band_good"`
-	ScorecardBandRefine        int            `db:"scorecard_band_refine"`
+	ScorecardBandRefine       int            `db:"scorecard_band_refine"`
 	ScorecardBandLow           int            `db:"scorecard_band_low"`
+	ScorecardBandStrongLabel   string         `db:"scorecard_band_strong_label"`
+	ScorecardBandGoodLabel     string         `db:"scorecard_band_good_label"`
+	ScorecardBandRefineLabel   string         `db:"scorecard_band_refine_label"`
+	ScorecardBandLowLabel      string         `db:"scorecard_band_low_label"`
+	ScorecardBandNoneLabel     string         `db:"scorecard_band_none_label"`
 	ScorecardTriggerStatusSlug sql.NullString `db:"scorecard_trigger_status_slug"`
 }
 
@@ -84,6 +89,11 @@ func (t *Tenant) ToModel() *entity.Tenant {
 		ScorecardBandGood:   t.ScorecardBandGood,
 		ScorecardBandRefine: t.ScorecardBandRefine,
 		ScorecardBandLow:    t.ScorecardBandLow,
+		ScorecardBandStrongLabel: t.ScorecardBandStrongLabel,
+		ScorecardBandGoodLabel:   t.ScorecardBandGoodLabel,
+		ScorecardBandRefineLabel: t.ScorecardBandRefineLabel,
+		ScorecardBandLowLabel:    t.ScorecardBandLowLabel,
+		ScorecardBandNoneLabel:   t.ScorecardBandNoneLabel,
 	}
 
 	if t.ScorecardTriggerStatusSlug.Valid {

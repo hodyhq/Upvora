@@ -36,6 +36,11 @@ type Tenant struct {
 	ScorecardBandGood          int    `json:"scorecardBandGood"`
 	ScorecardBandRefine        int    `json:"scorecardBandRefine"`
 	ScorecardBandLow           int    `json:"scorecardBandLow"`
+	ScorecardBandStrongLabel   string `json:"scorecardBandStrongLabel"`
+	ScorecardBandGoodLabel     string `json:"scorecardBandGoodLabel"`
+	ScorecardBandRefineLabel   string `json:"scorecardBandRefineLabel"`
+	ScorecardBandLowLabel      string `json:"scorecardBandLowLabel"`
+	ScorecardBandNoneLabel     string `json:"scorecardBandNoneLabel"`
 	ScorecardTriggerStatusSlug string `json:"scorecardTriggerStatusSlug"`
 	Statuses            []*Status         `json:"statuses,omitempty"`
 	ScorecardFields     []*ScorecardField `json:"scorecardFields,omitempty"`

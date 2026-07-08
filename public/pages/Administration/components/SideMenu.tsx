@@ -40,10 +40,10 @@ export const SideMenu = (props: SiteMenuProps) => {
   return (
     <div className="js-admin-menu sm:hidden md:hidden lg:block">
       <VStack spacing={0} className="c-side-menu rounded-md shadow bg-white">
-        {/* Collaborators get exactly four settings pages (full edit); the rest is admin-only. */}
+        {/* Collaborators get General read-only plus four editable pages; the rest is admin-only. */}
+        <SideMenuItem name="general" title="General" href="/admin" isActive={activeItem === "general"} />
         {fider.session.user.isAdministrator && (
           <>
-            <SideMenuItem name="general" title="General" href="/admin" isActive={activeItem === "general"} />
             <SideMenuItem name="privacy" title="Privacy" href="/admin/privacy" isActive={activeItem === "privacy"} />
             <SideMenuItem name="users" title="Users" href="/admin/users" isActive={activeItem === "users"} />
           </>

@@ -81,5 +81,10 @@ type SetTenantScorecardSettings struct {
 	BandGood          int
 	BandRefine        int
 	BandLow           int
+	BandStrongLabel   string
+	BandGoodLabel     string
+	BandRefineLabel   string
+	BandLowLabel      string
+	BandNoneLabel     string
 	TriggerStatusSlug string
 }

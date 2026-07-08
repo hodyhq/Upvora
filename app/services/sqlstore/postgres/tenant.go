@@ -279,6 +279,7 @@ func getFirstTenant(ctx context.Context, q *query.GetFirstTenant) error {
 		SELECT t.id, t.name, t.subdomain, t.cname, t.invitation, t.locale, t.welcome_message, t.welcome_header, t.description_template, t.status, t.is_private, t.logo_bkey, t.custom_css, t.allowed_schemes, t.is_email_auth_allowed, t.is_feed_enabled, t.is_moderation_enabled, t.prevent_indexing, t.is_pro, t.scheduled_deletion_at,
 			t.share_idea_instructions, t.site_banner_enabled, t.site_banner_message, t.site_banner_variant,
 			t.is_scorecard_enabled, t.scorecard_band_strong, t.scorecard_band_good, t.scorecard_band_refine, t.scorecard_band_low, t.scorecard_trigger_status_slug,
+			t.scorecard_band_strong_label, t.scorecard_band_good_label, t.scorecard_band_refine_label, t.scorecard_band_low_label, t.scorecard_band_none_label,
 			(b.paddle_subscription_id IS NOT NULL AND b.stripe_subscription_id IS NULL) AS has_paddle_subscription
 		FROM tenants t
 		LEFT JOIN tenants_billing b ON b.tenant_id = t.id
@@ -301,6 +302,7 @@ func getTenantByDomain(ctx context.Context, q *query.GetTenantByDomain) error {
 		SELECT t.id, t.name, t.subdomain, t.cname, t.invitation, t.locale, t.welcome_message, t.welcome_header, t.description_template, t.status, t.is_private, t.logo_bkey, t.custom_css, t.allowed_schemes, t.is_email_auth_allowed, t.is_feed_enabled, t.is_moderation_enabled, t.prevent_indexing, t.is_pro, t.scheduled_deletion_at,
 			t.share_idea_instructions, t.site_banner_enabled, t.site_banner_message, t.site_banner_variant,
 			t.is_scorecard_enabled, t.scorecard_band_strong, t.scorecard_band_good, t.scorecard_band_refine, t.scorecard_band_low, t.scorecard_trigger_status_slug,
+			t.scorecard_band_strong_label, t.scorecard_band_good_label, t.scorecard_band_refine_label, t.scorecard_band_low_label, t.scorecard_band_none_label,
 			(b.paddle_subscription_id IS NOT NULL AND b.stripe_subscription_id IS NULL) AS has_paddle_subscription
 		FROM tenants t
 		LEFT JOIN tenants_billing b ON b.tenant_id = t.id
