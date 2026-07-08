@@ -20,7 +20,7 @@ Given("I sign in as {string}", async function (this: FiderWorld, userName: strin
   // Get the code from email and enter it
   const code = await getLatestCodeSentTo(userEmail)
   await this.page.fill("#input-code", code)
-  await this.page.getByRole("button", { name: "submit" }).click()
+  await this.page.getByTestId("modal").getByRole("button", { name: "submit" }).click()
 
   // Wait for navigation after successful code verification
   await this.page.waitForLoadState("networkidle")
