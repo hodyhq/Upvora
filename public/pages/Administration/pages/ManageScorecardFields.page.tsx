@@ -179,7 +179,7 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
   private save = async () => {
     const s = this.state
     const editingField = s.editingId != null ? this.state.fields.find((f) => f.id === s.editingId) : undefined
-    let choicesForReq: unknown = undefined
+    let choicesForReq: ScorecardFieldChoice[] | undefined = undefined
     if (s.draftType === "choice") {
       const parsed = csvToChoices(s.draftChoicesCSV, editingField?.choices)
       if (parsed.length === 0) {
