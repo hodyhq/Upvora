@@ -16,7 +16,7 @@ export const Header = (props: HeaderProps) => {
   const [isSignInModalOpen, setIsSignInModalOpen] = useState(false)
   const [isRSSModalOpen, setIsRSSModalOpen] = useState(false)
 
-  const pathname = typeof window !== "undefined" && window.location ? window.location.pathname : "/"
+  const pathname = typeof window !== "undefined" && window.location && window.location.pathname ? window.location.pathname : "/"
   const isRoadmapActive = pathname === "/roadmap"
   const isScorecardActive = pathname === "/scorecard" || pathname.startsWith("/scorecard/")
   const isFeedbackActive = !isRoadmapActive && !isScorecardActive
