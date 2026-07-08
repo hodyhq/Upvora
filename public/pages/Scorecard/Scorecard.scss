@@ -84,8 +84,18 @@
 
   &__head-actions {
     display: flex;
-    gap: 8px;
+    gap: 12px;
     align-items: center;
+  }
+
+  &__save-state {
+    font-size: 12px;
+    color: var(--colors-gray-600);
+
+    &--error {
+      color: #b91c1c;
+      font-weight: 600;
+    }
   }
 
   &__title-row {

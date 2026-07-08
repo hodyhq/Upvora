@@ -1,6 +1,6 @@
 import "./Scorecard.scss"
 
-import React, { useMemo, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import { Button, Header } from "@fider/components"
 import { ScorecardField, ScorecardFieldChoice, Post, User } from "@fider/models"
 import { actions, notify, Fider } from "@fider/services"
@@ -55,12 +55,68 @@ const formatDate = (iso?: string): string => (iso ? new Date(iso).toLocaleDateSt
 // answers on THIS card keep rendering so committee history stays visible.
 const isAnswered = (v: unknown): boolean => v != null && String(v) !== "" && String(v) !== "0"
 
+type SaveState = "idle" | "dirty" | "saving" | "saved" | "error"
+
+const SAVE_DEBOUNCE_MS = 1000
+const SAVE_RETRY_MS = 4000
+
 const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
   const allFields = Fider.session.tenant.scorecardFields ?? []
   const [title, setTitle] = useState(props.scorecard.title)
   const [values, setValues] = useState<Record<string, unknown>>(props.scorecard.values ?? {})
-  const [saving, setSaving] = useState(false)
-  const [dirty, setDirty] = useState(false)
+  const [saveState, setSaveState] = useState<SaveState>("idle")
+
+  // Autosave plumbing. State drives the render; refs hold the latest payload
+  // and in-flight bookkeeping so the debounced save never captures stale data.
+  const latest = useRef({ title: props.scorecard.title, values: props.scorecard.values ?? {} })
+  const timer = useRef<number | undefined>(undefined)
+  const inflight = useRef(false)
+  const queued = useRef(false)
+
+  const doSave = async () => {
+    if (inflight.current) {
+      queued.current = true
+      return
+    }
+    inflight.current = true
+    setSaveState("saving")
+    const result = await actions.updateScorecard(props.scorecard.id, { title: latest.current.title, values: latest.current.values })
+    inflight.current = false
+    if (result.ok) {
+      if (queued.current) {
+        // More edits landed while this save was in flight — save again.
+        queued.current = false
+        void doSave()
+      } else {
+        setSaveState("saved")
+      }
+    } else {
+      setSaveState("error")
+      window.clearTimeout(timer.current)
+      timer.current = window.setTimeout(() => void doSave(), SAVE_RETRY_MS)
+    }
+  }
+
+  const scheduleSave = () => {
+    setSaveState("dirty")
+    window.clearTimeout(timer.current)
+    timer.current = window.setTimeout(() => void doSave(), SAVE_DEBOUNCE_MS)
+  }
+
+  useEffect(() => {
+    // Warn on navigation while an edit is unsaved or a save is mid-flight.
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (saveState === "dirty" || saveState === "saving" || saveState === "error") {
+        e.preventDefault()
+        e.returnValue = ""
+      }
+    }
+    window.addEventListener("beforeunload", onBeforeUnload)
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload)
+      window.clearTimeout(timer.current)
+    }
+  }, [saveState])
 
   // Active fields always show. Inactive ("retired") fields show only where this
   // card already answered them — read-only history, hidden on new cards.
@@ -68,8 +124,15 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
   const scoringFields = allFields.filter((f) => f.isActive) // weighted score uses active only
 
   const setValue = (key: string, v: unknown) => {
+    latest.current = { ...latest.current, values: { ...latest.current.values, [key]: v } }
     setValues((prev) => ({ ...prev, [key]: v }))
-    setDirty(true)
+    scheduleSave()
+  }
+
+  const changeTitle = (t: string) => {
+    latest.current = { ...latest.current, title: t }
+    setTitle(t)
+    scheduleSave()
   }
 
   const weightedScore = useMemo(() => computeWeightedScore(values, scoringFields), [values, scoringFields])
@@ -81,19 +144,15 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
   }
   const headerFields = (grouped["header"] ?? []).filter((f) => f.type === "choice")
 
-  const save = async () => {
-    setSaving(true)
-    const result = await actions.updateScorecard(props.scorecard.id, { title, values })
-    setSaving(false)
-    if (result.ok) {
-      setDirty(false)
-      notify.success("Scorecard saved.")
-    } else {
-      notify.error("Save failed. Try again.")
-    }
-  }
-
   const post = props.scorecard.post
+
+  const saveStateText: Record<SaveState, string> = {
+    idle: "",
+    dirty: "Unsaved changes…",
+    saving: "Saving…",
+    saved: "All changes saved",
+    error: "Not saved — retrying…",
+  }
 
   const renderStatusControl = (f: ScorecardField) => {
     const strVal = String(values[f.key] ?? "")
@@ -249,22 +308,16 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
                 ← All scorecards
               </a>
               <div className="c-scorecard__head-actions">
-                {dirty && <span className="text-xs text-muted">Unsaved changes</span>}
-                <Button variant="tertiary" onClick={() => window.location.reload()} disabled={saving || !dirty}>
-                  Discard
-                </Button>
-                <Button variant="primary" onClick={save} disabled={saving}>
-                  {saving ? "Saving…" : "Save"}
-                </Button>
+                <span className={`c-scorecard__save-state ${saveState === "error" ? "c-scorecard__save-state--error" : ""}`}>{saveStateText[saveState]}</span>
+                {post && (
+                  <a className="c-button c-button--default c-button--primary" href={`/posts/${post.number}/${post.slug}`} target="_blank" rel="noopener">
+                    Open Idea ↗
+                  </a>
+                )}
               </div>
             </div>
             <div className="c-scorecard__title-row">
-              <input
-                className="c-scorecard__title-input"
-                value={title}
-                onChange={(e) => (setTitle(e.target.value), setDirty(true))}
-                aria-label="Scorecard title"
-              />
+              <input className="c-scorecard__title-input" value={title} onChange={(e) => changeTitle(e.target.value)} aria-label="Scorecard title" />
               {headerFields.map(renderStatusControl)}
             </div>
             {post ? (
@@ -274,9 +327,6 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
                 <div className="c-scorecard__idea-title">
                   <span className="c-scorecard__idea-label">Idea</span>
                   <strong>{post.title}</strong>
-                  <a href={`/posts/${post.number}/${post.slug}`} target="_blank" rel="noopener">
-                    Open Idea ↗
-                  </a>
                 </div>
                 {post.description && <div className="c-scorecard__idea-desc">{post.description}</div>}
                 <div className="c-scorecard__meta">
