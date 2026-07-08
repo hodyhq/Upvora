@@ -95,7 +95,7 @@ export const TagListItem = (props: TagListItemProps) => {
         )}
       </div>
       <div className="flex justify-end gap-2">
-        {fider.session.user.isAdministrator && (
+        {fider.session.user.isCollaborator && (
           <>
             <Button size="small" onClick={startEdit}>
               <Icon sprite={IconPencilAlt} />

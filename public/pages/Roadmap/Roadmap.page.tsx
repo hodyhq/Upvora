@@ -94,6 +94,7 @@ const RoadmapColumn = (props: RoadmapColumnProps) => {
     <div className="c-roadmap-column">
       <div className="c-roadmap-column__header">
         <ResponseLozenge status={props.status} response={null} />
+        <span className="c-roadmap-column__count">{props.posts.length}</span>
       </div>
       <div className="c-roadmap-column__body">
         {props.posts.map((post) => (

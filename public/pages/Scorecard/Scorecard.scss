@@ -142,6 +142,64 @@
     }
   }
 
+  // live idea block — title/description/meta all render from the linked post
+  &__idea {
+    background: var(--colors-gray-100);
+    border: 1px solid var(--colors-gray-200);
+    border-radius: 4px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+
+    .c-scorecard__meta {
+      padding-bottom: 0;
+      margin-top: 10px;
+    }
+  }
+
+  &__idea-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--colors-gray-600);
+    margin-right: 8px;
+  }
+
+  &__idea-title {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 14px;
+
+    strong {
+      color: var(--colors-gray-900);
+      font-weight: 600;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    a {
+      color: var(--colors-primary-base);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 12.5px;
+      white-space: nowrap;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  &__idea-desc {
+    white-space: pre-wrap;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--colors-gray-800);
+    margin-top: 8px;
+  }
+
   &__meta {
     display: flex;
     flex-wrap: wrap;
@@ -617,6 +675,15 @@
     th.is-right,
     td.is-right {
       text-align: right;
+    }
+  }
+
+  // admin variant — rows are not click-through
+  &__table--static tbody tr {
+    cursor: default;
+
+    &:hover {
+      background: transparent;
     }
   }
 

@@ -1,3 +1,5 @@
+import "../../Scorecard/Scorecard.scss"
+
 import React from "react"
 import { Button, Field, Form, Input, Select, SelectOption, TextArea, Toggle } from "@fider/components"
 import { HStack, VStack } from "@fider/components/layout"
@@ -322,7 +324,7 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
   }
 
   public content() {
-    const canEdit = Fider.session.user.isAdministrator
+    const canEdit = Fider.session.user.isCollaborator
     const rows = [...this.state.fields].sort(this.byGroupThenOrder)
     const weightSum = this.weightSum()
     const weightSumOK = weightSum === 100
@@ -336,80 +338,86 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
             : " — must equal 100 for the weighted score to hit 0-100 correctly. Edit the weights of the eight scoring rows to rebalance."}
         </div>
 
-        <table className="w-full">
-          <thead>
-            <tr className="text-left text-xs uppercase text-muted">
-              <th className="p-2">Order</th>
-              <th className="p-2">Label</th>
-              <th className="p-2">Key</th>
-              <th className="p-2">Type</th>
-              <th className="p-2">Group</th>
-              <th className="p-2">Weight</th>
-              <th className="p-2">Usage</th>
-              <th className="p-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((f) => {
-              const answers = this.props.usage?.[f.key] ?? 0
-              return (
-                <tr key={f.id} className={f.isActive ? "" : "text-muted"}>
-                  <td className="p-2">
-                    <HStack spacing={1}>
-                      <Button variant="tertiary" size="small" onClick={() => this.move(f, -1)} disabled={!canEdit}>
-                        ↑
-                      </Button>
-                      <Button variant="tertiary" size="small" onClick={() => this.move(f, 1)} disabled={!canEdit}>
-                        ↓
-                      </Button>
-                      <span className="text-xs text-muted">{f.sortOrder}</span>
-                    </HStack>
-                  </td>
-                  <td className="p-2">
-                    {f.label}
-                    {!f.isActive && <span className="text-xs text-muted"> (inactive)</span>}
-                  </td>
-                  <td className="p-2 text-xs font-mono">
-                    {f.key}
-                    {f.isSystem ? " · system" : ""}
-                  </td>
-                  <td className="p-2 text-xs">{f.type}</td>
-                  <td className="p-2 text-xs">{groupLabel(f.groupKey)}</td>
-                  <td className="p-2 text-xs">{f.type === "score" ? f.weight ?? "—" : "—"}</td>
-                  <td className="p-2 text-xs">
-                    {answers > 0
-                      ? f.isActive
-                        ? `${answers} card${answers === 1 ? "" : "s"}`
-                        : `on ${answers} old card${answers === 1 ? "" : "s"} · hidden on new`
-                      : "never answered"}
-                  </td>
-                  <td className="p-2">
-                    <HStack spacing={2}>
-                      <Button variant="tertiary" size="small" onClick={() => this.openEdit(f)} disabled={!canEdit}>
-                        Edit
-                      </Button>
-                      {answers > 0 ? (
-                        f.isActive ? (
-                          <Button variant="secondary" size="small" onClick={() => this.setActive(f, false)} disabled={!canEdit}>
-                            Deactivate
-                          </Button>
-                        ) : (
-                          <Button variant="secondary" size="small" onClick={() => this.setActive(f, true)} disabled={!canEdit}>
-                            Reactivate
-                          </Button>
-                        )
-                      ) : (
-                        <Button variant="danger" size="small" onClick={() => this.remove(f)} disabled={!canEdit}>
-                          Delete
-                        </Button>
-                      )}
-                    </HStack>
-                  </td>
+        <div className="c-scorecard__panel">
+          <div className="c-scorecard__table-wrap">
+            <table className="c-scorecard__table c-scorecard__table--static">
+              <thead>
+                <tr>
+                  <th>Order</th>
+                  <th>Question</th>
+                  <th>Type</th>
+                  <th>Group</th>
+                  <th className="is-right">Weight</th>
+                  <th>Usage</th>
+                  <th className="is-right">Actions</th>
                 </tr>
-              )
-            })}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {rows.map((f) => {
+                  const answers = this.props.usage?.[f.key] ?? 0
+                  return (
+                    <tr key={f.id} style={f.isActive ? undefined : { opacity: 0.55 }}>
+                      <td>
+                        <HStack spacing={1}>
+                          <Button variant="tertiary" size="small" onClick={() => this.move(f, -1)} disabled={!canEdit}>
+                            ↑
+                          </Button>
+                          <Button variant="tertiary" size="small" onClick={() => this.move(f, 1)} disabled={!canEdit}>
+                            ↓
+                          </Button>
+                        </HStack>
+                      </td>
+                      <td>
+                        <div className="c-scorecard__row-title">
+                          {f.label}
+                          {!f.isActive && <span className="c-scorecard__field-retired">inactive</span>}
+                        </div>
+                        <div className="c-scorecard__row-sub">
+                          {f.key}
+                          {f.isSystem ? " · system" : ""}
+                        </div>
+                      </td>
+                      <td>
+                        <span className="c-scorecard__chip c-scorecard__chip--neutral c-scorecard__chip--plain">{f.type}</span>
+                      </td>
+                      <td>{groupLabel(f.groupKey)}</td>
+                      <td className="is-right">{f.type === "score" ? `${f.weight ?? 0}%` : "—"}</td>
+                      <td>
+                        {answers > 0
+                          ? f.isActive
+                            ? `${answers} card${answers === 1 ? "" : "s"}`
+                            : `on ${answers} old card${answers === 1 ? "" : "s"} · hidden on new`
+                          : "never answered"}
+                      </td>
+                      <td className="is-right">
+                        <HStack spacing={2}>
+                          <Button variant="tertiary" size="small" onClick={() => this.openEdit(f)} disabled={!canEdit}>
+                            Edit
+                          </Button>
+                          {answers > 0 ? (
+                            f.isActive ? (
+                              <Button variant="secondary" size="small" onClick={() => this.setActive(f, false)} disabled={!canEdit}>
+                                Deactivate
+                              </Button>
+                            ) : (
+                              <Button variant="secondary" size="small" onClick={() => this.setActive(f, true)} disabled={!canEdit}>
+                                Reactivate
+                              </Button>
+                            )
+                          ) : (
+                            <Button variant="danger" size="small" onClick={() => this.remove(f)} disabled={!canEdit}>
+                              Delete
+                            </Button>
+                          )}
+                        </HStack>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
         {(this.state.isAdding || this.state.editingId != null) && (
           <Form error={this.state.error}>

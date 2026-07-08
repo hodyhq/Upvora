@@ -74,11 +74,11 @@ func CreateScorecard() web.HandlerFunc {
 	}
 }
 
-// DeleteScorecard removes a card. Admin-only — collaborators can create and
-// edit but not delete. DELETE-with-no-body — parse :id inline.
+// DeleteScorecard removes a card. Collaborator+ — collaborators have full
+// edit rights on the scorecard pages. DELETE-with-no-body — parse :id inline.
 func DeleteScorecard() web.HandlerFunc {
 	return func(c *web.Context) error {
-		if c.User() == nil || !c.User().IsAdministrator() {
+		if c.User() == nil || !c.User().IsCollaborator() {
 			return c.Forbidden()
 		}
 		id, err := c.ParamAsInt("id")

@@ -64,7 +64,7 @@ export default class ScorecardSettingsPage extends AdminBasePage<any, ScorecardS
     return (
       <Form error={this.state.error}>
         <Field label="Enable scorecard">
-          <Toggle disabled={!Fider.session.user.isAdministrator} active={this.state.isEnabled} onToggle={this.toggle} />
+          <Toggle disabled={!Fider.session.user.isCollaborator} active={this.state.isEnabled} onToggle={this.toggle} />
           <p className="text-muted mt-1">
             When enabled, collaborators and administrators see a Scorecard page for reviewing and scoring ideas across the weighted dimensions you define.
             Visitors never see it.
@@ -95,32 +95,32 @@ export default class ScorecardSettingsPage extends AdminBasePage<any, ScorecardS
           field="bandStrong"
           label="Strong Candidate ≥"
           value={String(this.state.bandStrong)}
-          disabled={!Fider.session.user.isAdministrator}
+          disabled={!Fider.session.user.isCollaborator}
           onChange={this.setBand("bandStrong")}
         />
         <Input
           field="bandGood"
           label="Good Candidate ≥"
           value={String(this.state.bandGood)}
-          disabled={!Fider.session.user.isAdministrator}
+          disabled={!Fider.session.user.isCollaborator}
           onChange={this.setBand("bandGood")}
         />
         <Input
           field="bandRefine"
           label="Needs Refinement ≥"
           value={String(this.state.bandRefine)}
-          disabled={!Fider.session.user.isAdministrator}
+          disabled={!Fider.session.user.isCollaborator}
           onChange={this.setBand("bandRefine")}
         />
         <Input
           field="bandLow"
           label="Low Priority ≥"
           value={String(this.state.bandLow)}
-          disabled={!Fider.session.user.isAdministrator}
+          disabled={!Fider.session.user.isCollaborator}
           onChange={this.setBand("bandLow")}
         />
 
-        <Button variant="primary" onClick={this.save} disabled={!Fider.session.user.isAdministrator}>
+        <Button variant="primary" onClick={this.save} disabled={!Fider.session.user.isCollaborator}>
           Save
         </Button>
       </Form>

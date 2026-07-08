@@ -40,19 +40,24 @@ export const SideMenu = (props: SiteMenuProps) => {
   return (
     <div className="js-admin-menu sm:hidden md:hidden lg:block">
       <VStack spacing={0} className="c-side-menu rounded-md shadow bg-white">
-        <SideMenuItem name="general" title="General" href="/admin" isActive={activeItem === "general"} />
-        <SideMenuItem name="privacy" title="Privacy" href="/admin/privacy" isActive={activeItem === "privacy"} />
-        <SideMenuItem name="users" title="Users" href="/admin/users" isActive={activeItem === "users"} />
-        <SideMenuItem name="tags" title="Tags" href="/admin/tags" isActive={activeItem === "tags"} />
-        <SideMenuItem name="statuses" title="Statuses" href="/admin/statuses" isActive={activeItem === "statuses"} />
-        <SideMenuItem name="scorecard-settings" title="Scorecard" href="/admin/scorecard-settings" isActive={activeItem === "scorecard-settings"} />
-        <SideMenuItem name="scorecard-fields" title="Scorecard Fields" href="/admin/scorecard-fields" isActive={activeItem === "scorecard-fields"} />
-        <SideMenuItem name="banner" title="Banner" href="/admin/banner" isActive={activeItem === "banner"} />
-        <SideMenuItem name="invitations" title="Invitations" href="/admin/invitations" isActive={activeItem === "invitations"} />
-        <SideMenuItem name="authentication" title="Authentication" href="/admin/authentication" isActive={activeItem === "authentication"} />
-        <SideMenuItem name="advanced" title="Advanced" href="/admin/advanced" isActive={activeItem === "advanced"} />
+        {/* Collaborators get exactly four settings pages (full edit); the rest is admin-only. */}
         {fider.session.user.isAdministrator && (
           <>
+            <SideMenuItem name="general" title="General" href="/admin" isActive={activeItem === "general"} />
+            <SideMenuItem name="privacy" title="Privacy" href="/admin/privacy" isActive={activeItem === "privacy"} />
+            <SideMenuItem name="users" title="Users" href="/admin/users" isActive={activeItem === "users"} />
+          </>
+        )}
+        <SideMenuItem name="tags" title="Tags" href="/admin/tags" isActive={activeItem === "tags"} />
+        {fider.session.user.isAdministrator && <SideMenuItem name="statuses" title="Statuses" href="/admin/statuses" isActive={activeItem === "statuses"} />}
+        <SideMenuItem name="scorecard-settings" title="Scorecard" href="/admin/scorecard-settings" isActive={activeItem === "scorecard-settings"} />
+        <SideMenuItem name="scorecard-fields" title="Scorecard Fields" href="/admin/scorecard-fields" isActive={activeItem === "scorecard-fields"} />
+        {fider.session.user.isAdministrator && <SideMenuItem name="banner" title="Banner" href="/admin/banner" isActive={activeItem === "banner"} />}
+        <SideMenuItem name="invitations" title="Invitations" href="/admin/invitations" isActive={activeItem === "invitations"} />
+        {fider.session.user.isAdministrator && (
+          <>
+            <SideMenuItem name="authentication" title="Authentication" href="/admin/authentication" isActive={activeItem === "authentication"} />
+            <SideMenuItem name="advanced" title="Advanced" href="/admin/advanced" isActive={activeItem === "advanced"} />
             {fider.settings.isBillingEnabled && <SideMenuItem name="billing" title="Billing" href="/admin/billing" isActive={activeItem === "billing"} />}
             <SideMenuItem name="webhooks" title="Webhooks" href="/admin/webhooks" isActive={activeItem === "webhooks"} />
             <SideMenuItem name="export" title="Export" href="/admin/export" isActive={activeItem === "export"} />

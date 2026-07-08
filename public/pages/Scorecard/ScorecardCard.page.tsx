@@ -21,8 +21,9 @@ interface ScorecardCardPageProps {
   assigneeNames?: string[]
 }
 
-const GROUP_ORDER = ["context", "workflow", "ownership", "classification", "scoring", "decision"] as const
+const GROUP_ORDER = ["intake", "context", "workflow", "ownership", "classification", "scoring", "decision"] as const
 const GROUP_LABELS: Record<string, string> = {
+  intake: "Intake",
   context: "Context",
   workflow: "Workflow",
   ownership: "Ownership",
@@ -31,6 +32,7 @@ const GROUP_LABELS: Record<string, string> = {
   decision: "Decision",
 }
 const GROUP_HINTS: Record<string, string> = {
+  intake: "Additional intake questions",
   context: "Filled in during review",
   workflow: "Current state and the proposed AI-assisted future state",
   ownership: "Who owns this if it moves forward",
@@ -265,9 +267,19 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
               />
               {headerFields.map(renderStatusControl)}
             </div>
-            <div className="c-scorecard__meta">
-              {post ? (
-                <>
+            {post ? (
+              // Everything in this block renders live from the linked post —
+              // edits on the idea page show here on the next load, never a copy.
+              <div className="c-scorecard__idea">
+                <div className="c-scorecard__idea-title">
+                  <span className="c-scorecard__idea-label">Idea</span>
+                  <strong>{post.title}</strong>
+                  <a href={`/posts/${post.number}/${post.slug}`} target="_blank" rel="noopener">
+                    Open Idea ↗
+                  </a>
+                </div>
+                {post.description && <div className="c-scorecard__idea-desc">{post.description}</div>}
+                <div className="c-scorecard__meta">
                   <span>
                     Submitted by <strong>{post.user?.name ?? "—"}</strong> on {formatDate(post.createdAt)}
                   </span>
@@ -284,14 +296,13 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
                       ))}
                     </span>
                   )}
-                  <a href={`/posts/${post.number}/${post.slug}`} target="_blank" rel="noopener">
-                    Open Idea ↗
-                  </a>
-                </>
-              ) : (
+                </div>
+              </div>
+            ) : (
+              <div className="c-scorecard__meta">
                 <span>Standalone scorecard (not linked to an idea) · created {formatDate(props.scorecard.createdAt)}</span>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           <div className="c-scorecard__gauge">
@@ -329,16 +340,6 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
           </div>
 
           <div className="c-scorecard__groups">
-            {post && (
-              <div className="c-scorecard__group">
-                <div className="c-scorecard__group-head">
-                  <span className="c-scorecard__group-label">Intake</span>
-                  <span className="c-scorecard__group-hint">Pulled live from the idea — always current</span>
-                </div>
-                {post.description && <div style={{ whiteSpace: "pre-wrap", fontSize: 13.5, lineHeight: 1.55 }}>{post.description}</div>}
-              </div>
-            )}
-
             {GROUP_ORDER.map((g) => {
               const rows = grouped[g]
               if (!rows || rows.length === 0) return null
@@ -354,7 +355,7 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
               )
             })}
 
-            {Fider.session.user.isAdministrator && (
+            {Fider.session.user.isCollaborator && (
               <div className="c-scorecard__group">
                 <Button
                   variant="danger"

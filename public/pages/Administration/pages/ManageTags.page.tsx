@@ -134,7 +134,7 @@ export default class ManageTagsPage extends AdminBasePage<ManageTagsPageProps, M
   public content() {
     const tags = this.sortedTags()
     const gridTemplateColumns = "minmax(200px, 1fr) minmax(100px, 150px) 200px"
-    const canAdd = Fider.session.user.isAdministrator
+    const canAdd = Fider.session.user.isCollaborator
     const lastTagIsLast = !canAdd
 
     const addRow = canAdd && (

@@ -36,7 +36,7 @@ type CreateScorecardField struct {
 }
 
 func (a *CreateScorecardField) IsAuthorized(ctx context.Context, user *entity.User) bool {
-	return user != nil && user.Role == enum.RoleAdministrator
+	return user != nil && user.IsCollaborator()
 }
 
 func (a *CreateScorecardField) Validate(ctx context.Context, user *entity.User) *validate.Result {
@@ -94,7 +94,7 @@ type UpdateScorecardField struct {
 }
 
 func (a *UpdateScorecardField) IsAuthorized(ctx context.Context, user *entity.User) bool {
-	return user != nil && user.Role == enum.RoleAdministrator
+	return user != nil && user.IsCollaborator()
 }
 
 func (a *UpdateScorecardField) Validate(ctx context.Context, user *entity.User) *validate.Result {
@@ -117,7 +117,7 @@ type DeleteScorecardField struct {
 }
 
 func (a *DeleteScorecardField) IsAuthorized(ctx context.Context, user *entity.User) bool {
-	return user != nil && user.Role == enum.RoleAdministrator
+	return user != nil && user.IsCollaborator()
 }
 
 func (a *DeleteScorecardField) Validate(ctx context.Context, user *entity.User) *validate.Result {
@@ -184,7 +184,7 @@ type UpdateScorecardSettings struct {
 }
 
 func (a *UpdateScorecardSettings) IsAuthorized(ctx context.Context, user *entity.User) bool {
-	return user != nil && user.Role == enum.RoleAdministrator
+	return user != nil && user.IsCollaborator()
 }
 
 func (a *UpdateScorecardSettings) Validate(ctx context.Context, user *entity.User) *validate.Result {
