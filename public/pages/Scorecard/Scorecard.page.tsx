@@ -1,8 +1,10 @@
-import React from "react"
+import "./Scorecard.scss"
+
+import React, { useMemo, useState } from "react"
 import { Button, Header } from "@fider/components"
-import { HStack, VStack } from "@fider/components/layout"
+import { ScorecardFieldChoice } from "@fider/models"
 import { actions, Fider, notify } from "@fider/services"
-import { ScoreBandPill, computeWeightedScore } from "./ScoreBand"
+import { computeWeightedScore, bandForScore } from "./ScoreBand"
 
 interface ScorecardRecord {
   id: number
@@ -11,149 +13,191 @@ interface ScorecardRecord {
   values: Record<string, unknown>
   createdAt: string
   updatedAt: string
+  postNumber?: number
+  postSlug?: string
+  postVotes?: number
+  submittedBy?: string
 }
 
 interface ScorecardPageProps {
   scorecards?: ScorecardRecord[]
 }
 
+type Bucket = "new" | "review" | "executive"
+const TABS: { key: "all" | Bucket; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "new", label: "New" },
+  { key: "review", label: "In review" },
+  { key: "executive", label: "Executive" },
+]
+
+const parseChoices = (raw: unknown): ScorecardFieldChoice[] => {
+  if (!raw || !Array.isArray(raw)) return []
+  return raw
+    .map((c: any) => (typeof c === "string" ? { value: c } : { value: String(c?.value ?? ""), color: c?.color, bucket: c?.bucket }))
+    .filter((c) => c.value !== "")
+}
+
 const Scorecard: React.FC<ScorecardPageProps> = (props) => {
   const cards = props.scorecards ?? []
   const featureOff = !Fider.session.tenant.isScorecardEnabled
+  const [tab, setTab] = useState<"all" | Bucket>("all")
+  const [filter, setFilter] = useState("")
+
+  const fields = Fider.session.tenant.scorecardFields ?? []
+  const statusField = fields.find((f) => f.groupKey === "header" && f.type === "choice" && f.isActive)
+  const bucketByStatus = useMemo(() => {
+    const map = new Map<string, Bucket | undefined>()
+    for (const c of parseChoices(statusField?.choices)) {
+      map.set(c.value, c.bucket)
+    }
+    return map
+  }, [statusField])
+
+  const statusOf = (c: ScorecardRecord): string => String(c.values?.[statusField?.key ?? "status"] ?? "")
+  const bucketOf = (c: ScorecardRecord): Bucket | undefined => bucketByStatus.get(statusOf(c))
+
+  const counts: Record<string, number> = { all: cards.length, new: 0, review: 0, executive: 0 }
+  for (const c of cards) {
+    const b = bucketOf(c)
+    if (b) counts[b]++
+  }
+
+  const visible = cards.filter((c) => {
+    if (tab !== "all" && bucketOf(c) !== tab) return false
+    if (filter !== "") {
+      const q = filter.toLowerCase()
+      const hay = `${c.title} ${statusOf(c)} ${c.submittedBy ?? ""}`.toLowerCase()
+      if (!hay.includes(q)) return false
+    }
+    return true
+  })
+
+  const newScorecard = async () => {
+    const r = await actions.createScorecard({})
+    if (r.ok && r.data) {
+      window.location.href = `/scorecard/${r.data.id}`
+    } else {
+      notify.error("Could not create scorecard.")
+    }
+  }
 
   return (
     <>
       <Header />
       <div id="p-scorecard" className="page container">
-        <VStack spacing={4}>
-          <HStack className="justify-between items-baseline">
-            <div>
-              <h1 className="text-header">Scorecard</h1>
-              <p className="text-muted">Committee-scored review of ideas — weighted across the scoring dimensions defined in Admin → Scorecard Fields.</p>
-            </div>
-            <Button
-              variant="primary"
-              onClick={async () => {
-                const r = await actions.createScorecard({})
-                if (r.ok && r.data) {
-                  window.location.href = `/scorecard/${r.data.id}`
-                } else {
-                  notify.error("Could not create scorecard.")
-                }
-              }}
-            >
-              + New scorecard
-            </Button>
-          </HStack>
+        {featureOff && (
+          <div className="p-3 rounded bg-yellow-100 text-yellow-800 mt-4">
+            Scorecard feature is <strong>disabled</strong> at the tenant level. An administrator can turn it on at{" "}
+            <a href="/admin/scorecard-settings" className="text-link">
+              Site Settings → Scorecard
+            </a>
+            .
+          </div>
+        )}
 
-          {featureOff && (
-            <div className="p-3 rounded bg-yellow-100 text-yellow-800">
-              Scorecard feature is <strong>disabled</strong> at the tenant level. An administrator can turn it on at{" "}
-              <a href="/admin/scorecard-settings" className="text-link">
-                Site Settings → Scorecard
-              </a>
-              .
+        <div className="c-scorecard__panel mt-4 mb-8">
+          <div className="c-scorecard__toolbar">
+            <div className="c-scorecard__tabs" role="tablist">
+              {TABS.map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === t.key}
+                  className={`c-scorecard__tab ${tab === t.key ? "c-scorecard__tab--active" : ""}`}
+                  onClick={() => setTab(t.key)}
+                >
+                  {t.label} <span className="c-scorecard__tab-count">{counts[t.key]}</span>
+                </button>
+              ))}
             </div>
-          )}
+            <div className="c-scorecard__toolbar-right">
+              <input
+                type="search"
+                className="c-scorecard__search"
+                placeholder="Filter cards…"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                aria-label="Filter cards"
+              />
+              <Button variant="primary" onClick={newScorecard}>
+                + New scorecard
+              </Button>
+            </div>
+          </div>
 
-          {cards.length === 0 ? (
-            <div style={{ background: "var(--colors-white)", border: "1px solid var(--colors-gray-200)", borderRadius: 10, padding: 32, textAlign: "center" }}>
-              <p className="text-muted">No scorecards yet.</p>
-              <p className="text-muted text-sm mt-2">
-                Cards get created automatically when a post&apos;s status changes to your configured trigger, or manually from the &quot;Score this idea&quot;
-                button on a post&apos;s detail page.
-              </p>
-            </div>
-          ) : (
-            <div style={{ background: "var(--colors-white)", border: "1px solid var(--colors-gray-200)", borderRadius: 10, overflow: "hidden" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ background: "var(--colors-gray-50, #f8fafc)", borderBottom: "1px solid var(--colors-gray-200)" }}>
-                    <th
-                      style={{
-                        textAlign: "left",
-                        padding: "10px 14px",
-                        fontSize: 11,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.06em",
-                        color: "var(--colors-gray-500)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Title
-                    </th>
-                    <th
-                      style={{
-                        textAlign: "left",
-                        padding: "10px 14px",
-                        fontSize: 11,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.06em",
-                        color: "var(--colors-gray-500)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Score
-                    </th>
-                    <th
-                      style={{
-                        textAlign: "left",
-                        padding: "10px 14px",
-                        fontSize: 11,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.06em",
-                        color: "var(--colors-gray-500)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Post
-                    </th>
-                    <th
-                      style={{
-                        textAlign: "left",
-                        padding: "10px 14px",
-                        fontSize: 11,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.06em",
-                        color: "var(--colors-gray-500)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Updated
-                    </th>
+          <div className="c-scorecard__table-wrap">
+            <table className="c-scorecard__table">
+              <thead>
+                <tr>
+                  <th>Idea</th>
+                  <th>Status</th>
+                  <th>Band</th>
+                  <th className="is-right">Score</th>
+                  <th>Submitted by</th>
+                  <th className="is-right">Votes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((c) => {
+                  const score = computeWeightedScore(c.values, fields)
+                  const band = bandForScore(score)
+                  const status = statusOf(c)
+                  const scored = fields.some((f) => f.type === "score" && f.isActive && String(c.values?.[f.key] ?? "0") !== "0")
+                  return (
+                    <tr key={c.id} onClick={() => (window.location.href = `/scorecard/${c.id}`)}>
+                      <td>
+                        <div className="c-scorecard__row-title">{c.title || `Scorecard #${c.id}`}</div>
+                        {c.postNumber != null && <div className="c-scorecard__row-sub">Idea #{c.postNumber}</div>}
+                      </td>
+                      <td>
+                        {status ? (
+                          <span className="c-scorecard__chip c-scorecard__chip--status c-scorecard__chip--plain">{status}</span>
+                        ) : (
+                          <span className="text-muted">—</span>
+                        )}
+                      </td>
+                      <td>
+                        {scored ? (
+                          <span className={`c-scorecard__chip c-scorecard__chip--${band.key}`}>{band.label}</span>
+                        ) : (
+                          <span className="c-scorecard__chip c-scorecard__chip--neutral c-scorecard__chip--plain">Not scored</span>
+                        )}
+                      </td>
+                      <td className="is-right">
+                        {scored ? (
+                          <>
+                            <span className="c-scorecard__score-cell">
+                              <span className="c-scorecard__score-cell-num">{score}</span>
+                              <span className="c-scorecard__score-cell-of">/100</span>
+                            </span>
+                            <span className="c-scorecard__score-mini">
+                              <i className={`is-${band.key}`} style={{ width: `${Math.min(100, score)}%` }} />
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-muted">—</span>
+                        )}
+                      </td>
+                      <td>{c.submittedBy || "—"}</td>
+                      <td className="is-right">{c.postNumber != null ? c.postVotes ?? 0 : "—"}</td>
+                    </tr>
+                  )
+                })}
+                {visible.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="c-scorecard__empty" style={{ cursor: "default" }}>
+                      {cards.length === 0
+                        ? "No scorecards yet. Cards get created automatically when a post's status changes to your configured trigger, or manually with the button above."
+                        : "No cards match this view."}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {cards.map((c, i) => {
-                    const score = computeWeightedScore(c.values, Fider.session.tenant.scorecardFields)
-                    return (
-                      <tr key={c.id} style={{ borderTop: i === 0 ? "none" : "1px solid var(--colors-gray-100)" }}>
-                        <td style={{ padding: "12px 14px" }}>
-                          <a href={`/scorecard/${c.id}`} className="text-link" style={{ fontWeight: 500 }}>
-                            {c.title || `Scorecard #${c.id}`}
-                          </a>
-                        </td>
-                        <td style={{ padding: "12px 14px" }}>
-                          <ScoreBandPill score={score} />
-                        </td>
-                        <td style={{ padding: "12px 14px", fontSize: 13, color: "var(--colors-gray-500)" }}>
-                          {c.postId != null ? (
-                            <a href={`/posts/${c.postId}`} className="text-link" style={{ fontSize: 13 }}>
-                              #{c.postId}
-                            </a>
-                          ) : (
-                            "—"
-                          )}
-                        </td>
-                        <td style={{ padding: "12px 14px", fontSize: 13, color: "var(--colors-gray-500)" }}>{new Date(c.updatedAt).toLocaleString()}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </VStack>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </>
   )
