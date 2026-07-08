@@ -1,0 +1,1240 @@
+<title>Scorecard · design preview</title>
+<style>
+  :root {
+    --ground: #F6F9F7;
+    --ground-2: #EEF3F0;
+    --ink: #0C1512;
+    --muted: #51605A;
+    --light: #8B9793;
+    --border: #E3EAE6;
+    --border-strong: #CBD8D2;
+    --card: #FFFFFF;
+    --card-hover: #F3F8F5;
+
+    --green: #008859;
+    --green-hover: #007A50;
+    --green-dark: #004C2C;
+    --green-deep: #06382A;
+    --green-accent: #00F7A5;
+    --green-tint: #E4F3EB;
+    --green-tint-2: #D2EBDE;
+
+    --strong-bg: #E5F4E9;   --strong-ink: #14532D;   --strong-bar: #16A34A;
+    --good-bg:   #E3ECF9;   --good-ink:   #1E3A8A;   --good-bar:   #2563EB;
+    --refine-bg: #FBF1D8;   --refine-ink: #78350F;   --refine-bar: #E9A208;
+    --low-bg:    #FBE8D6;   --low-ink:    #7C2D12;   --low-bar:    #EA7326;
+    --reject-bg: #FAE3E3;   --reject-ink: #7F1D1D;   --reject-bar: #DC2626;
+
+    --shadow-sm: 0 1px 1px rgba(10, 24, 18, .04);
+    --shadow-md: 0 1px 2px rgba(10, 24, 18, .05);
+    --shadow-pop: 0 1px 3px rgba(10, 24, 18, .1);
+
+    --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+    --font-num: "SF Mono", "Cascadia Code", Consolas, "Roboto Mono", ui-monospace, monospace;
+
+    --r-panel: 6px;
+    --r-ctl: 4px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0A110E;
+      --ground-2: #0F1814;
+      --ink: #E9EFEB;
+      --muted: #9AA6A0;
+      --light: #67736E;
+      --border: #1D2924;
+      --border-strong: #2C3B35;
+      --card: #111B16;
+      --card-hover: #16221C;
+
+      --green: #1FBE85;
+      --green-hover: #2BD494;
+      --green-dark: #0E5C3C;
+      --green-deep: #0A1F17;
+      --green-tint: #122B20;
+      --green-tint-2: #17382A;
+
+      --strong-bg: #12301F;   --strong-ink: #7EE3A6;   --strong-bar: #27B563;
+      --good-bg:   #16223F;   --good-ink:   #9BB8F4;   --good-bar:   #5580E4;
+      --refine-bg: #32240B;   --refine-ink: #F0C878;   --refine-bar: #D19E23;
+      --low-bg:    #331D0D;   --low-ink:    #F0A878;   --low-bar:    #D9713A;
+      --reject-bg: #331414;   --reject-ink: #F0A0A0;   --reject-bar: #D45454;
+
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, .5);
+      --shadow-md: 0 1px 3px rgba(0, 0, 0, .5), 0 8px 24px -8px rgba(0, 0, 0, .45);
+      --shadow-pop: 0 2px 6px rgba(0, 0, 0, .5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0A110E; --ground-2: #0F1814; --ink: #E9EFEB; --muted: #9AA6A0; --light: #67736E;
+    --border: #1D2924; --border-strong: #2C3B35; --card: #111B16; --card-hover: #16221C;
+    --green: #1FBE85; --green-hover: #2BD494; --green-dark: #0E5C3C; --green-deep: #0A1F17;
+    --green-tint: #122B20; --green-tint-2: #17382A;
+    --strong-bg: #12301F; --strong-ink: #7EE3A6; --strong-bar: #27B563;
+    --good-bg: #16223F; --good-ink: #9BB8F4; --good-bar: #5580E4;
+    --refine-bg: #32240B; --refine-ink: #F0C878; --refine-bar: #D19E23;
+    --low-bg: #331D0D; --low-ink: #F0A878; --low-bar: #D9713A;
+    --reject-bg: #331414; --reject-ink: #F0A0A0; --reject-bar: #D45454;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.5);
+    --shadow-md: 0 1px 3px rgba(0,0,0,.5), 0 8px 24px -8px rgba(0,0,0,.45);
+    --shadow-pop: 0 2px 6px rgba(0,0,0,.5);
+  }
+  :root[data-theme="light"] {
+    --ground: #F6F9F7; --ground-2: #EEF3F0; --ink: #0C1512; --muted: #51605A; --light: #8B9793;
+    --border: #E3EAE6; --border-strong: #CBD8D2; --card: #FFFFFF; --card-hover: #F3F8F5;
+    --green: #008859; --green-hover: #007A50; --green-dark: #004C2C; --green-deep: #06382A;
+    --green-tint: #E4F3EB; --green-tint-2: #D2EBDE;
+    --strong-bg: #E5F4E9; --strong-ink: #14532D; --strong-bar: #16A34A;
+    --good-bg: #E3ECF9; --good-ink: #1E3A8A; --good-bar: #2563EB;
+    --refine-bg: #FBF1D8; --refine-ink: #78350F; --refine-bar: #E9A208;
+    --low-bg: #FBE8D6; --low-ink: #7C2D12; --low-bar: #EA7326;
+    --reject-bg: #FAE3E3; --reject-ink: #7F1D1D; --reject-bar: #DC2626;
+    --shadow-sm: 0 1px 2px rgba(10,24,18,.05);
+    --shadow-md: 0 1px 3px rgba(10,24,18,.05), 0 8px 24px -8px rgba(10,24,18,.09);
+    --shadow-pop: 0 2px 6px rgba(10,24,18,.12);
+  }
+
+  html { color-scheme: light dark; }
+  body {
+    font-family: var(--font-ui);
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--ink);
+    background: var(--ground);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  .num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+  * { transition: background-color .12s ease, border-color .12s ease; }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  /* ─────────── brand topbar ─────────── */
+  .topbar {
+    background: var(--green-dark);
+    padding: 0 28px;
+    display: flex; align-items: center; gap: 24px;
+    height: 52px;
+    position: relative;
+  }
+  .topbar::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+    background: var(--green-accent);
+  }
+  .topbar__brand {
+    display: flex; align-items: center; gap: 10px;
+    color: #fff; text-decoration: none;
+  }
+  .topbar__name { font-size: 14px; font-weight: 700; letter-spacing: .01em; }
+  .topbar__sep { color: rgba(255,255,255,.28); }
+  .topbar__section { color: rgba(255,255,255,.75); font-size: 13px; }
+  .topbar__right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+  .topbar__user {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(255,255,255,.14);
+    color: #fff; font-size: 11px; font-weight: 700;
+    display: grid; place-items: center;
+    border: 1px solid rgba(255,255,255,.3);
+  }
+
+  /* ─────────── framing ─────────── */
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 30px 24px 110px; }
+
+  .banner {
+    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .banner__title { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+  .banner__desc { font-size: 12.5px; color: var(--light); }
+
+  .section-heading {
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+    margin: 52px 0 14px;
+  }
+  .section-heading__eyebrow {
+    font-size: 11px; font-weight: 700; letter-spacing: .09em;
+    color: var(--green-dark); text-transform: uppercase;
+    border-bottom: 2px solid var(--green); padding-bottom: 2px;
+  }
+  :root[data-theme="dark"] .section-heading__eyebrow { color: #7EE3A6; }
+  @media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .section-heading__eyebrow { color: #7EE3A6; } }
+  .section-heading__title { font-size: 19px; font-weight: 700; margin: 0; letter-spacing: -.012em; }
+  .section-heading__note { font-size: 12.5px; color: var(--light); }
+
+  /* ─────────── panel ─────────── */
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-panel);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+  }
+
+  /* ─────────── DASHBOARD ─────────── */
+  .toolbar {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    gap: 12px; padding: 10px 18px 0; flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+  }
+  .tabs { display: flex; gap: 4px; }
+  .tab {
+    font: inherit; font-size: 13px; font-weight: 500; color: var(--muted);
+    padding: 9px 12px 10px; border: 0; border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    background: transparent; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab--active {
+    color: var(--ink); font-weight: 600;
+    border-bottom-color: var(--green);
+  }
+  .tab .count {
+    font-family: var(--font-num); font-size: 11px; font-weight: 600;
+    color: var(--light);
+  }
+  .tab--active .count { color: var(--green); }
+  .toolbar__right { padding-bottom: 9px; }
+
+  .toolbar__right { display: flex; gap: 10px; align-items: center; }
+
+  .search {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--ground-2); border: 1px solid transparent; border-radius: var(--r-ctl);
+    padding: 6px 11px; width: 210px;
+  }
+  .search:focus-within { background: var(--card); border-color: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 15%, transparent); }
+  .search input {
+    font: inherit; font-size: 13px; border: 0; outline: 0; background: transparent;
+    color: var(--ink); flex: 1; min-width: 0;
+  }
+  .search input::placeholder { color: var(--light); }
+  .search svg { width: 14px; height: 14px; color: var(--light); flex-shrink: 0; }
+
+  .btn {
+    font: inherit; font-size: 13px; font-weight: 500;
+    padding: 7px 14px; border-radius: var(--r-ctl);
+    border: 1px solid var(--border-strong); background: var(--card); color: var(--ink);
+    cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
+    box-shadow: var(--shadow-sm);
+  }
+  .btn:hover { background: var(--card-hover); }
+  .btn:active { transform: translateY(.5px); }
+  .btn--primary {
+    background: var(--green); color: #fff; border-color: transparent;
+    font-weight: 600;
+  }
+  .btn--primary:hover { background: var(--green-hover); }
+  .btn--danger { background: transparent; color: var(--reject-bar); border-color: color-mix(in srgb, var(--reject-bar) 45%, transparent); box-shadow: none; }
+  .btn--danger:hover { background: var(--reject-bg); }
+  .btn--ghost { border-color: transparent; background: transparent; color: var(--muted); box-shadow: none; }
+  .btn--ghost:hover { background: var(--card-hover); color: var(--ink); }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left; font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--light); font-weight: 700;
+    padding: 9px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 13px 18px; border-bottom: 1px solid var(--border);
+    font-size: 13.5px; vertical-align: middle;
+  }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover { background: var(--card-hover); }
+  tbody tr:hover .row-go { opacity: 1; transform: translateX(0); }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.right, th.right { text-align: right; }
+
+  .cell-title { font-weight: 600; color: var(--ink); letter-spacing: -.005em; }
+  .cell-title__sub { font-size: 12px; color: var(--light); margin-top: 2px; font-weight: 400; }
+
+  .score-block {
+    display: inline-flex; align-items: baseline; gap: 3px; justify-content: flex-end;
+  }
+  .score-block__num { font-family: var(--font-num); font-size: 16.5px; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  .score-block__of { font-family: var(--font-num); font-size: 10px; color: var(--light); }
+  .score-block--empty .score-block__num { color: var(--light); font-weight: 400; }
+
+  .row-go {
+    color: var(--light); opacity: 0; transform: translateX(-3px);
+    transition: opacity .12s ease, transform .12s ease;
+    display: inline-block;
+  }
+
+  /* score mini-bar under the number */
+  .score-mini {
+    width: 54px; height: 3px; border-radius: 2px; background: var(--ground-2);
+    margin-top: 5px; margin-left: auto; overflow: hidden;
+  }
+  .score-mini i { display: block; height: 100%; border-radius: 2px; }
+
+  /* ─────────── chips ─────────── */
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 600; letter-spacing: .015em;
+    padding: 3px 8px; border-radius: 3px; white-space: nowrap;
+  }
+  .chip--stripe::before {
+    content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor;
+  }
+  .chip--strong  { background: var(--strong-bg); color: var(--strong-ink); }
+  .chip--good    { background: var(--good-bg);   color: var(--good-ink);   }
+  .chip--refine  { background: var(--refine-bg); color: var(--refine-ink); }
+  .chip--low     { background: var(--low-bg);    color: var(--low-ink);    }
+  .chip--reject  { background: var(--reject-bg); color: var(--reject-ink); }
+  .chip--neutral { background: var(--ground-2);  color: var(--muted); }
+  .chip--status  { background: var(--green-tint); color: var(--green-dark); }
+  :root[data-theme="dark"] .chip--status { color: #7EE3A6; }
+  @media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .chip--status { color: #7EE3A6; } }
+
+  /* ─────────── CARD DETAIL ─────────── */
+  .detail-head { padding: 18px 24px 0; }
+  .detail-head__top { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 14px; }
+  .detail-head__crumbs { font-size: 12.5px; }
+  .detail-head__crumbs a { color: var(--muted); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+  .detail-head__crumbs a:hover { color: var(--green); }
+  .detail-head__actions { display: flex; gap: 8px; align-items: center; }
+  .save-state { font-size: 12px; color: var(--light); margin-right: 4px; }
+
+  .detail-head__titlerow {
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;
+    flex-wrap: wrap; margin-bottom: 8px;
+  }
+  .detail-head__title {
+    font-size: 23px; font-weight: 700; margin: 0; line-height: 1.22; letter-spacing: -.018em;
+    text-wrap: balance;
+  }
+
+  /* status control — top of the card, always visible; choices are admin-managed */
+  .status-ctl { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+  .status-ctl__label {
+    font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--light);
+  }
+  .status-ctl__select { position: relative; display: inline-flex; align-items: center; }
+  .status-ctl__select select {
+    appearance: none; -webkit-appearance: none;
+    font: inherit; font-size: 13px; font-weight: 600;
+    color: var(--green-dark); background: var(--green-tint);
+    border: 1px solid var(--green-tint-2); border-radius: var(--r-ctl);
+    padding: 6px 34px 6px 26px; cursor: pointer;
+  }
+  :root[data-theme="dark"] .status-ctl__select select { color: #7EE3A6; }
+  @media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .status-ctl__select select { color: #7EE3A6; } }
+  .status-ctl__select select:focus {
+    outline: 0; border-color: var(--green);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 15%, transparent);
+  }
+  .status-ctl__dot {
+    position: absolute; left: 12px; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green); pointer-events: none;
+  }
+  .status-ctl__chev {
+    position: absolute; right: 12px; pointer-events: none;
+    width: 12px; height: 12px; color: var(--muted);
+  }
+  .detail-head__meta {
+    display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--muted);
+    padding-bottom: 18px;
+  }
+  .detail-head__meta strong { color: var(--ink); font-weight: 600; }
+  .detail-head__meta a { color: var(--green); text-decoration: none; font-weight: 600; }
+  .detail-head__meta a:hover { text-decoration: underline; }
+  .meta-item { display: inline-flex; align-items: center; gap: 6px; }
+  .meta-item svg { width: 13px; height: 13px; color: var(--light); flex-shrink: 0; }
+
+  /* gauge ribbon */
+  .gauge-ribbon {
+    display: grid; grid-template-columns: auto 1fr auto; gap: 28px; align-items: center;
+    padding: 20px 24px 22px;
+    background: var(--ground-2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .gauge-score__label {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted);
+    font-weight: 700; display: block; margin-bottom: 3px;
+  }
+  .gauge-score__row { display: flex; align-items: baseline; gap: 5px; }
+  .gauge-score__num {
+    font-family: var(--font-num); font-size: 42px; font-weight: 700; line-height: 1;
+    color: var(--ink); letter-spacing: -.04em; font-variant-numeric: tabular-nums;
+  }
+  .gauge-score__of { font-family: var(--font-num); font-size: 13px; color: var(--light); }
+
+  .gauge-track { position: relative; padding-top: 22px; }
+  .gauge-bar {
+    position: relative; display: flex; gap: 3px; height: 8px;
+  }
+  .gauge-bar__seg { height: 100%; flex: 1; border-radius: 4px; opacity: .32; }
+  .gauge-bar__seg--reject { background: var(--reject-bar); }
+  .gauge-bar__seg--low    { background: var(--low-bar); }
+  .gauge-bar__seg--refine { background: var(--refine-bar); }
+  .gauge-bar__seg--good   { background: var(--good-bar); }
+  .gauge-bar__seg--strong { background: var(--strong-bar); }
+  .gauge-bar__seg--lit { opacity: 1; }
+  .gauge-marker {
+    position: absolute; top: 14px; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .gauge-marker__bubble {
+    font-family: var(--font-num); font-size: 11px; font-weight: 700;
+    background: var(--ink); color: var(--card);
+    padding: 2px 7px; border-radius: 5px; line-height: 1.5;
+    position: relative; top: -18px;
+  }
+  .gauge-marker__bubble::after {
+    content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    border: 4px solid transparent; border-top-color: var(--ink);
+  }
+  .gauge-marker__pin {
+    width: 2.5px; height: 16px; background: var(--ink); border-radius: 2px;
+    margin-top: -14px;
+    box-shadow: 0 0 0 2.5px var(--card);
+  }
+  .gauge-ticks {
+    position: relative; height: 15px; margin-top: 6px;
+    font-family: var(--font-num); font-size: 10px; color: var(--light);
+    font-variant-numeric: tabular-nums;
+  }
+  .gauge-ticks span { position: absolute; transform: translateX(-50%); }
+
+  .gauge-band { justify-self: end; text-align: right; }
+  .gauge-band .chip { font-size: 12.5px; padding: 6px 14px; }
+  .gauge-band__hint { font-size: 11px; color: var(--light); margin-top: 6px; }
+
+  /* ─────────── field groups ─────────── */
+  .groups { padding: 6px 24px 24px; }
+  .group { border-top: 1px solid var(--border); padding: 20px 0 22px; }
+  .group:first-child { border-top: 0; padding-top: 22px; }
+  .group__head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 16px; }
+  .group__label {
+    font-family: var(--font-num); font-size: 10.5px; letter-spacing: .13em; font-weight: 700;
+    color: var(--green); text-transform: uppercase;
+  }
+  .group__hint { font-size: 12px; color: var(--light); }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 22px; }
+  .grid--2 { grid-template-columns: repeat(2, 1fr); }
+  .field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .field--wide { grid-column: 1 / -1; }
+  .field__label { font-size: 11.5px; font-weight: 600; color: var(--muted); letter-spacing: .015em; }
+  .field input, .field select, .field textarea {
+    font: inherit; font-size: 13.5px;
+    background: var(--card); color: var(--ink);
+    border: 1px solid var(--border-strong); border-radius: var(--r-ctl);
+    padding: 8px 11px; width: 100%;
+  }
+  .field textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: 0; border-color: var(--green);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 15%, transparent);
+  }
+  .field--read .field__value { font-size: 13.5px; color: var(--ink); padding: 2px 0; }
+  .field--read textarea { background: var(--ground-2); border-color: transparent; color: var(--muted); }
+
+  /* scoring rows */
+  .score-rows { display: flex; flex-direction: column; }
+  .score-row {
+    display: grid;
+    grid-template-columns: minmax(240px, 5fr) minmax(200px, 7fr) auto;
+    gap: 2px 20px; align-items: center;
+    padding: 11px 0; border-top: 1px solid var(--border);
+  }
+  .score-row:first-child { border-top: 0; padding-top: 2px; }
+  .score-row__text { min-width: 0; }
+  .score-row__head { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+  .score-row__label { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+  .score-row__weight {
+    font-family: var(--font-num); font-size: 10px; font-weight: 700; letter-spacing: .03em;
+    color: var(--green); background: var(--green-tint); padding: 1.5px 7px; border-radius: 4px;
+  }
+  .score-row__q { font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+
+  .score-row__control { display: flex; align-items: center; gap: 14px; }
+  .score-row__slider { flex: 1; position: relative; }
+  .score-row__slider input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: 3px;
+    background: linear-gradient(90deg, var(--green) var(--pct, 0%), var(--border) var(--pct, 0%));
+    display: block;
+  }
+  .score-row__slider input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 17px; height: 17px; border-radius: 50%;
+    background: var(--card); border: 5px solid var(--green); box-shadow: var(--shadow-pop);
+    cursor: pointer;
+  }
+  .score-row__slider input[type=range]::-moz-range-thumb {
+    width: 17px; height: 17px; border-radius: 50%;
+    background: var(--card); border: 5px solid var(--green); box-shadow: var(--shadow-pop);
+    cursor: pointer; box-sizing: border-box;
+  }
+  .score-row__slider .steps {
+    display: flex; justify-content: space-between; margin-top: 4px; padding: 0 7px;
+    font-family: var(--font-num); font-size: 9px; color: var(--light);
+  }
+  .score-row__val {
+    font-family: var(--font-num); font-size: 17px; font-weight: 700; width: 30px; text-align: center;
+    color: var(--ink); font-variant-numeric: tabular-nums;
+    background: var(--ground-2); border-radius: var(--r-ctl); padding: 5px 0;
+  }
+  .score-row__val--unset { color: var(--light); font-weight: 400; background: transparent; }
+
+  /* ─────────── field admin ─────────── */
+  .admin-table td { padding: 13px 18px; }
+  .admin-table__key { font-family: var(--font-num); font-size: 11.5px; color: var(--light); margin-top: 2px; }
+  .admin-table__key .sys {
+    font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    background: var(--green-tint); color: var(--green-dark); padding: 1px 5px; border-radius: 3px;
+    margin-left: 5px;
+  }
+  :root[data-theme="dark"] .admin-table__key .sys { color: #7EE3A6; }
+  .admin-table__usage { font-size: 12.5px; color: var(--muted); }
+  .admin-table__usage strong { color: var(--ink); font-weight: 600; }
+  .admin-table__actions { display: flex; gap: 6px; justify-content: flex-end; }
+
+  .rule-note {
+    background: var(--ground-2);
+    border-left: 3px solid var(--green);
+    padding: 12px 16px; border-radius: 0 var(--r-ctl) var(--r-ctl) 0; margin: 18px 18px 4px;
+    font-size: 12.5px; color: var(--muted); line-height: 1.6;
+  }
+  .rule-note__icon { display: none; }
+  .rule-note strong { color: var(--ink); font-weight: 600; }
+  .rule-note code {
+    font-family: var(--font-num); font-size: 11.5px;
+    background: var(--card); padding: 1px 5px; border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .inactive-row td > * { opacity: .5; }
+  .inactive-row:hover td > * { opacity: .85; }
+  .chip--inactive {
+    background: transparent; color: var(--light);
+    border: 1px dashed var(--border-strong);
+  }
+
+  /* ─────────── theme toggle ─────────── */
+  .theme-toggle {
+    position: fixed; top: 62px; right: 20px; z-index: 10;
+    background: var(--card); border: 1px solid var(--border-strong); border-radius: 999px;
+    padding: 3px; display: flex; gap: 2px; box-shadow: var(--shadow-md);
+  }
+  .theme-toggle button {
+    font: inherit; font-size: 11px; font-weight: 600; letter-spacing: .04em;
+    padding: 5px 11px; border-radius: 999px; border: 0;
+    background: transparent; color: var(--muted); cursor: pointer;
+  }
+  .theme-toggle button[aria-pressed="true"] { background: var(--green-dark); color: #fff; }
+
+  :focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+
+  @media (max-width: 820px) {
+    .grid, .grid--2 { grid-template-columns: 1fr; }
+    .gauge-ribbon { grid-template-columns: 1fr; gap: 18px; }
+    .gauge-band { justify-self: start; text-align: left; }
+    .score-row { grid-template-columns: 1fr; gap: 8px; }
+    .score-row__val { justify-self: start; }
+  }
+</style>
+
+<header class="topbar">
+  <a class="topbar__brand" href="#">
+    <span class="topbar__mark">S</span>
+    <span class="topbar__name">Scorecard</span>
+  </a>
+  <span class="topbar__sep">/</span>
+  <span class="topbar__section">AI Use Case Review · Hord Coplan Macht</span>
+  <div class="topbar__right">
+    <span class="topbar__user">HM</span>
+  </div>
+</header>
+
+<div class="theme-toggle" role="group" aria-label="Theme">
+  <button type="button" data-theme-btn="light" aria-pressed="false">Light</button>
+  <button type="button" data-theme-btn="dark"  aria-pressed="false">Dark</button>
+</div>
+
+<div class="wrap">
+
+  <div class="banner">
+    <h1 class="banner__title">Design preview · v2</h1>
+    <span class="banner__desc">Modern-condensed refresh of Jerry's POC · brand topbar · light + dark · production copy</span>
+  </div>
+
+  <!-- ─────────── DASHBOARD ─────────── -->
+  <div class="section-heading">
+    <span class="section-heading__eyebrow">Dashboard</span>
+    <h2 class="section-heading__title">All ideas being scored</h2>
+    <span class="section-heading__note">Segmented tabs · score with inline band bar · hover reveals the row affordance</span>
+  </div>
+
+  <div class="panel">
+    <div class="toolbar">
+      <div class="tabs" role="tablist">
+        <button class="tab tab--active" type="button" role="tab" aria-selected="true">All <span class="count">12</span></button>
+        <button class="tab" type="button" role="tab" aria-selected="false">New <span class="count">3</span></button>
+        <button class="tab" type="button" role="tab" aria-selected="false">In review <span class="count">5</span></button>
+        <button class="tab" type="button" role="tab" aria-selected="false">Executive <span class="count">4</span></button>
+      </div>
+      <div class="toolbar__right">
+        <label class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+          </svg>
+          <input type="search" placeholder="Filter cards…" />
+        </label>
+        <button class="btn btn--primary" type="button">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          New scorecard
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Idea</th>
+            <th>Status</th>
+            <th>Band</th>
+            <th class="right">Score</th>
+            <th>Submitted by</th>
+            <th class="right">Votes</th>
+            <th aria-hidden="true"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="cell-title">Sustainability &amp; Energy Code Planner</div>
+              <div class="cell-title__sub">AI-supported decision · Sustainability</div>
+            </td>
+            <td><span class="chip chip--status">Scored</span></td>
+            <td><span class="chip chip--strong chip--stripe">Strong candidate</span></td>
+            <td class="right">
+              <span class="score-block"><span class="score-block__num">84</span><span class="score-block__of">/100</span></span>
+              <span class="score-mini"><i style="width:84%; background:var(--strong-bar)"></i></span>
+            </td>
+            <td>Brian Uher</td>
+            <td class="right"><span class="num">1</span></td>
+            <td class="right"><span class="row-go">→</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="cell-title">Chatbot for Logo / Icon extraction</div>
+              <div class="cell-title__sub">Reusable assistant · Design Technology</div>
+            </td>
+            <td><span class="chip chip--status">Under Review</span></td>
+            <td><span class="chip chip--good chip--stripe">Good candidate</span></td>
+            <td class="right">
+              <span class="score-block"><span class="score-block__num">67</span><span class="score-block__of">/100</span></span>
+              <span class="score-mini"><i style="width:67%; background:var(--good-bar)"></i></span>
+            </td>
+            <td>Brian Helfer, Jr.</td>
+            <td class="right"><span class="num">2</span></td>
+            <td class="right"><span class="row-go">→</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="cell-title">Add Team Members to Forma (ACC) Projects</div>
+              <div class="cell-title__sub">Workflow automation · IT / DT</div>
+            </td>
+            <td><span class="chip chip--status">In Review</span></td>
+            <td><span class="chip chip--refine chip--stripe">Needs refinement</span></td>
+            <td class="right">
+              <span class="score-block"><span class="score-block__num">54</span><span class="score-block__of">/100</span></span>
+              <span class="score-mini"><i style="width:54%; background:var(--refine-bar)"></i></span>
+            </td>
+            <td>Jordan Billingsley</td>
+            <td class="right"><span class="num">4</span></td>
+            <td class="right"><span class="row-go">→</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="cell-title">AEC Spec Assembly Assistant</div>
+              <div class="cell-title__sub">AI-assisted task · Architecture</div>
+            </td>
+            <td><span class="chip chip--status">Submitted</span></td>
+            <td><span class="chip chip--neutral">Not scored</span></td>
+            <td class="right">
+              <span class="score-block score-block--empty"><span class="score-block__num">—</span></span>
+              <span class="score-mini"><i style="width:0%"></i></span>
+            </td>
+            <td>Sarah Millmann</td>
+            <td class="right"><span class="num">7</span></td>
+            <td class="right"><span class="row-go">→</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="cell-title">Meeting Note Summarizer for BD Calls</div>
+              <div class="cell-title__sub">AI feature in existing platform · Marketing / BD</div>
+            </td>
+            <td><span class="chip chip--status">Rejected</span></td>
+            <td><span class="chip chip--low chip--stripe">Low priority</span></td>
+            <td class="right">
+              <span class="score-block"><span class="score-block__num">31</span><span class="score-block__of">/100</span></span>
+              <span class="score-mini"><i style="width:31%; background:var(--low-bar)"></i></span>
+            </td>
+            <td>Tim Barnhill</td>
+            <td class="right"><span class="num">1</span></td>
+            <td class="right"><span class="row-go">→</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="cell-title">Auto-title Revit views from sheet metadata</div>
+              <div class="cell-title__sub">Workflow automation · Design Technology</div>
+            </td>
+            <td><span class="chip chip--status">Approved</span></td>
+            <td><span class="chip chip--good chip--stripe">Good candidate</span></td>
+            <td class="right">
+              <span class="score-block"><span class="score-block__num">72</span><span class="score-block__of">/100</span></span>
+              <span class="score-mini"><i style="width:72%; background:var(--good-bar)"></i></span>
+            </td>
+            <td>Mike Hord</td>
+            <td class="right"><span class="num">3</span></td>
+            <td class="right"><span class="row-go">→</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ─────────── CARD DETAIL ─────────── -->
+  <div class="section-heading">
+    <span class="section-heading__eyebrow">Card detail</span>
+    <h2 class="section-heading__title">The scoring surface</h2>
+    <span class="section-heading__note">Gauge ribbon with lit band segments · 3-across scoring rows · icon meta line</span>
+  </div>
+
+  <div class="panel">
+    <div class="detail-head">
+      <div class="detail-head__top">
+        <div class="detail-head__crumbs">
+          <a href="#">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M19 12H5m6-7-7 7 7 7"/></svg>
+            All scorecards
+          </a>
+        </div>
+        <div class="detail-head__actions">
+          <span class="save-state">Saved just now</span>
+          <button class="btn btn--ghost" type="button">Discard</button>
+          <button class="btn btn--primary" type="button">Save</button>
+        </div>
+      </div>
+      <div class="detail-head__titlerow">
+        <h1 class="detail-head__title">Sustainability &amp; Energy Code Planner</h1>
+        <div class="status-ctl">
+          <span class="status-ctl__label">Status</span>
+          <span class="status-ctl__select">
+            <span class="status-ctl__dot" aria-hidden="true"></span>
+            <select aria-label="Card status">
+              <option>Submitted</option>
+              <option>Under Review</option>
+              <option>Needs Clarification</option>
+              <option selected>Scored</option>
+              <option>Approved for Pilot</option>
+              <option>Pilot in Progress</option>
+              <option>Approved for Rollout</option>
+              <option>Deferred</option>
+              <option>Rejected</option>
+              <option>Completed</option>
+            </select>
+            <svg class="status-ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        </div>
+      </div>
+      <div class="detail-head__meta">
+        <span class="meta-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>
+          <strong>Brian Uher</strong>
+        </span>
+        <span class="meta-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>
+          Ideas board <span class="num">2026-06-22</span> · review <span class="num">2026-06-25</span>
+        </span>
+        <span class="meta-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m12 4 7 8h-4v8h-6v-8H5z"/></svg>
+          <span class="num">1</span> upvote
+        </span>
+        <a href="#">Open Idea ↗</a>
+      </div>
+    </div>
+
+    <div class="gauge-ribbon">
+      <div class="gauge-score">
+        <span class="gauge-score__label">Weighted score</span>
+        <span class="gauge-score__row">
+          <span class="gauge-score__num">84</span><span class="gauge-score__of">/ 100</span>
+        </span>
+      </div>
+      <div class="gauge-track">
+        <div class="gauge-bar">
+          <div class="gauge-bar__seg gauge-bar__seg--reject"></div>
+          <div class="gauge-bar__seg gauge-bar__seg--low"></div>
+          <div class="gauge-bar__seg gauge-bar__seg--refine"></div>
+          <div class="gauge-bar__seg gauge-bar__seg--good"></div>
+          <div class="gauge-bar__seg gauge-bar__seg--strong gauge-bar__seg--lit"></div>
+        </div>
+        <div class="gauge-marker" style="left:84%">
+          <span class="gauge-marker__bubble">84</span>
+          <span class="gauge-marker__pin"></span>
+        </div>
+        <div class="gauge-ticks">
+          <span style="left:0%">0</span>
+          <span style="left:20%">20</span>
+          <span style="left:40%">40</span>
+          <span style="left:60%">60</span>
+          <span style="left:80%">80</span>
+          <span style="left:100%">100</span>
+        </div>
+      </div>
+      <div class="gauge-band">
+        <span class="chip chip--strong chip--stripe">Strong candidate</span>
+        <div class="gauge-band__hint">band threshold ≥ 80</div>
+      </div>
+    </div>
+
+    <div class="groups">
+
+      <div class="group">
+        <div class="group__head">
+          <span class="group__label">Intake</span>
+          <span class="group__hint">Pulled from the Fider ideas board — read-only</span>
+        </div>
+        <div class="grid">
+          <div class="field field--read">
+            <span class="field__label">Idea title</span>
+            <span class="field__value">Sustainability &amp; Energy Code Planner</span>
+          </div>
+          <div class="field field--read">
+            <span class="field__label">Submitted by</span>
+            <span class="field__value">Brian Uher</span>
+          </div>
+          <div class="field field--read">
+            <span class="field__label">Upvotes</span>
+            <span class="field__value num">1</span>
+          </div>
+          <div class="field field--read field--wide">
+            <span class="field__label">Idea description</span>
+            <textarea readonly rows="3">An AI assistant that ingests project location + program and returns the applicable energy code, sustainability certifications available, and a first-pass compliance checklist so PMs can scope earlier and more consistently across offices.</textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="group__head">
+          <span class="group__label">Context</span>
+          <span class="group__hint">Filled in during review</span>
+        </div>
+        <div class="grid grid--2">
+          <div class="field">
+            <label class="field__label" for="f-owner">Business outcome owner</label>
+            <input id="f-owner" type="text" value="Amy Sickeler" />
+          </div>
+          <div class="field">
+            <label class="field__label" for="f-dept">Department / studio / practice</label>
+            <input id="f-dept" type="text" value="Sustainability" />
+          </div>
+          <div class="field field--wide">
+            <label class="field__label" for="f-problem">Business problem this solves</label>
+            <textarea id="f-problem">Junior staff spend hours cross-referencing code tables per project; senior staff spot-check but reviews slip on tight bids. A firmwide assistant would compress that lookup into minutes and standardize the answer.</textarea>
+          </div>
+          <div class="field field--wide">
+            <label class="field__label" for="f-benefits">Who would benefit</label>
+            <textarea id="f-benefits">PMs at fee-proposal stage, sustainability specialists during design, and pursuit teams estimating scope.</textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="group__head">
+          <span class="group__label">Scoring</span>
+          <span class="group__hint">1–5 each · 0 = not scored · weights sum to 100</span>
+        </div>
+        <div class="score-rows">
+
+          <div class="score-row">
+            <div class="score-row__text">
+              <div class="score-row__head">
+                <span class="score-row__label">Strategic alignment</span>
+                <span class="score-row__weight num">×20</span>
+              </div>
+              <div class="score-row__q">Does this support a firm priority?</div>
+            </div>
+            <div class="score-row__control">
+              <div class="score-row__slider">
+                <input type="range" min="0" max="5" value="5" style="--pct:100%" aria-label="Strategic alignment score">
+                <div class="steps"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+              </div>
+            </div>
+            <span class="score-row__val num">5</span>
+          </div>
+
+          <div class="score-row">
+            <div class="score-row__text">
+              <div class="score-row__head">
+                <span class="score-row__label">Business value</span>
+                <span class="score-row__weight num">×20</span>
+              </div>
+              <div class="score-row__q">Does this improve margin, delivery, quality, risk, speed, or decision-making?</div>
+            </div>
+            <div class="score-row__control">
+              <div class="score-row__slider">
+                <input type="range" min="0" max="5" value="4" style="--pct:80%" aria-label="Business value score">
+                <div class="steps"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+              </div>
+            </div>
+            <span class="score-row__val num">4</span>
+          </div>
+
+          <div class="score-row">
+            <div class="score-row__text">
+              <div class="score-row__head">
+                <span class="score-row__label">Ownership clarity</span>
+                <span class="score-row__weight num">×15</span>
+              </div>
+              <div class="score-row__q">Is there a real business owner, not just IT interest?</div>
+            </div>
+            <div class="score-row__control">
+              <div class="score-row__slider">
+                <input type="range" min="0" max="5" value="5" style="--pct:100%" aria-label="Ownership clarity score">
+                <div class="steps"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+              </div>
+            </div>
+            <span class="score-row__val num">5</span>
+          </div>
+
+          <div class="score-row">
+            <div class="score-row__text">
+              <div class="score-row__head">
+                <span class="score-row__label">Workflow clarity</span>
+                <span class="score-row__weight num">×15</span>
+              </div>
+              <div class="score-row__q">Is the current and future workflow understood?</div>
+            </div>
+            <div class="score-row__control">
+              <div class="score-row__slider">
+                <input type="range" min="0" max="5" value="4" style="--pct:80%" aria-label="Workflow clarity score">
+                <div class="steps"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+              </div>
+            </div>
+            <span class="score-row__val num">4</span>
+          </div>
+
+          <div class="score-row">
+            <div class="score-row__text">
+              <div class="score-row__head">
+                <span class="score-row__label">Data readiness</span>
+                <span class="score-row__weight num">×10</span>
+              </div>
+              <div class="score-row__q">Is the needed data available, trusted, and usable?</div>
+            </div>
+            <div class="score-row__control">
+              <div class="score-row__slider">
+                <input type="range" min="0" max="5" value="3" style="--pct:60%" aria-label="Data readiness score">
+                <div class="steps"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+              </div>
+            </div>
+            <span class="score-row__val num">3</span>
+          </div>
+
+          <div class="score-row">
+            <div class="score-row__text">
+              <div class="score-row__head">
+                <span class="score-row__label">Risk manageability</span>
+                <span class="score-row__weight num">×10</span>
+              </div>
+              <div class="score-row__q">Can confidentiality, accuracy, security, and review risks be managed?</div>
+            </div>
+            <div class="score-row__control">
+              <div class="score-row__slider">
+                <input type="range" min="0" max="5" value="4" style="--pct:80%" aria-label="Risk manageability score">
+                <div class="steps"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+              </div>
+            </div>
+            <span class="score-row__val num">4</span>
+          </div>
+
+          <div class="score-row">
+            <div class="score-row__text">
+              <div class="score-row__head">
+                <span class="score-row__label">Adoption likelihood</span>
+                <span class="score-row__weight num">×5</span>
+              </div>
+              <div class="score-row__q">Will people actually use this?</div>
+            </div>
+            <div class="score-row__control">
+              <div class="score-row__slider">
+                <input type="range" min="0" max="5" value="4" style="--pct:80%" aria-label="Adoption likelihood score">
+                <div class="steps"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+              </div>
+            </div>
+            <span class="score-row__val num">4</span>
+          </div>
+
+          <div class="score-row">
+            <div class="score-row__text">
+              <div class="score-row__head">
+                <span class="score-row__label">Supportability</span>
+                <span class="score-row__weight num">×5</span>
+              </div>
+              <div class="score-row__q">Can this be supported after the pilot?</div>
+            </div>
+            <div class="score-row__control">
+              <div class="score-row__slider">
+                <input type="range" min="0" max="5" value="0" style="--pct:0%" aria-label="Supportability score">
+                <div class="steps"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+              </div>
+            </div>
+            <span class="score-row__val score-row__val--unset num">—</span>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="group__head">
+          <span class="group__label">Decision</span>
+          <span class="group__hint">Committee recommendation and outcome</span>
+        </div>
+        <div class="grid grid--2">
+          <div class="field">
+            <label class="field__label" for="f-rec">Recommendation</label>
+            <select id="f-rec">
+              <option>Approve for Pilot</option>
+              <option>Needs more discovery</option>
+              <option>Defer</option>
+              <option>Reject</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field__label" for="f-final">Final decision</label>
+            <select id="f-final">
+              <option>—</option>
+              <option>Approved for pilot</option>
+              <option>Approved for rollout</option>
+              <option>Deferred</option>
+              <option>Rejected</option>
+            </select>
+          </div>
+          <div class="field field--wide">
+            <label class="field__label" for="f-pilot">Pilot scope</label>
+            <textarea id="f-pilot">One studio, three project types (K-12, higher ed, healthcare), 45-day trial. Success = median lookup time under 90 seconds and specialist sign-off on 90% of first-pass answers.</textarea>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ─────────── FIELD ADMIN ─────────── -->
+  <div class="section-heading">
+    <span class="section-heading__eyebrow">Field admin</span>
+    <h2 class="section-heading__title">Adding, retiring, and never breaking history</h2>
+    <span class="section-heading__note">Deactivate vs. delete · driven by whether any card has answered the question</span>
+  </div>
+
+  <div class="panel">
+
+    <div class="rule-note">
+      <span class="rule-note__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+      </span>
+      <div>
+        <strong>The rule.</strong> A question can only be <em>deleted</em> while no scorecard has ever answered it. Once any card holds a value for it — even one draft — the question retires via <strong>Deactivate</strong> instead: it <strong>stops appearing on new scorecards</strong> but <strong>stays visible on every card that answered it</strong>, so committee history is never rewritten. <code>is_system</code> fields can be renamed, reweighted, or deactivated — never deleted. <strong>Status</strong> sits at the top of every card; its choice list is fully admin-editable here, and retired choices follow the same rule — hidden from the dropdown on new cards, still shown on cards that hold them.
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Question</th>
+            <th>Type</th>
+            <th>Group</th>
+            <th class="right">Weight</th>
+            <th>Usage</th>
+            <th class="right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="cell-title">Status</div>
+              <div class="admin-table__key">status · choices: Submitted, Under Review, Scored, … <span class="sys">system</span></div>
+            </td>
+            <td><span class="chip chip--neutral">Choice</span></td>
+            <td>Header</td>
+            <td class="right num">—</td>
+            <td class="admin-table__usage"><strong>12</strong> cards</td>
+            <td>
+              <div class="admin-table__actions">
+                <button class="btn" type="button">Edit choices</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="cell-title">Strategic alignment</div>
+              <div class="admin-table__key">score_strategic<span class="sys">system</span></div>
+            </td>
+            <td><span class="chip chip--neutral">Score</span></td>
+            <td>Scoring</td>
+            <td class="right num">20%</td>
+            <td class="admin-table__usage"><strong>12</strong> cards</td>
+            <td>
+              <div class="admin-table__actions">
+                <button class="btn btn--ghost" type="button">Edit</button>
+                <button class="btn" type="button">Deactivate</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="cell-title">Data readiness</div>
+              <div class="admin-table__key">score_data_readiness<span class="sys">system</span></div>
+            </td>
+            <td><span class="chip chip--neutral">Score</span></td>
+            <td>Scoring</td>
+            <td class="right num">10%</td>
+            <td class="admin-table__usage"><strong>10</strong> cards</td>
+            <td>
+              <div class="admin-table__actions">
+                <button class="btn btn--ghost" type="button">Edit</button>
+                <button class="btn" type="button">Deactivate</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="cell-title">Business outcome owner</div>
+              <div class="admin-table__key">business_outcome_owner</div>
+            </td>
+            <td><span class="chip chip--neutral">Text</span></td>
+            <td>Context</td>
+            <td class="right num">—</td>
+            <td class="admin-table__usage"><strong>8</strong> cards</td>
+            <td>
+              <div class="admin-table__actions">
+                <button class="btn btn--ghost" type="button">Edit</button>
+                <button class="btn" type="button">Deactivate</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="cell-title">Ethics review needed?</div>
+              <div class="admin-table__key">ethics_review_needed</div>
+            </td>
+            <td><span class="chip chip--neutral">Choice</span></td>
+            <td>Classification</td>
+            <td class="right num">—</td>
+            <td class="admin-table__usage">Never answered</td>
+            <td>
+              <div class="admin-table__actions">
+                <button class="btn btn--ghost" type="button">Edit</button>
+                <button class="btn btn--danger" type="button">Delete</button>
+              </div>
+            </td>
+          </tr>
+          <tr class="inactive-row">
+            <td>
+              <div class="cell-title">Vendor / integration partner</div>
+              <div class="admin-table__key">vendor_partner</div>
+            </td>
+            <td><span class="chip chip--inactive">Inactive</span></td>
+            <td>Ownership</td>
+            <td class="right num">—</td>
+            <td class="admin-table__usage">On <strong>3</strong> old cards · hidden on new</td>
+            <td>
+              <div class="admin-table__actions">
+                <button class="btn btn--ghost" type="button">Edit</button>
+                <button class="btn" type="button">Reactivate</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Theme toggle stamps :root[data-theme=...] so the token overrides win.
+  const root = document.documentElement;
+  const buttons = document.querySelectorAll("[data-theme-btn]");
+  const sync = () => {
+    const cur = root.getAttribute("data-theme") ||
+      (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    buttons.forEach(b => b.setAttribute("aria-pressed", b.dataset.themeBtn === cur ? "true" : "false"));
+  };
+  buttons.forEach(b => b.addEventListener("click", () => {
+    root.setAttribute("data-theme", b.dataset.themeBtn);
+    sync();
+  }));
+  sync();
+
+  // Live slider fill + value text + gauge recompute.
+  const WEIGHTS = [20, 20, 15, 15, 10, 10, 5, 5];
+  const sliders = Array.from(document.querySelectorAll(".score-row__slider input[type=range]"));
+
+  function bandFor(score) {
+    if (score >= 80) return { label: "Strong candidate", cls: "chip--strong", seg: 4 };
+    if (score >= 60) return { label: "Good candidate", cls: "chip--good", seg: 3 };
+    if (score >= 40) return { label: "Needs refinement", cls: "chip--refine", seg: 2 };
+    if (score >= 20) return { label: "Low priority", cls: "chip--low", seg: 1 };
+    return { label: "Not recommended", cls: "chip--reject", seg: 0 };
+  }
+
+  function recompute() {
+    let total = 0;
+    sliders.forEach((r, i) => { total += (WEIGHTS[i] || 0) * Number(r.value); });
+    const score = Math.round(total / 5);
+
+    document.querySelector(".gauge-score__num").textContent = score;
+    const marker = document.querySelector(".gauge-marker");
+    marker.style.left = score + "%";
+    marker.querySelector(".gauge-marker__bubble").textContent = score;
+
+    const band = bandFor(score);
+    const chip = document.querySelector(".gauge-band .chip");
+    chip.className = "chip chip--stripe " + band.cls;
+    chip.textContent = band.label;
+    const hints = { 4: "band threshold ≥ 80", 3: "band threshold ≥ 60", 2: "band threshold ≥ 40", 1: "band threshold ≥ 20", 0: "band threshold < 20" };
+    document.querySelector(".gauge-band__hint").textContent = hints[band.seg];
+
+    document.querySelectorAll(".gauge-bar__seg").forEach((s, i) => {
+      s.classList.toggle("gauge-bar__seg--lit", i === band.seg);
+    });
+  }
+
+  sliders.forEach(r => {
+    const val = r.closest(".score-row").querySelector(".score-row__val");
+    r.addEventListener("input", () => {
+      const pct = (r.value / 5) * 100;
+      r.style.setProperty("--pct", pct + "%");
+      if (r.value === "0") {
+        val.textContent = "—"; val.classList.add("score-row__val--unset");
+      } else {
+        val.textContent = r.value; val.classList.remove("score-row__val--unset");
+      }
+      recompute();
+    });
+  });
+
+  // Tabs (cosmetic — no routing in the mockup).
+  document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => { x.classList.remove("tab--active"); x.setAttribute("aria-selected", "false"); });
+    t.classList.add("tab--active"); t.setAttribute("aria-selected", "true");
+  }));
+</script>

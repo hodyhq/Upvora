@@ -21,6 +21,10 @@ export const computeWeightedScore = (values: Record<string, unknown> | undefined
 
 export interface BandInfo {
   label: string
+  // key indexes the c-scorecard__chip--<key> / gauge segment classes in Scorecard.scss
+  key: "strong" | "good" | "refine" | "low" | "reject"
+  // threshold that put the score in this band (for the "band threshold ≥ N" hint)
+  threshold: number
   bg: string
   fg: string
   border: string
@@ -31,11 +35,14 @@ export interface BandInfo {
 // which don't ship orange.
 export const bandForScore = (score: number): BandInfo => {
   const t = Fider.session.tenant
-  if (score >= t.scorecardBandStrong) return { label: "Strong Candidate", bg: "#DCFCE7", fg: "#14532D", border: "#16A34A" }
-  if (score >= t.scorecardBandGood) return { label: "Good Candidate", bg: "#DBEAFE", fg: "#1E3A8A", border: "#2563EB" }
-  if (score >= t.scorecardBandRefine) return { label: "Needs Refinement", bg: "#FEF3C7", fg: "#78350F", border: "#F59E0B" }
-  if (score >= t.scorecardBandLow) return { label: "Low Priority", bg: "#FFEDD5", fg: "#7C2D12", border: "#F97316" }
-  return { label: "Not Recommended", bg: "#FEE2E2", fg: "#7F1D1D", border: "#DC2626" }
+  if (score >= t.scorecardBandStrong)
+    return { label: "Strong Candidate", key: "strong", threshold: t.scorecardBandStrong, bg: "#DCFCE7", fg: "#14532D", border: "#16A34A" }
+  if (score >= t.scorecardBandGood)
+    return { label: "Good Candidate", key: "good", threshold: t.scorecardBandGood, bg: "#DBEAFE", fg: "#1E3A8A", border: "#2563EB" }
+  if (score >= t.scorecardBandRefine)
+    return { label: "Needs Refinement", key: "refine", threshold: t.scorecardBandRefine, bg: "#FEF3C7", fg: "#78350F", border: "#F59E0B" }
+  if (score >= t.scorecardBandLow) return { label: "Low Priority", key: "low", threshold: t.scorecardBandLow, bg: "#FFEDD5", fg: "#7C2D12", border: "#F97316" }
+  return { label: "Not Recommended", key: "reject", threshold: 0, bg: "#FEE2E2", fg: "#7F1D1D", border: "#DC2626" }
 }
 
 // Small inline pill for use in tables and list rows.

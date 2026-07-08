@@ -1,0 +1,698 @@
+@use "~@fider/assets/styles/variables.scss" as *;
+
+// Shared styles for the Scorecard dashboard + card pages (v0.36.1.3 reskin).
+// Design source: the approved v3 mockup — squared 4/6px radii, hairline
+// shadows, tabular-mono numerics, band chips as small squared tags. Brand
+// color rides the tenant theme via --colors-primary-*.
+
+.c-scorecard {
+  // ─────────── panel ───────────
+  &__panel {
+    background: var(--colors-white);
+    border: 1px solid var(--colors-gray-200);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  // ─────────── chips ───────────
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.015em;
+    padding: 3px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+
+    &::before {
+      content: "";
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    &--plain::before {
+      display: none;
+    }
+
+    &--strong  { background: #e5f4e9; color: #14532d; }
+    &--good    { background: #e3ecf9; color: #1e3a8a; }
+    &--refine  { background: #fbf1d8; color: #78350f; }
+    &--low     { background: #fbe8d6; color: #7c2d12; }
+    &--reject  { background: #fae3e3; color: #7f1d1d; }
+    &--neutral { background: var(--colors-gray-200); color: var(--colors-gray-700); }
+    &--status  { background: var(--colors-gray-200); color: var(--colors-gray-900); }
+  }
+
+  // ─────────── card header ───────────
+  &__head {
+    padding: 18px 24px 0;
+  }
+
+  &__head-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 14px;
+  }
+
+  &__crumb {
+    font-size: 13px;
+    color: var(--colors-gray-700);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--colors-primary-base);
+    }
+  }
+
+  &__head-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  &__title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+
+  &__title-input {
+    font-size: 23px;
+    font-weight: 700;
+    line-height: 1.22;
+    letter-spacing: -0.018em;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--colors-gray-900);
+    padding: 2px 6px;
+    margin-left: -6px;
+    flex: 1;
+    min-width: 240px;
+
+    &:hover {
+      border-color: var(--colors-gray-300);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--colors-primary-base);
+      background: var(--colors-white);
+    }
+  }
+
+  // status control — always visible top-right of the card
+  &__status {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-end;
+  }
+
+  &__status-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--colors-gray-600);
+  }
+
+  &__status-select {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--colors-gray-900);
+    background: var(--colors-gray-200);
+    border: 1px solid var(--colors-gray-300);
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+
+    &:focus {
+      outline: none;
+      border-color: var(--colors-primary-base);
+    }
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    font-size: 12.5px;
+    color: var(--colors-gray-700);
+    padding-bottom: 18px;
+    align-items: center;
+
+    strong {
+      color: var(--colors-gray-900);
+      font-weight: 600;
+    }
+
+    a {
+      color: var(--colors-primary-base);
+      text-decoration: none;
+      font-weight: 600;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  &__meta-tags {
+    display: inline-flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  // ─────────── gauge ribbon ───────────
+  &__gauge {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 28px;
+    align-items: center;
+    padding: 20px 24px 22px;
+    background: var(--colors-gray-100);
+    border-top: 1px solid var(--colors-gray-200);
+    border-bottom: 1px solid var(--colors-gray-200);
+  }
+
+  &__gauge-label {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--colors-gray-600);
+    font-weight: 700;
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  &__gauge-num {
+    font-family: $font-code;
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--colors-gray-900);
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__gauge-of {
+    font-family: $font-code;
+    font-size: 13px;
+    color: var(--colors-gray-600);
+  }
+
+  &__gauge-track {
+    position: relative;
+    padding-top: 22px;
+  }
+
+  &__gauge-bar {
+    position: relative;
+    display: flex;
+    gap: 3px;
+    height: 8px;
+  }
+
+  &__gauge-seg {
+    height: 100%;
+    flex: 1;
+    border-radius: 4px;
+    opacity: 0.32;
+
+    &--reject { background: #dc2626; }
+    &--low    { background: #ea7326; }
+    &--refine { background: #e9a208; }
+    &--good   { background: #2563eb; }
+    &--strong { background: #16a34a; }
+    &--lit    { opacity: 1; }
+  }
+
+  &__gauge-marker {
+    position: absolute;
+    top: 14px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  &__gauge-bubble {
+    font-family: $font-code;
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--colors-gray-900);
+    color: var(--colors-white);
+    padding: 2px 7px;
+    border-radius: 4px;
+    line-height: 1.5;
+    position: relative;
+    top: -18px;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 4px solid transparent;
+      border-top-color: var(--colors-gray-900);
+    }
+  }
+
+  &__gauge-pin {
+    width: 2.5px;
+    height: 16px;
+    background: var(--colors-gray-900);
+    border-radius: 2px;
+    margin-top: -14px;
+    box-shadow: 0 0 0 2.5px var(--colors-gray-100);
+  }
+
+  &__gauge-ticks {
+    position: relative;
+    height: 15px;
+    margin-top: 6px;
+    font-family: $font-code;
+    font-size: 10px;
+    color: var(--colors-gray-600);
+
+    span {
+      position: absolute;
+      transform: translateX(-50%);
+    }
+  }
+
+  &__gauge-band {
+    justify-self: end;
+    text-align: right;
+
+    .c-scorecard__chip {
+      font-size: 12.5px;
+      padding: 6px 14px;
+    }
+  }
+
+  &__gauge-hint {
+    font-size: 11px;
+    color: var(--colors-gray-600);
+    margin-top: 6px;
+  }
+
+  // ─────────── field groups ───────────
+  &__groups {
+    padding: 6px 24px 24px;
+  }
+
+  &__group {
+    border-top: 1px solid var(--colors-gray-200);
+    padding: 20px 0 22px;
+
+    &:first-child {
+      border-top: 0;
+      padding-top: 22px;
+    }
+  }
+
+  &__group-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  &__group-label {
+    font-family: $font-code;
+    font-size: 10.5px;
+    letter-spacing: 0.13em;
+    font-weight: 700;
+    color: var(--colors-primary-base);
+    text-transform: uppercase;
+  }
+
+  &__group-hint {
+    font-size: 12px;
+    color: var(--colors-gray-600);
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px 22px;
+
+    @include media("sm") {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+
+    &--wide {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--colors-gray-700);
+      letter-spacing: 0.015em;
+    }
+
+    input,
+    select,
+    textarea {
+      font: inherit;
+      font-size: 13.5px;
+      background: var(--colors-white);
+      color: var(--colors-gray-900);
+      border: 1px solid var(--colors-gray-300);
+      border-radius: 4px;
+      padding: 8px 11px;
+      width: 100%;
+
+      &:focus {
+        outline: none;
+        border-color: var(--colors-primary-base);
+      }
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 64px;
+      line-height: 1.5;
+    }
+  }
+
+  &__field-retired {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--colors-gray-600);
+    background: var(--colors-gray-200);
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-left: 6px;
+  }
+
+  // ─────────── scoring rows ───────────
+  &__score-row {
+    display: grid;
+    grid-template-columns: minmax(220px, 5fr) minmax(200px, 7fr) auto;
+    gap: 2px 20px;
+    align-items: center;
+    padding: 11px 0;
+    border-top: 1px solid var(--colors-gray-200);
+
+    &:first-child {
+      border-top: 0;
+      padding-top: 2px;
+    }
+
+    @include media("sm") {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+  }
+
+  &__score-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+  }
+
+  &__score-label {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--colors-gray-900);
+  }
+
+  &__score-weight {
+    font-family: $font-code;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: var(--colors-primary-base);
+    background: var(--colors-gray-200);
+    padding: 1.5px 7px;
+    border-radius: 4px;
+  }
+
+  &__score-q {
+    font-size: 12px;
+    color: var(--colors-gray-700);
+    margin-top: 2px;
+    line-height: 1.4;
+  }
+
+  &__score-slider {
+    width: 100%;
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--colors-primary-base);
+      display: block;
+    }
+  }
+
+  &__score-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2px;
+    padding: 0 7px;
+    font-family: $font-code;
+    font-size: 9px;
+    color: var(--colors-gray-600);
+  }
+
+  &__score-val {
+    font-family: $font-code;
+    font-size: 17px;
+    font-weight: 700;
+    width: 34px;
+    text-align: center;
+    color: var(--colors-gray-900);
+    font-variant-numeric: tabular-nums;
+    background: var(--colors-gray-200);
+    border-radius: 4px;
+    padding: 5px 0;
+
+    &--unset {
+      color: var(--colors-gray-600);
+      font-weight: 400;
+      background: transparent;
+    }
+  }
+
+  // ─────────── dashboard ───────────
+  &__toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 12px;
+    padding: 10px 18px 0;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--colors-gray-200);
+  }
+
+  &__tabs {
+    display: flex;
+    gap: 4px;
+  }
+
+  &__tab {
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--colors-gray-700);
+    padding: 9px 12px 10px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    background: transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    &:hover {
+      color: var(--colors-gray-900);
+    }
+
+    &--active {
+      color: var(--colors-gray-900);
+      font-weight: 600;
+      border-bottom-color: var(--colors-primary-base);
+    }
+  }
+
+  &__tab-count {
+    font-family: $font-code;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--colors-gray-600);
+
+    .c-scorecard__tab--active & {
+      color: var(--colors-primary-base);
+    }
+  }
+
+  &__toolbar-right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding-bottom: 9px;
+  }
+
+  &__search {
+    font: inherit;
+    font-size: 13px;
+    background: var(--colors-gray-200);
+    color: var(--colors-gray-900);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 6px 11px;
+    width: 210px;
+
+    &:focus {
+      outline: none;
+      background: var(--colors-white);
+      border-color: var(--colors-primary-base);
+    }
+  }
+
+  &__table-wrap {
+    overflow-x: auto;
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+
+    thead th {
+      text-align: left;
+      font-size: 10.5px;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--colors-gray-600);
+      font-weight: 700;
+      padding: 9px 18px;
+      border-bottom: 1px solid var(--colors-gray-200);
+      white-space: nowrap;
+    }
+
+    tbody td {
+      padding: 13px 18px;
+      border-bottom: 1px solid var(--colors-gray-200);
+      font-size: 13.5px;
+      vertical-align: middle;
+    }
+
+    tbody tr {
+      cursor: pointer;
+
+      &:hover {
+        background: var(--colors-gray-100);
+      }
+
+      &:last-child td {
+        border-bottom: 0;
+      }
+    }
+
+    th.is-right,
+    td.is-right {
+      text-align: right;
+    }
+  }
+
+  &__row-title {
+    font-weight: 600;
+    color: var(--colors-gray-900);
+    letter-spacing: -0.005em;
+  }
+
+  &__row-sub {
+    font-size: 12px;
+    color: var(--colors-gray-600);
+    margin-top: 2px;
+    font-weight: 400;
+  }
+
+  &__score-cell {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+  }
+
+  &__score-cell-num {
+    font-family: $font-code;
+    font-size: 16.5px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__score-cell-of {
+    font-family: $font-code;
+    font-size: 10px;
+    color: var(--colors-gray-600);
+  }
+
+  &__score-mini {
+    width: 54px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--colors-gray-200);
+    margin-top: 5px;
+    margin-left: auto;
+    overflow: hidden;
+
+    i {
+      display: block;
+      height: 100%;
+      border-radius: 2px;
+
+      &.is-strong { background: #16a34a; }
+      &.is-good   { background: #2563eb; }
+      &.is-refine { background: #e9a208; }
+      &.is-low    { background: #ea7326; }
+      &.is-reject { background: #dc2626; }
+    }
+  }
+
+  &__empty {
+    text-align: center;
+    color: var(--colors-gray-600);
+    padding: 40px 20px;
+  }
+
+  // ─────────── dark mode ───────────
+  @include dark-mode {
+    &__chip {
+      &--strong  { background: #12301f; color: #7ee3a6; }
+      &--good    { background: #16223f; color: #9bb8f4; }
+      &--refine  { background: #32240b; color: #f0c878; }
+      &--low     { background: #331d0d; color: #f0a878; }
+      &--reject  { background: #331414; color: #f0a0a0; }
+    }
+
+    &__gauge-pin {
+      box-shadow: 0 0 0 2.5px var(--colors-gray-100);
+    }
+  }
+}
