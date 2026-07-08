@@ -558,6 +558,11 @@ func TestSetResponseHandler(t *testing.T) {
 		return app.ErrNotFound
 	})
 
+	bus.AddHandler(func(ctx context.Context, q *query.GetStatusBySlug) error {
+		q.Result = &entity.Status{Slug: q.Slug, Kind: "closed-completed", IsActive: true}
+		return nil
+	})
+
 	var setResponse *cmd.SetPostResponse
 	bus.AddHandler(func(ctx context.Context, c *cmd.SetPostResponse) error {
 		setResponse = c
@@ -590,6 +595,11 @@ func TestSetResponseHandler_Unauthorized(t *testing.T) {
 
 func TestSetResponseHandler_Duplicate(t *testing.T) {
 	RegisterT(t)
+
+	bus.AddHandler(func(ctx context.Context, q *query.GetStatusBySlug) error {
+		q.Result = &entity.Status{Slug: q.Slug, Kind: "duplicate", IsActive: true}
+		return nil
+	})
 
 	var markAsDuplicate *cmd.MarkPostAsDuplicate
 	bus.AddHandler(func(ctx context.Context, c *cmd.MarkPostAsDuplicate) error {
@@ -626,6 +636,11 @@ func TestSetResponseHandler_Duplicate(t *testing.T) {
 func TestSetResponseHandler_Duplicate_NotFound(t *testing.T) {
 	RegisterT(t)
 
+	bus.AddHandler(func(ctx context.Context, q *query.GetStatusBySlug) error {
+		q.Result = &entity.Status{Slug: q.Slug, Kind: "duplicate", IsActive: true}
+		return nil
+	})
+
 	post1 := &entity.Post{ID: 1, Number: 1, Title: "The Post #1", Description: "The Description #1"}
 	bus.AddHandler(func(ctx context.Context, q *query.GetPostByNumber) error {
 		if q.Number == post1.Number {
@@ -647,6 +662,11 @@ func TestSetResponseHandler_Duplicate_NotFound(t *testing.T) {
 
 func TestSetResponseHandler_Duplicate_Itself(t *testing.T) {
 	RegisterT(t)
+
+	bus.AddHandler(func(ctx context.Context, q *query.GetStatusBySlug) error {
+		q.Result = &entity.Status{Slug: q.Slug, Kind: "duplicate", IsActive: true}
+		return nil
+	})
 
 	post := &entity.Post{ID: 1, Number: 1, Title: "The Post #1", Description: "The Description #1"}
 	bus.AddHandler(func(ctx context.Context, q *query.GetPostByNumber) error {

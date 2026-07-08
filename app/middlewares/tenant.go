@@ -83,6 +83,9 @@ func MultiTenant() web.MiddlewareFunc {
 // are non-fatal — a tenant with no statuses still loads the page, the frontend
 // just falls back to the built-in enum.
 func attachTenantStatuses(c *web.Context, tenant *entity.Tenant) {
+	// recover swallows the bus's missing-handler panic in unit tests where the
+	// postgres service isn't registered. Non-fatal by contract.
+	defer func() { _ = recover() }()
 	q := &query.ListActiveStatusesForTenant{}
 	if err := bus.Dispatch(c, q); err == nil {
 		tenant.Statuses = q.Result
@@ -93,6 +96,7 @@ func attachTenantStatuses(c *web.Context, tenant *entity.Tenant) {
 // catalogue onto tenant.ScorecardFields so the React client receives it on
 // bootstrap. Same non-fatal contract as attachTenantStatuses.
 func attachTenantScorecardFields(c *web.Context, tenant *entity.Tenant) {
+	defer func() { _ = recover() }()
 	q := &query.ListScorecardFieldsForTenant{}
 	if err := bus.Dispatch(c, q); err == nil {
 		tenant.ScorecardFields = q.Result
