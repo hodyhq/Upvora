@@ -138,6 +138,7 @@ func (s Service) Init() {
 	bus.AddHandler(createScorecardField)
 	bus.AddHandler(updateScorecardField)
 	bus.AddHandler(deleteScorecardField)
+	bus.AddHandler(getScorecardFieldUsage)
 	bus.AddHandler(seedTenantScorecardFields)
 	bus.AddHandler(setTenantScorecardSettings)
 	bus.AddHandler(listScorecardsForTenant)

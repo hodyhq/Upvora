@@ -22,6 +22,13 @@ type GetScorecardFieldByID struct {
 	Result *entity.ScorecardField
 }
 
+// GetScorecardFieldUsage returns, per field key, the number of scorecards
+// holding a real answer for it ('' and '0' excluded). Drives the admin page's
+// delete-vs-deactivate gating: answered questions can only be deactivated.
+type GetScorecardFieldUsage struct {
+	Result map[string]int
+}
+
 // ListScorecardsForTenant returns every scorecard for the current tenant,
 // most recently updated first. Used by the /scorecard dashboard page.
 type ListScorecardsForTenant struct {

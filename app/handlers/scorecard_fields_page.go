@@ -17,11 +17,18 @@ func ManageScorecardFields() web.HandlerFunc {
 		if err := bus.Dispatch(c, list); err != nil {
 			return c.Failure(err)
 		}
+		// Per-key answer counts drive delete-vs-deactivate gating client-side.
+		// Best-effort: an empty map just means every field shows Delete.
+		usage := &query.GetScorecardFieldUsage{}
+		if err := bus.Dispatch(c, usage); err != nil {
+			usage.Result = map[string]int{}
+		}
 		return c.Page(http.StatusOK, web.Props{
 			Page:  "Administration/pages/ManageScorecardFields.page",
 			Title: "Scorecard Fields · Site Settings",
 			Data: web.Map{
 				"fields": list.Result,
+				"usage":  usage.Result,
 			},
 		})
 	}
