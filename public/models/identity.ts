@@ -30,8 +30,21 @@ export interface Tenant {
   scorecardBandGood: number
   scorecardBandRefine: number
   scorecardBandLow: number
+  scorecardBandStrongLabel: string
+  scorecardBandGoodLabel: string
+  scorecardBandRefineLabel: string
+  scorecardBandLowLabel: string
+  scorecardBandNoneLabel: string
   scorecardTriggerStatusSlug: string
   scorecardFields?: ScorecardField[]
+}
+
+// One entry in a choice-typed field's list. bucket maps the choice onto a
+// scorecard dashboard view (used by the header status field's tabs).
+export interface ScorecardFieldChoice {
+  value: string
+  color?: string
+  bucket?: "new" | "review" | "executive"
 }
 
 export interface ScorecardField {
@@ -40,7 +53,7 @@ export interface ScorecardField {
   label: string
   groupKey: string
   type: "text" | "note" | "date" | "number" | "url" | "choice" | "score" | "user"
-  choices?: unknown
+  choices?: ScorecardFieldChoice[]
   weight?: number
   question?: string
   sortOrder: number

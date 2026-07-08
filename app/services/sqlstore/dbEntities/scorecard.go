@@ -53,6 +53,52 @@ func (s *Scorecard) ToModel() *entity.Scorecard {
 	return m
 }
 
+// ScorecardListItem is a Scorecard row joined with its linked post's live
+// number/slug/author/votes for the dashboard list. Flat struct — dbx's row
+// mapper only maps db-tagged direct fields, it does not flatten embedding.
+type ScorecardListItem struct {
+	ID          int            `db:"id"`
+	TenantID    int            `db:"tenant_id"`
+	PostID      sql.NullInt64  `db:"post_id"`
+	Title       string         `db:"title"`
+	Values      string         `db:"values"`
+	CreatedAt   time.Time      `db:"created_at"`
+	UpdatedAt   time.Time      `db:"updated_at"`
+	PostNumber  sql.NullInt64  `db:"post_number"`
+	PostSlug    sql.NullString `db:"post_slug"`
+	SubmittedBy sql.NullString `db:"submitted_by"`
+	PostVotes   int            `db:"post_votes"`
+}
+
+func (s *ScorecardListItem) ToModel() *entity.Scorecard {
+	if s == nil {
+		return nil
+	}
+	m := &entity.Scorecard{
+		ID:        s.ID,
+		Title:     s.Title,
+		Values:    json.RawMessage(s.Values),
+		CreatedAt: s.CreatedAt,
+		UpdatedAt: s.UpdatedAt,
+		PostVotes: s.PostVotes,
+	}
+	if s.PostID.Valid {
+		pid := int(s.PostID.Int64)
+		m.PostID = &pid
+	}
+	if s.PostNumber.Valid {
+		n := int(s.PostNumber.Int64)
+		m.PostNumber = &n
+	}
+	if s.PostSlug.Valid {
+		m.PostSlug = s.PostSlug.String
+	}
+	if s.SubmittedBy.Valid {
+		m.SubmittedBy = s.SubmittedBy.String
+	}
+	return m
+}
+
 func (f *ScorecardField) ToModel() *entity.ScorecardField {
 	if f == nil {
 		return nil

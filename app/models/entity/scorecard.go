@@ -43,4 +43,10 @@ type Scorecard struct {
 	// Post is populated when PostID != nil by handlers that stitch it on.
 	// Not persisted; convenience payload for the card view.
 	Post *Post `json:"post,omitempty"`
+	// List-presentation fields, populated only by ListScorecardsForTenant's
+	// post join so the dashboard shows live post data without N+1 fetches.
+	PostNumber  *int   `json:"postNumber,omitempty"`
+	PostSlug    string `json:"postSlug,omitempty"`
+	PostVotes   int    `json:"postVotes,omitempty"`
+	SubmittedBy string `json:"submittedBy,omitempty"`
 }

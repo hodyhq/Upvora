@@ -26,9 +26,10 @@ type CreateEditTag struct {
 	Tag *entity.Tag
 }
 
-// IsAuthorized returns true if current user is authorized to perform this action
+// IsAuthorized returns true if current user is authorized to perform this action.
+// Collaborator+: collaborators own the Tags settings page with full edit rights.
 func (action *CreateEditTag) IsAuthorized(ctx context.Context, user *entity.User) bool {
-	return user != nil && user.IsAdministrator()
+	return user != nil && user.IsCollaborator()
 }
 
 // Validate if current model is valid
@@ -76,9 +77,10 @@ type DeleteTag struct {
 	Tag *entity.Tag
 }
 
-// IsAuthorized returns true if current user is authorized to perform this action
+// IsAuthorized returns true if current user is authorized to perform this action.
+// Collaborator+: same full-edit contract as CreateEditTag.
 func (action *DeleteTag) IsAuthorized(ctx context.Context, user *entity.User) bool {
-	return user != nil && user.IsAdministrator()
+	return user != nil && user.IsCollaborator()
 }
 
 // Validate if current model is valid

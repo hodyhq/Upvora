@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/getfider/fider/app"
 	"github.com/getfider/fider/app/models/cmd"
 	"github.com/getfider/fider/app/models/entity"
@@ -166,6 +168,31 @@ func updateScorecardField(ctx context.Context, c *cmd.UpdateScorecardField) erro
 
 func deleteScorecardField(ctx context.Context, c *cmd.DeleteScorecardField) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
+		// History rule: a question can only be deleted while no card has ever
+		// answered it. Empty string and '0' (score "not scored") don't count
+		// as answers. Once answered, the field must be deactivated instead so
+		// old cards keep rendering it.
+		var key string
+		err := trx.Scalar(&key, `SELECT key FROM scorecard_fields WHERE tenant_id = $1 AND id = $2`, tenant.ID, c.ID)
+		if err == app.ErrNotFound {
+			return app.ErrNotFound
+		}
+		if err != nil {
+			return errors.Wrap(err, "failed to look up scorecard field %d", c.ID)
+		}
+		var answered int
+		err = trx.Scalar(&answered, `
+			SELECT COUNT(*) FROM scorecards
+			WHERE tenant_id = $1 AND COALESCE(values->>$2, '') NOT IN ('', '0')
+		`, tenant.ID, key)
+		if err != nil {
+			return errors.Wrap(err, "failed to count answers for scorecard field %q", key)
+		}
+		if answered > 0 {
+			// Plain fmt error: the message surfaces verbatim in the admin UI's
+			// 400 response, so no file:line suffix from pkg/errors.New.
+			return fmt.Errorf("this question has answers on %d scorecard(s) and cannot be deleted — deactivate it instead; it will stay visible on those cards and stop appearing on new ones", answered)
+		}
 		res, err := trx.Execute(`DELETE FROM scorecard_fields WHERE tenant_id = $1 AND id = $2`, tenant.ID, c.ID)
 		if err != nil {
 			return errors.Wrap(err, "failed to delete scorecard field %d", c.ID)
@@ -177,8 +204,59 @@ func deleteScorecardField(ctx context.Context, c *cmd.DeleteScorecardField) erro
 	})
 }
 
+type dbScorecardFieldUsage struct {
+	Key   string `db:"key"`
+	Count int    `db:"count"`
+}
+
+// getScorecardFieldUsage counts, per field key, how many cards hold a real
+// answer for it (empty and '0' excluded). Feeds the admin page's delete-vs-
+// deactivate gating.
+func getScorecardFieldUsage(ctx context.Context, q *query.GetScorecardFieldUsage) error {
+	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
+		rows := []*dbScorecardFieldUsage{}
+		err := trx.Select(&rows, `
+			SELECT e.key, COUNT(*) AS count
+			FROM scorecards s, LATERAL jsonb_each_text(s.values) AS e(key, value)
+			WHERE s.tenant_id = $1 AND COALESCE(e.value, '') NOT IN ('', '0')
+			GROUP BY e.key
+		`, tenant.ID)
+		if err != nil {
+			return errors.Wrap(err, "failed to aggregate scorecard field usage")
+		}
+		q.Result = make(map[string]int, len(rows))
+		for _, r := range rows {
+			q.Result[r.Key] = r.Count
+		}
+		return nil
+	})
+}
+
+// scorecardStatusChoicesSeed mirrors the 202607081800 migration seed — keep in sync.
+const scorecardStatusChoicesSeed = `[
+  {"value": "Submitted",            "color": "blue",   "bucket": "new"},
+  {"value": "Under Review",         "color": "gold",   "bucket": "review"},
+  {"value": "Needs Clarification",  "color": "salmon", "bucket": "review"},
+  {"value": "Scored",               "color": "lavender", "bucket": "executive"},
+  {"value": "Approved for Pilot",   "color": "mint",   "bucket": "executive"},
+  {"value": "Pilot in Progress",    "color": "cyan",   "bucket": "executive"},
+  {"value": "Approved for Rollout", "color": "purple", "bucket": "executive"},
+  {"value": "Deferred",             "color": "gray",   "bucket": "executive"},
+  {"value": "Rejected",             "color": "coral",  "bucket": "executive"},
+  {"value": "Completed",            "color": "pink",   "bucket": "executive"}
+]`
+
 func seedTenantScorecardFields(ctx context.Context, c *cmd.SeedTenantScorecardFields) error {
 	return using(ctx, func(trx *dbx.Trx, _ *entity.Tenant, _ *entity.User) error {
+		_, err := trx.Execute(`
+			INSERT INTO scorecard_fields
+				(tenant_id, key, label, group_key, type, choices, sort_order, is_system, is_active)
+			VALUES ($1, 'status', 'Status', 'header', 'choice', $2::jsonb, 0, TRUE, TRUE)
+			ON CONFLICT (tenant_id, key) DO NOTHING
+		`, c.TenantID, scorecardStatusChoicesSeed)
+		if err != nil {
+			return errors.Wrap(err, "failed to seed scorecard status field for tenant %d", c.TenantID)
+		}
 		for _, seed := range scorecardScoringSeeds {
 			_, err := trx.Execute(`
 				INSERT INTO scorecard_fields
@@ -307,12 +385,18 @@ func deleteScorecard(ctx context.Context, c *cmd.DeleteScorecard) error {
 
 func listScorecardsForTenant(ctx context.Context, q *query.ListScorecardsForTenant) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
-		rows := []*dbEntities.Scorecard{}
+		rows := []*dbEntities.ScorecardListItem{}
+		// Post join keeps the dashboard's number/author/votes columns live —
+		// they render current post data on every load, never a stored copy.
 		err := trx.Select(&rows, `
-			SELECT `+scorecardSelectCols+`
-			FROM scorecards
-			WHERE tenant_id = $1
-			ORDER BY updated_at DESC, id DESC
+			SELECT s.id, s.tenant_id, s.post_id, s.title, s.values::text AS values, s.created_at, s.updated_at,
+			       p.number AS post_number, p.slug AS post_slug, u.name AS submitted_by,
+			       COALESCE((SELECT COUNT(*) FROM post_votes v WHERE v.post_id = p.id AND v.tenant_id = s.tenant_id), 0) AS post_votes
+			FROM scorecards s
+			LEFT JOIN posts p ON p.id = s.post_id AND p.tenant_id = s.tenant_id
+			LEFT JOIN users u ON u.id = p.user_id AND u.tenant_id = s.tenant_id
+			WHERE s.tenant_id = $1
+			ORDER BY s.updated_at DESC, s.id DESC
 		`, tenant.ID)
 		if err != nil {
 			return errors.Wrap(err, "failed to list scorecards for tenant %d", tenant.ID)
@@ -340,9 +424,16 @@ func setTenantScorecardSettings(ctx context.Context, c *cmd.SetTenantScorecardSe
 				scorecard_band_good = $3,
 				scorecard_band_refine = $4,
 				scorecard_band_low = $5,
-				scorecard_trigger_status_slug = $6
-			WHERE id = $7
-		`, c.IsEnabled, c.BandStrong, c.BandGood, c.BandRefine, c.BandLow, triggerArg, tenant.ID)
+				scorecard_band_strong_label = $6,
+				scorecard_band_good_label = $7,
+				scorecard_band_refine_label = $8,
+				scorecard_band_low_label = $9,
+				scorecard_band_none_label = $10,
+				scorecard_trigger_status_slug = $11
+			WHERE id = $12
+		`, c.IsEnabled, c.BandStrong, c.BandGood, c.BandRefine, c.BandLow,
+			c.BandStrongLabel, c.BandGoodLabel, c.BandRefineLabel, c.BandLowLabel, c.BandNoneLabel,
+			triggerArg, tenant.ID)
 		if err != nil {
 			return errors.Wrap(err, "failed to update scorecard settings for tenant %d", tenant.ID)
 		}

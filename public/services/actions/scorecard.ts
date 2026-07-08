@@ -7,6 +7,11 @@ export interface ScorecardSettings {
   bandGood: number
   bandRefine: number
   bandLow: number
+  bandStrongLabel: string
+  bandGoodLabel: string
+  bandRefineLabel: string
+  bandLowLabel: string
+  bandNoneLabel: string
   triggerStatusSlug: string
 }
 

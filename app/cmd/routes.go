@@ -174,18 +174,21 @@ func routes(r *web.Engine) *web.Engine {
 		// This is meant to be removed when all pages are translated.
 		ui.Use(middlewares.SetLocale("en"))
 
+		// Collaborator-accessible settings pages — full edit rights on exactly
+		// these four: Invitations, Tags, Scorecard settings, Scorecard fields.
+		// /admin (General) is readable so the settings landing page and its side
+		// menu work for collaborators — its inputs render disabled for them and
+		// the save API below is admin-only. Everything else is admin-only.
 		ui.Get("/admin", handlers.GeneralSettingsPage())
-		ui.Get("/admin/advanced", handlers.AdvancedSettingsPage())
-		ui.Get("/admin/privacy", handlers.Page("Privacy · Site Settings", "", "Administration/pages/PrivacySettings.page"))
 		ui.Get("/admin/invitations", handlers.Page("Invitations · Site Settings", "", "Administration/pages/Invitations.page"))
-		ui.Get("/admin/users", handlers.ManageMembers())
 		ui.Get("/admin/tags", handlers.ManageTags())
-		ui.Get("/admin/statuses", handlers.ManageStatuses())
 		ui.Get("/admin/scorecard-settings", handlers.ManageScorecardSettings())
 		ui.Get("/admin/scorecard-fields", handlers.ManageScorecardFields())
-			ui.Get("/admin/banner", handlers.ManageBanner())
-		ui.Get("/admin/authentication", handlers.ManageAuthentication())
-		ui.Get("/_api/admin/oauth/:provider", handlers.GetOAuthConfig())
+		ui.Get("/_api/admin/scorecard-fields", handlers.ListScorecardFields())
+		ui.Post("/_api/admin/scorecard-fields", handlers.CreateScorecardField())
+		ui.Put("/_api/admin/scorecard-fields/:id", handlers.UpdateScorecardField())
+		ui.Delete("/_api/admin/scorecard-fields/:id", handlers.DeleteScorecardField())
+		ui.Post("/_api/admin/scorecard-settings", handlers.UpdateScorecardSettings())
 
 		// Pro features (available to self-hosters and pro hosted customers)
 		proUi := ui.Group()
@@ -196,6 +199,14 @@ func routes(r *web.Engine) *web.Engine {
 
 		// From this step, only Administrators are allowed
 		ui.Use(middlewares.IsAuthorized(enum.RoleAdministrator))
+
+		ui.Get("/admin/advanced", handlers.AdvancedSettingsPage())
+		ui.Get("/admin/privacy", handlers.Page("Privacy · Site Settings", "", "Administration/pages/PrivacySettings.page"))
+		ui.Get("/admin/users", handlers.ManageMembers())
+		ui.Get("/admin/statuses", handlers.ManageStatuses())
+		ui.Get("/admin/banner", handlers.ManageBanner())
+		ui.Get("/admin/authentication", handlers.ManageAuthentication())
+		ui.Get("/_api/admin/oauth/:provider", handlers.GetOAuthConfig())
 
 		// Danger Zone — delete the entire site. Hosted multi-tenant only; owner-only is
 		// enforced inside the handlers.
@@ -227,11 +238,6 @@ func routes(r *web.Engine) *web.Engine {
 		ui.Put("/_api/admin/statuses/:id", handlers.UpdateStatus())
 		ui.Delete("/_api/admin/statuses/:id", handlers.DeleteStatus())
 
-		ui.Get("/_api/admin/scorecard-fields", handlers.ListScorecardFields())
-		ui.Post("/_api/admin/scorecard-fields", handlers.CreateScorecardField())
-		ui.Put("/_api/admin/scorecard-fields/:id", handlers.UpdateScorecardField())
-		ui.Delete("/_api/admin/scorecard-fields/:id", handlers.DeleteScorecardField())
-		ui.Post("/_api/admin/scorecard-settings", handlers.UpdateScorecardSettings())
 		ui.Post("/_api/admin/oauth", handlers.SaveOAuthConfig())
 		ui.Post("/_api/admin/oauth/:provider/status", handlers.SetSystemProviderStatus())
 		ui.Post("/_api/admin/roles/:role/users", handlers.ChangeUserRole())
@@ -308,6 +314,11 @@ func routes(r *web.Engine) *web.Engine {
 		staffApi.Use(middlewares.BlockLockedTenants())
 		staffApi.Post("/api/v1/posts/:number/tags/:slug", apiv1.AssignTag())
 		staffApi.Delete("/api/v1/posts/:number/tags/:slug", apiv1.UnassignTag())
+		// Tag CRUD is collaborator-editable: collaborators own the Tags settings
+		// page with full edit rights.
+		staffApi.Post("/api/v1/tags", apiv1.CreateEditTag())
+		staffApi.Put("/api/v1/tags/:slug", apiv1.CreateEditTag())
+		staffApi.Delete("/api/v1/tags/:slug", apiv1.DeleteTag())
 	}
 
 	// Operations used to manage a site
@@ -319,9 +330,6 @@ func routes(r *web.Engine) *web.Engine {
 		adminApi.Use(middlewares.IsAuthorized(enum.RoleAdministrator))
 
 		adminApi.Post("/api/v1/users", apiv1.CreateUser())
-		adminApi.Post("/api/v1/tags", apiv1.CreateEditTag())
-		adminApi.Put("/api/v1/tags/:slug", apiv1.CreateEditTag())
-		adminApi.Delete("/api/v1/tags/:slug", apiv1.DeleteTag())
 
 		// Pro features (available to self-hosters and pro hosted customers)
 		proAdminApi := adminApi.Group()

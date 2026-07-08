@@ -53,9 +53,26 @@ func TestIsAuthenticated_WithoutUser(t *testing.T) {
 	server := mock.NewServer()
 	server.Use(middlewares.IsAuthenticated())
 
-	status, _ := server.Execute(func(c *web.Context) error {
+	// Page navigations get a sign-in redirect back to where they were headed,
+	// not a dead 401 (signed-out admins hitting /scorecard or /admin).
+	status, response := server.Execute(func(c *web.Context) error {
 		return c.NoContent(http.StatusOK)
 	})
+
+	Expect(status).Equals(http.StatusTemporaryRedirect)
+	Expect(response.Header().Get("Location")).Equals("/signin?redirect=%2F")
+}
+
+func TestIsAuthenticated_WithoutUser_Post(t *testing.T) {
+	RegisterT(t)
+
+	server := mock.NewServer()
+	server.Use(middlewares.IsAuthenticated())
+
+	// Non-GET requests keep the raw 401 — redirects make no sense mid-mutation.
+	status, _ := server.ExecutePost(func(c *web.Context) error {
+		return c.NoContent(http.StatusOK)
+	}, "{}")
 
 	Expect(status).Equals(http.StatusUnauthorized)
 }

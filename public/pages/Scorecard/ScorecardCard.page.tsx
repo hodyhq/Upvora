@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from "react"
-import { Button, Header, Input, Select, SelectOption, TextArea, Form } from "@fider/components"
-import { HStack, VStack } from "@fider/components/layout"
-import { ScorecardField, Post, User } from "@fider/models"
+import "./Scorecard.scss"
+
+import React, { useEffect, useMemo, useRef, useState } from "react"
+import { Button, Header } from "@fider/components"
+import { ScorecardField, ScorecardFieldChoice, Post, User } from "@fider/models"
 import { actions, notify, Fider } from "@fider/services"
-import { ScoreBandHero, computeWeightedScore } from "./ScoreBand"
+import { computeWeightedScore, bandForScore } from "./ScoreBand"
 
 interface Scorecard {
   id: number
@@ -30,78 +31,242 @@ const GROUP_LABELS: Record<string, string> = {
   scoring: "Scoring",
   decision: "Decision",
 }
+const GROUP_HINTS: Record<string, string> = {
+  intake: "Additional intake questions",
+  context: "Filled in during review",
+  workflow: "Current state and the proposed AI-assisted future state",
+  ownership: "Who owns this if it moves forward",
+  classification: "What kind of effort this is",
+  scoring: "1–5 each · 0 = not scored · weights sum to 100",
+  decision: "Committee recommendation and outcome",
+}
+const BAND_SEGMENTS = ["reject", "low", "refine", "good", "strong"] as const
 
-const parseChoices = (raw: unknown): { value: string }[] => {
+const parseChoices = (raw: unknown): ScorecardFieldChoice[] => {
   if (!raw || !Array.isArray(raw)) return []
-  return raw.map((c: any) => (typeof c === "string" ? { value: c } : { value: String(c?.value ?? "") })).filter((c) => c.value !== "")
+  return raw
+    .map((c: any) => (typeof c === "string" ? { value: c } : { value: String(c?.value ?? ""), color: c?.color, bucket: c?.bucket }))
+    .filter((c) => c.value !== "")
 }
 
-const formatDate = (iso?: string): string => (iso ? new Date(iso).toLocaleString() : "—")
+const formatDate = (iso?: string): string => (iso ? new Date(iso).toLocaleDateString() : "—")
+
+// answered = has a value that isn't blank or score-zero; retired questions with
+// answers on THIS card keep rendering so committee history stays visible.
+const isAnswered = (v: unknown): boolean => v != null && String(v) !== "" && String(v) !== "0"
+
+type SaveState = "idle" | "dirty" | "saving" | "saved" | "error"
+
+const SAVE_DEBOUNCE_MS = 1000
+const SAVE_RETRY_MS = 4000
 
 const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
-  const fields = (Fider.session.tenant.scorecardFields ?? []).filter((f) => f.isActive)
+  const allFields = Fider.session.tenant.scorecardFields ?? []
   const [title, setTitle] = useState(props.scorecard.title)
   const [values, setValues] = useState<Record<string, unknown>>(props.scorecard.values ?? {})
-  const [saving, setSaving] = useState(false)
+  const [saveState, setSaveState] = useState<SaveState>("idle")
 
-  const setValue = (key: string, v: unknown) => setValues((prev) => ({ ...prev, [key]: v }))
+  // Autosave plumbing. State drives the render; refs hold the latest payload
+  // and in-flight bookkeeping so the debounced save never captures stale data.
+  const latest = useRef({ title: props.scorecard.title, values: props.scorecard.values ?? {} })
+  const timer = useRef<number | undefined>(undefined)
+  const inflight = useRef(false)
+  const queued = useRef(false)
 
-  const weightedScore = useMemo(() => computeWeightedScore(values, fields), [values, fields])
+  const doSave = async () => {
+    if (inflight.current) {
+      queued.current = true
+      return
+    }
+    inflight.current = true
+    setSaveState("saving")
+    const result = await actions.updateScorecard(props.scorecard.id, { title: latest.current.title, values: latest.current.values })
+    inflight.current = false
+    if (result.ok) {
+      if (queued.current) {
+        // More edits landed while this save was in flight — save again.
+        queued.current = false
+        void doSave()
+      } else {
+        setSaveState("saved")
+      }
+    } else {
+      setSaveState("error")
+      window.clearTimeout(timer.current)
+      timer.current = window.setTimeout(() => void doSave(), SAVE_RETRY_MS)
+    }
+  }
+
+  const scheduleSave = () => {
+    setSaveState("dirty")
+    window.clearTimeout(timer.current)
+    timer.current = window.setTimeout(() => void doSave(), SAVE_DEBOUNCE_MS)
+  }
+
+  // Read save state through a ref so the beforeunload effect registers ONCE.
+  // Depending on saveState here would re-run the effect on every state flip,
+  // and its cleanup would clearTimeout the just-scheduled save — which made
+  // single discrete edits (like the status dropdown) save only every other
+  // time. The timer is cleared on real unmount only.
+  const saveStateRef = useRef<SaveState>("idle")
+  saveStateRef.current = saveState
+
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      const s = saveStateRef.current
+      if (s === "dirty" || s === "saving" || s === "error") {
+        e.preventDefault()
+        e.returnValue = ""
+      }
+    }
+    window.addEventListener("beforeunload", onBeforeUnload)
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload)
+      window.clearTimeout(timer.current)
+    }
+  }, [])
+
+  // Active fields always show. Inactive ("retired") fields show only where this
+  // card already answered them — read-only history, hidden on new cards.
+  const fields = allFields.filter((f) => f.isActive || isAnswered((props.scorecard.values ?? {})[f.key]))
+  const scoringFields = allFields.filter((f) => f.isActive) // weighted score uses active only
+
+  const setValue = (key: string, v: unknown) => {
+    latest.current = { ...latest.current, values: { ...latest.current.values, [key]: v } }
+    setValues((prev) => ({ ...prev, [key]: v }))
+    scheduleSave()
+  }
+
+  const changeTitle = (t: string) => {
+    latest.current = { ...latest.current, title: t }
+    setTitle(t)
+    scheduleSave()
+  }
+
+  const weightedScore = useMemo(() => computeWeightedScore(values, scoringFields), [values, scoringFields])
+  const band = bandForScore(weightedScore)
 
   const grouped: Record<string, ScorecardField[]> = {}
   for (const f of fields) {
     ;(grouped[f.groupKey] ??= []).push(f)
   }
-
-  const save = async () => {
-    setSaving(true)
-    const result = await actions.updateScorecard(props.scorecard.id, { title, values })
-    setSaving(false)
-    if (result.ok) {
-      notify.success("Scorecard saved.")
-    } else {
-      notify.error("Save failed. Try again.")
-    }
-  }
+  const headerFields = (grouped["header"] ?? []).filter((f) => f.type === "choice")
 
   const post = props.scorecard.post
+
+  const saveStateText: Record<SaveState, string> = {
+    idle: "",
+    dirty: "Unsaved changes…",
+    saving: "Saving…",
+    saved: "All changes saved",
+    error: "Not saved — retrying…",
+  }
+
+  const renderStatusControl = (f: ScorecardField) => {
+    const strVal = String(values[f.key] ?? "")
+    const choices = parseChoices(f.choices)
+    const hasLegacyValue = strVal !== "" && !choices.some((c) => c.value === strVal)
+    return (
+      <div key={f.key} className="c-scorecard__status">
+        <span className="c-scorecard__status-label">{f.label}</span>
+        <select className="c-scorecard__status-select" value={strVal} onChange={(e) => setValue(f.key, e.target.value)} aria-label={f.label}>
+          <option value="">—</option>
+          {choices.map((c) => (
+            <option key={c.value} value={c.value}>
+              {c.value}
+            </option>
+          ))}
+          {hasLegacyValue && <option value={strVal}>{strVal} (retired)</option>}
+        </select>
+      </div>
+    )
+  }
 
   const renderField = (f: ScorecardField) => {
     const key = f.key
     const val = values[key]
     const strVal = val == null ? "" : String(val)
+    const retired = !f.isActive
+
+    const label = (
+      <label htmlFor={`sc-${key}`}>
+        {f.label}
+        {retired && <span className="c-scorecard__field-retired">retired</span>}
+      </label>
+    )
 
     if (f.type === "score") {
       const n = typeof val === "number" ? val : parseInt(strVal, 10) || 0
       return (
-        <div key={key} className="mb-4">
-          <div className="flex justify-between items-baseline mb-1">
-            <label className="font-semibold">
-              {f.label} <span className="text-xs text-muted">weight {f.weight ?? 0}</span>
-            </label>
-            <span className="text-sm text-muted">{n === 0 ? "not scored" : `${n} / 5`}</span>
+        <div key={key} className="c-scorecard__score-row">
+          <div>
+            <div className="c-scorecard__score-head">
+              <span className="c-scorecard__score-label">
+                {f.label}
+                {retired && <span className="c-scorecard__field-retired">retired</span>}
+              </span>
+              <span className="c-scorecard__score-weight">×{f.weight ?? 0}</span>
+            </div>
+            {f.question && <div className="c-scorecard__score-q">{f.question}</div>}
           </div>
-          {f.question && <p className="text-sm text-muted mb-1">{f.question}</p>}
-          <input type="range" min={0} max={5} step={1} value={n} onChange={(e) => setValue(key, parseInt(e.target.value, 10))} className="w-full" />
+          <div className="c-scorecard__score-slider">
+            <input
+              type="range"
+              min={0}
+              max={5}
+              step={1}
+              value={n}
+              disabled={retired}
+              onChange={(e) => setValue(key, parseInt(e.target.value, 10))}
+              aria-label={`${f.label} score`}
+            />
+            <div className="c-scorecard__score-steps">
+              <span>0</span>
+              <span>1</span>
+              <span>2</span>
+              <span>3</span>
+              <span>4</span>
+              <span>5</span>
+            </div>
+          </div>
+          <span className={`c-scorecard__score-val ${n === 0 ? "c-scorecard__score-val--unset" : ""}`}>{n === 0 ? "—" : n}</span>
         </div>
       )
     }
 
     if (f.type === "choice") {
       const choices = parseChoices(f.choices)
-      const opts: SelectOption[] = [{ value: "", label: "— none —" }, ...choices.map((c) => ({ value: c.value, label: c.value }))]
-      return <Select key={key} field={key} label={f.label} defaultValue={strVal} options={opts} onChange={(o) => setValue(key, o?.value ?? "")} />
+      const hasLegacyValue = strVal !== "" && !choices.some((c) => c.value === strVal)
+      return (
+        <div key={key} className="c-scorecard__field">
+          {label}
+          <select id={`sc-${key}`} value={strVal} disabled={retired} onChange={(e) => setValue(key, e.target.value)}>
+            <option value="">—</option>
+            {choices.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.value}
+              </option>
+            ))}
+            {hasLegacyValue && <option value={strVal}>{strVal} (retired)</option>}
+          </select>
+        </div>
+      )
     }
 
     if (f.type === "note") {
-      return <TextArea key={key} field={key} label={f.label} value={strVal} onChange={(v) => setValue(key, v)} />
+      return (
+        <div key={key} className="c-scorecard__field c-scorecard__field--wide">
+          {label}
+          <textarea id={`sc-${key}`} rows={3} value={strVal} disabled={retired} onChange={(e) => setValue(key, e.target.value)} />
+        </div>
+      )
     }
 
     if (f.type === "date") {
       return (
-        <div key={key} className="mb-4">
-          <label className="font-semibold block mb-1">{f.label}</label>
-          <input type="date" value={strVal} onChange={(e) => setValue(key, e.target.value)} className="c-input" />
+        <div key={key} className="c-scorecard__field">
+          {label}
+          <input id={`sc-${key}`} type="date" value={strVal} disabled={retired} onChange={(e) => setValue(key, e.target.value)} />
         </div>
       )
     }
@@ -110,15 +275,16 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
       const listId = `scorecard-users-${key}`
       const names = props.assigneeNames ?? []
       return (
-        <div key={key} className="mb-4">
-          <label className="font-semibold block mb-1">{f.label}</label>
+        <div key={key} className="c-scorecard__field">
+          {label}
           <input
+            id={`sc-${key}`}
             type="text"
             list={listId}
             value={strVal}
+            disabled={retired}
             onChange={(e) => setValue(key, e.target.value)}
             placeholder="Pick a collaborator/admin or type any name…"
-            className="c-input w-full"
           />
           <datalist id={listId}>
             {names.map((n) => (
@@ -129,76 +295,142 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
       )
     }
 
-    // text, number, url — one-line input; type attr handled by native browser
-    return <Input key={key} field={key} label={f.label} value={strVal} onChange={(v) => setValue(key, v)} />
+    // text, number, url
+    const inputType = f.type === "number" ? "number" : f.type === "url" ? "url" : "text"
+    return (
+      <div key={key} className="c-scorecard__field">
+        {label}
+        <input id={`sc-${key}`} type={inputType} value={strVal} disabled={retired} onChange={(e) => setValue(key, e.target.value)} />
+      </div>
+    )
   }
-
-  const currentStatusLabel = post ? (Fider.session.tenant.statuses ?? []).find((s) => s.slug === (post as any).status)?.label ?? (post as any).status : ""
 
   return (
     <>
       <Header />
       <div id="p-scorecard-card" className="page container">
-        <VStack spacing={4}>
-          <a href="/scorecard" className="text-link text-sm">
-            ← All scorecards
-          </a>
-
-          {post && (
-            <div style={{ background: "var(--colors-white)", border: "1px solid var(--colors-gray-200)", borderRadius: 10, padding: 20 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 12 }}>
-                <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0, lineHeight: 1.3 }}>{post.title}</h2>
-                <a
-                  className="c-button c-button--tertiary"
-                  href={`/posts/${post.number}/${post.slug}`}
-                  target="_blank"
-                  rel="noopener"
-                  style={{ whiteSpace: "nowrap" }}
-                >
-                  View idea →
-                </a>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", columnGap: 12, rowGap: 4, fontSize: 13, marginBottom: 12 }}>
-                <span style={{ color: "var(--colors-gray-500)" }}>Submitted by</span>
-                <span>
-                  <strong>{post.user?.name ?? "—"}</strong> on {formatDate(post.createdAt)}
-                </span>
-                <span style={{ color: "var(--colors-gray-500)" }}>Submitted to</span>
-                <span>
-                  <strong>{currentStatusLabel || "—"}</strong> on {formatDate(props.scorecard.createdAt)}
-                </span>
-              </div>
-              {post.description && <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.5, marginBottom: 12 }}>{post.description}</div>}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: 13, color: "var(--colors-gray-600)" }}>
-                <span>👍 {(post as any).votesCount ?? 0} votes</span>
-                <span>💬 {(post as any).commentsCount ?? 0} comments</span>
-                {Array.isArray(post.tags) && post.tags.length > 0 && <span>🏷 {post.tags.join(", ")}</span>}
+        <div className="c-scorecard__panel mt-4 mb-8">
+          <div className="c-scorecard__head">
+            <div className="c-scorecard__head-top">
+              <a href="/scorecard" className="c-scorecard__crumb">
+                ← All scorecards
+              </a>
+              <div className="c-scorecard__head-actions">
+                <span className={`c-scorecard__save-state ${saveState === "error" ? "c-scorecard__save-state--error" : ""}`}>{saveStateText[saveState]}</span>
+                {post && (
+                  <a className="c-button c-button--default c-button--primary" href={`/posts/${post.number}/${post.slug}`} target="_blank" rel="noopener">
+                    Open Idea ↗
+                  </a>
+                )}
               </div>
             </div>
-          )}
+            <div className="c-scorecard__title-row">
+              <input className="c-scorecard__title-input" value={title} onChange={(e) => changeTitle(e.target.value)} aria-label="Scorecard title" />
+              {headerFields.map(renderStatusControl)}
+            </div>
+            {post ? (
+              // Everything in this block renders live from the linked post —
+              // edits on the idea page show here on the next load, never a copy.
+              <div className="c-scorecard__idea">
+                <div className="c-scorecard__idea-title">
+                  <span className="c-scorecard__idea-label">Idea</span>
+                  <strong>{post.title}</strong>
+                </div>
+                {post.description && <div className="c-scorecard__idea-desc">{post.description}</div>}
+                <div className="c-scorecard__meta">
+                  <span>
+                    Submitted by <strong>{post.user?.name ?? "—"}</strong> on {formatDate(post.createdAt)}
+                  </span>
+                  <span>To scorecard {formatDate(props.scorecard.createdAt)}</span>
+                  <span>
+                    <strong>{(post as any).votesCount ?? 0}</strong> votes · <strong>{(post as any).commentsCount ?? 0}</strong> comments
+                  </span>
+                  {Array.isArray(post.tags) && post.tags.length > 0 && (
+                    <span className="c-scorecard__meta-tags">
+                      {post.tags.map((t: any) => (
+                        <span key={String(t)} className="c-scorecard__chip c-scorecard__chip--neutral c-scorecard__chip--plain">
+                          {String(t)}
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="c-scorecard__meta">
+                <span>Standalone scorecard (not linked to an idea) · created {formatDate(props.scorecard.createdAt)}</span>
+              </div>
+            )}
+          </div>
 
-          <Form>
-            <Input field="title" label="Scorecard title" value={title} onChange={setTitle} />
+          <div className="c-scorecard__gauge">
+            <div>
+              <span className="c-scorecard__gauge-label">Weighted score</span>
+              <span>
+                <span className="c-scorecard__gauge-num">{weightedScore}</span>
+                <span className="c-scorecard__gauge-of"> / 100</span>
+              </span>
+            </div>
+            <div className="c-scorecard__gauge-track">
+              <div className="c-scorecard__gauge-bar">
+                {BAND_SEGMENTS.map((seg) => (
+                  <div
+                    key={seg}
+                    className={`c-scorecard__gauge-seg c-scorecard__gauge-seg--${seg} ${
+                      weightedScore > 0 && band.key === seg ? "c-scorecard__gauge-seg--lit" : ""
+                    }`}
+                  />
+                ))}
+              </div>
+              <div className="c-scorecard__gauge-marker" style={{ left: `${Math.min(100, Math.max(0, weightedScore))}%` }}>
+                <span className="c-scorecard__gauge-bubble">{weightedScore}</span>
+                <span className="c-scorecard__gauge-pin"></span>
+              </div>
+              <div className="c-scorecard__gauge-ticks">
+                {[0, 20, 40, 60, 80, 100].map((t) => (
+                  <span key={t} style={{ left: `${t}%` }}>
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="c-scorecard__gauge-band">
+              {weightedScore === 0 ? (
+                // A card with nothing scored is "Not scored", not the bottom
+                // band — stage 5 starts at 1.
+                <>
+                  <span className="c-scorecard__chip c-scorecard__chip--neutral c-scorecard__chip--plain">Not scored</span>
+                  <div className="c-scorecard__gauge-hint">score any dimension to place this card</div>
+                </>
+              ) : (
+                <>
+                  <span className={`c-scorecard__chip c-scorecard__chip--${band.key}`}>{band.label}</span>
+                  <div className="c-scorecard__gauge-hint">
+                    {band.threshold > 0 ? `band threshold ≥ ${band.threshold}` : `below ${Fider.session.tenant.scorecardBandLow}`}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
 
-            {/* Weighted score hero — colored band panel driven by tenant thresholds. */}
-            <ScoreBandHero score={weightedScore} />
-
+          <div className="c-scorecard__groups">
             {GROUP_ORDER.map((g) => {
               const rows = grouped[g]
               if (!rows || rows.length === 0) return null
+              const sorted = [...rows].sort((a, b) => a.sortOrder - b.sortOrder)
               return (
-                <div key={g} className="mt-4">
-                  <h3 className="text-md font-semibold border-b pb-1 mb-3">{GROUP_LABELS[g]}</h3>
-                  {rows.sort((a, b) => a.sortOrder - b.sortOrder).map(renderField)}
+                <div key={g} className="c-scorecard__group">
+                  <div className="c-scorecard__group-head">
+                    <span className="c-scorecard__group-label">{GROUP_LABELS[g]}</span>
+                    <span className="c-scorecard__group-hint">{GROUP_HINTS[g]}</span>
+                  </div>
+                  {g === "scoring" ? <div>{sorted.map(renderField)}</div> : <div className="c-scorecard__grid">{sorted.map(renderField)}</div>}
                 </div>
               )
             })}
 
-            <HStack spacing={2}>
-              <Button variant="primary" onClick={save} disabled={saving}>
-                {saving ? "Saving…" : "Save"}
-              </Button>
-              {Fider.session.user.isAdministrator && (
+            {Fider.session.user.isCollaborator && (
+              <div className="c-scorecard__group">
                 <Button
                   variant="danger"
                   onClick={async () => {
@@ -213,10 +445,10 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
                 >
                   Delete scorecard
                 </Button>
-              )}
-            </HStack>
-          </Form>
-        </VStack>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </>
   )

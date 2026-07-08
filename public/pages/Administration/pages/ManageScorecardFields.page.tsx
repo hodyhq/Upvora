@@ -1,12 +1,15 @@
+import "../../Scorecard/Scorecard.scss"
+
 import React from "react"
 import { Button, Field, Form, Input, Select, SelectOption, TextArea, Toggle } from "@fider/components"
 import { HStack, VStack } from "@fider/components/layout"
-import { ScorecardField } from "@fider/models"
+import { ScorecardField, ScorecardFieldChoice } from "@fider/models"
 import { actions, Failure, Fider } from "@fider/services"
 import { AdminBasePage } from "../components/AdminBasePage"
 
 interface ManageScorecardFieldsPageProps {
   fields: ScorecardField[]
+  usage: { [key: string]: number }
 }
 
 interface ManageScorecardFieldsPageState {
@@ -27,6 +30,7 @@ interface ManageScorecardFieldsPageState {
 }
 
 const groupOptions: SelectOption[] = [
+  { value: "header", label: "Header (top of the card, next to the title)" },
   { value: "intake", label: "Intake" },
   { value: "context", label: "Context" },
   { value: "workflow", label: "Workflow" },
@@ -47,21 +51,50 @@ const typeOptions: SelectOption[] = [
   { value: "user", label: "User — pick a collaborator/admin or type any name" },
 ]
 
-// Choices come in over the wire as [{value:"A"},{value:"B"}]. Admin edits them
-// as a comma-separated string. These helpers translate between the two shapes.
+// Choices come in over the wire as [{value, color?, bucket?}]. Admin edits them
+// as a comma-separated string where each entry is "Value" or "Value:bucket"
+// (bucket = new | review | executive, used by the scorecard dashboard tabs).
+// Colors — and buckets not restated in the CSV — are preserved by merging with
+// the previous choice list by value, so editing the list never wipes them.
+const VALID_BUCKETS = ["new", "review", "executive"]
+
 const choicesToCsv = (raw: unknown): string => {
   if (!raw || !Array.isArray(raw)) return ""
   return raw
-    .map((c: any) => (typeof c === "string" ? c : c?.value ?? ""))
+    .map((c: any) => {
+      if (typeof c === "string") return c
+      if (!c?.value) return ""
+      return c.bucket ? `${c.value}:${c.bucket}` : c.value
+    })
     .filter(Boolean)
     .join(", ")
 }
-const csvToChoices = (s: string): { value: string }[] =>
-  s
+
+const csvToChoices = (s: string, previous?: ScorecardFieldChoice[]): ScorecardFieldChoice[] => {
+  const prevByValue = new Map((previous ?? []).map((c) => [c.value, c]))
+  return s
     .split(",")
     .map((v) => v.trim())
     .filter((v) => v.length > 0)
-    .map((v) => ({ value: v }))
+    .map((entry) => {
+      const sep = entry.lastIndexOf(":")
+      const maybeBucket =
+        sep >= 0
+          ? entry
+              .slice(sep + 1)
+              .trim()
+              .toLowerCase()
+          : ""
+      const hasBucket = VALID_BUCKETS.includes(maybeBucket)
+      const value = hasBucket ? entry.slice(0, sep).trim() : entry
+      const prev = prevByValue.get(value)
+      const choice: ScorecardFieldChoice = { value }
+      if (prev?.color) choice.color = prev.color
+      const bucket = hasBucket ? (maybeBucket as ScorecardFieldChoice["bucket"]) : prev?.bucket
+      if (bucket) choice.bucket = bucket
+      return choice
+    })
+}
 
 const slugifyKey = (s: string): string =>
   s
@@ -147,9 +180,10 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
 
   private save = async () => {
     const s = this.state
-    let choicesForReq: unknown = undefined
+    const editingField = s.editingId != null ? this.state.fields.find((f) => f.id === s.editingId) : undefined
+    let choicesForReq: ScorecardFieldChoice[] | undefined = undefined
     if (s.draftType === "choice") {
-      const parsed = csvToChoices(s.draftChoicesCSV)
+      const parsed = csvToChoices(s.draftChoicesCSV, editingField?.choices)
       if (parsed.length === 0) {
         this.setState({ error: { errors: [{ field: "choices", message: "Enter at least one option (comma-separated)." }] } })
         return
@@ -225,12 +259,30 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
 
   private remove = async (f: ScorecardField) => {
     const warning = f.isSystem
-      ? `Delete the seeded field "${f.label}"? This is one of the eight scoring dimensions the app shipped with — you can rebuild it later by hand if you change your mind. Card values that referenced this key stay in place but stop rendering.`
-      : `Delete field "${f.label}"? Card values that referenced this key stay in place but stop rendering.`
+      ? `Delete the seeded field "${f.label}"? It has never been answered on any scorecard, so this is safe — but you'd have to rebuild it by hand if you change your mind.`
+      : `Delete field "${f.label}"? It has never been answered on any scorecard, so nothing is lost.`
     if (!window.confirm(warning)) return
     const result = await actions.deleteScorecardField(f.id)
     if (result.ok) {
       this.setState({ fields: this.state.fields.filter((x) => x.id !== f.id) })
+    } else {
+      this.setState({ error: result.error })
+    }
+  }
+
+  // One-click active toggle from the table row — the lifecycle action for
+  // questions that already hold answers and therefore can't be deleted.
+  private setActive = async (f: ScorecardField, isActive: boolean) => {
+    const result = await actions.updateScorecardField(f.id, {
+      label: f.label,
+      choices: f.type === "choice" ? f.choices : undefined,
+      weight: f.weight,
+      question: f.question,
+      sortOrder: f.sortOrder,
+      isActive,
+    })
+    if (result.ok) {
+      this.setState({ fields: this.state.fields.map((x) => (x.id === f.id ? { ...x, isActive } : x)) })
     } else {
       this.setState({ error: result.error })
     }
@@ -259,7 +311,7 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
   }
 
   private byGroupThenOrder = (a: ScorecardField, b: ScorecardField): number => {
-    const groupOrder = ["intake", "context", "workflow", "ownership", "classification", "scoring", "decision"]
+    const groupOrder = ["header", "intake", "context", "workflow", "ownership", "classification", "scoring", "decision"]
     const ga = groupOrder.indexOf(a.groupKey)
     const gb = groupOrder.indexOf(b.groupKey)
     if (ga !== gb) return ga - gb
@@ -272,172 +324,245 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
   }
 
   public content() {
-    const canEdit = Fider.session.user.isAdministrator
+    const canEdit = Fider.session.user.isCollaborator
     const rows = [...this.state.fields].sort(this.byGroupThenOrder)
     const weightSum = this.weightSum()
     const weightSumOK = weightSum === 100
 
     return (
       <VStack spacing={4}>
-        <div className={`p-3 rounded ${weightSumOK ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
-          <strong>Weighted-score input:</strong> active scoring weights sum to <strong>{weightSum}</strong>
-          {weightSumOK
-            ? " (100 — good)."
-            : " — must equal 100 for the weighted score to hit 0-100 correctly. Edit the weights of the eight scoring rows to rebalance."}
+        <div className={`c-scorecard__callout ${weightSumOK ? "" : "c-scorecard__callout--warn"}`}>
+          <span className="c-scorecard__callout-num">{weightSum}</span>
+          <div>
+            <strong>Scoring weights</strong>
+            {weightSumOK
+              ? " — active weights sum to 100, the weighted score maps cleanly to 0–100."
+              : " — active weights must sum to 100 for the weighted score to map to 0–100. Edit the weights of the scoring rows to rebalance."}
+          </div>
         </div>
 
-        <table className="w-full">
-          <thead>
-            <tr className="text-left text-xs uppercase text-muted">
-              <th className="p-2">Order</th>
-              <th className="p-2">Label</th>
-              <th className="p-2">Key</th>
-              <th className="p-2">Type</th>
-              <th className="p-2">Group</th>
-              <th className="p-2">Weight</th>
-              <th className="p-2">System</th>
-              <th className="p-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((f) => (
-              <tr key={f.id} className={f.isActive ? "" : "text-muted"}>
-                <td className="p-2">
-                  <HStack spacing={1}>
-                    <Button variant="tertiary" size="small" onClick={() => this.move(f, -1)} disabled={!canEdit}>
-                      ↑
-                    </Button>
-                    <Button variant="tertiary" size="small" onClick={() => this.move(f, 1)} disabled={!canEdit}>
-                      ↓
-                    </Button>
-                    <span className="text-xs text-muted">{f.sortOrder}</span>
-                  </HStack>
-                </td>
-                <td className="p-2">{f.label}</td>
-                <td className="p-2 text-xs font-mono">{f.key}</td>
-                <td className="p-2 text-xs">{f.type}</td>
-                <td className="p-2 text-xs">{groupLabel(f.groupKey)}</td>
-                <td className="p-2 text-xs">{f.type === "score" ? f.weight ?? "—" : "—"}</td>
-                <td className="p-2 text-xs">{f.isSystem ? "yes" : ""}</td>
-                <td className="p-2">
-                  <HStack spacing={2}>
-                    <Button variant="tertiary" size="small" onClick={() => this.openEdit(f)} disabled={!canEdit}>
-                      Edit
-                    </Button>
-                    <Button variant="danger" size="small" onClick={() => this.remove(f)} disabled={!canEdit}>
-                      Delete
-                    </Button>
-                  </HStack>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {/* The form renders ABOVE the table so "+ Add a field" (in the toolbar
+            right below) opens it in place — no scrolling past the catalogue. */}
+        {(this.state.isAdding || this.state.editingId != null) && this.renderForm()}
 
-        {(this.state.isAdding || this.state.editingId != null) && (
+        <div className="c-scorecard__panel">
+          <div className="c-scorecard__toolbar">
+            <div className="c-scorecard__group-head" style={{ marginBottom: 0, paddingBottom: 9 }}>
+              <span className="c-scorecard__group-label">Field catalogue</span>
+              <span className="c-scorecard__group-hint">Answered questions can be deactivated, never deleted — history stays intact</span>
+            </div>
+            <div className="c-scorecard__toolbar-right">
+              {!this.state.isAdding && this.state.editingId == null && (
+                <Button variant="primary" onClick={this.openAdd} disabled={!canEdit}>
+                  + Add a field
+                </Button>
+              )}
+            </div>
+          </div>
+          <div className="c-scorecard__table-wrap">
+            <table className="c-scorecard__table c-scorecard__table--static">
+              <thead>
+                <tr>
+                  <th>Order</th>
+                  <th>Question</th>
+                  <th>Type</th>
+                  <th>Group</th>
+                  <th className="is-right">Weight</th>
+                  <th>Usage</th>
+                  <th className="is-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((f) => {
+                  const answers = this.props.usage?.[f.key] ?? 0
+                  return (
+                    <tr key={f.id} style={f.isActive ? undefined : { opacity: 0.55 }}>
+                      <td>
+                        <HStack spacing={1}>
+                          <Button variant="tertiary" size="small" onClick={() => this.move(f, -1)} disabled={!canEdit}>
+                            ↑
+                          </Button>
+                          <Button variant="tertiary" size="small" onClick={() => this.move(f, 1)} disabled={!canEdit}>
+                            ↓
+                          </Button>
+                          <span className="c-scorecard__order-num">{f.sortOrder}</span>
+                        </HStack>
+                      </td>
+                      <td>
+                        <div className="c-scorecard__row-title">
+                          {f.label}
+                          {!f.isActive && <span className="c-scorecard__field-retired">inactive</span>}
+                        </div>
+                        <div className="c-scorecard__row-sub">
+                          {f.key}
+                          {f.isSystem ? " · system" : ""}
+                        </div>
+                      </td>
+                      <td>
+                        <span className="c-scorecard__chip c-scorecard__chip--neutral c-scorecard__chip--plain">{f.type}</span>
+                      </td>
+                      <td>{groupLabel(f.groupKey)}</td>
+                      <td className="is-right">{f.type === "score" ? `${f.weight ?? 0}%` : "—"}</td>
+                      <td>
+                        {answers > 0
+                          ? f.isActive
+                            ? `${answers} card${answers === 1 ? "" : "s"}`
+                            : `on ${answers} old card${answers === 1 ? "" : "s"} · hidden on new`
+                          : "never answered"}
+                      </td>
+                      <td className="is-right">
+                        <HStack spacing={2}>
+                          <Button variant="tertiary" size="small" onClick={() => this.openEdit(f)} disabled={!canEdit}>
+                            Edit
+                          </Button>
+                          {answers > 0 ? (
+                            f.isActive ? (
+                              <Button variant="secondary" size="small" onClick={() => this.setActive(f, false)} disabled={!canEdit}>
+                                Deactivate
+                              </Button>
+                            ) : (
+                              <Button variant="secondary" size="small" onClick={() => this.setActive(f, true)} disabled={!canEdit}>
+                                Reactivate
+                              </Button>
+                            )
+                          ) : (
+                            <Button variant="danger" size="small" onClick={() => this.remove(f)} disabled={!canEdit}>
+                              Delete
+                            </Button>
+                          )}
+                        </HStack>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </VStack>
+    )
+  }
+
+  private renderForm() {
+    const canEdit = Fider.session.user.isCollaborator
+    return (
+      <div className="c-scorecard__panel">
+        <div className="c-scorecard__form">
+          <div className="c-scorecard__form-head">
+            <span className="c-scorecard__group-label">{this.state.isAdding ? "Add a field" : "Edit field"}</span>
+            <span className="c-scorecard__group-hint">
+              {this.state.isAdding ? "New questions appear on new scorecards immediately" : `key: ${this.state.draftKey}`}
+            </span>
+          </div>
           <Form error={this.state.error}>
-            <h3 className="text-md font-semibold">{this.state.isAdding ? "Add a field" : "Edit field"}</h3>
+            <div className="c-scorecard__form-grid">
+              {/* Label is always editable */}
+              <Input field="label" label="Label" value={this.state.draftLabel} onChange={this.setLabel} />
 
-            {/* Label is always editable */}
-            <Input field="label" label="Label" value={this.state.draftLabel} onChange={this.setLabel} />
-
-            {/* Key is only editable when adding. On edit, show read-only. */}
-            {this.state.isAdding ? (
-              <Input
-                field="key"
-                label="Key (machine name — lowercase letters, digits, underscores)"
-                value={this.state.draftKey}
-                onChange={(v) => this.setState({ draftKey: slugifyKey(v) })}
-              />
-            ) : (
-              <Input field="key" label="Key" value={this.state.draftKey} disabled />
-            )}
-
-            {/* Group + type are only editable when adding. */}
-            {this.state.isAdding ? (
-              <>
-                <Select
-                  field="groupKey"
-                  label="Group"
-                  defaultValue={this.state.draftGroup}
-                  options={groupOptions}
-                  onChange={(o) => this.setState({ draftGroup: o?.value ?? "context" })}
-                />
-                <Select
-                  field="type"
-                  label="Type"
-                  defaultValue={this.state.draftType}
-                  options={typeOptions}
-                  onChange={(o) => this.setState({ draftType: o?.value ?? "text" })}
-                />
-              </>
-            ) : (
-              <>
-                <Input field="groupKey" label="Group" value={groupLabel(this.state.draftGroup)} disabled />
-                <Input field="type" label="Type" value={this.state.draftType} disabled />
-              </>
-            )}
-
-            {/* Weight + question are only meaningful for score-type rows. */}
-            {this.state.draftType === "score" && (
-              <>
+              {/* Key is only editable when adding. On edit, show read-only. */}
+              {this.state.isAdding ? (
                 <Input
-                  field="weight"
-                  label="Weight (0-100; active weights across all scoring rows must sum to 100)"
-                  value={this.state.draftWeight}
-                  onChange={(v) => this.setState({ draftWeight: v.replace(/[^0-9]/g, "") })}
+                  field="key"
+                  label="Key (machine name — lowercase letters, digits, underscores)"
+                  value={this.state.draftKey}
+                  onChange={(v) => this.setState({ draftKey: slugifyKey(v) })}
                 />
-                <TextArea
-                  field="question"
-                  label="Question (shown next to the 1-5 slider on the card page)"
-                  value={this.state.draftQuestion}
-                  onChange={(v) => this.setState({ draftQuestion: v })}
+              ) : (
+                <Input field="key" label="Key" value={this.state.draftKey} disabled />
+              )}
+
+              {/* Group + type are only editable when adding. */}
+              {this.state.isAdding ? (
+                <>
+                  <Select
+                    field="groupKey"
+                    label="Group"
+                    defaultValue={this.state.draftGroup}
+                    options={groupOptions}
+                    onChange={(o) => this.setState({ draftGroup: o?.value ?? "context" })}
+                  />
+                  <Select
+                    field="type"
+                    label="Type"
+                    defaultValue={this.state.draftType}
+                    options={typeOptions}
+                    onChange={(o) => this.setState({ draftType: o?.value ?? "text" })}
+                  />
+                </>
+              ) : (
+                <>
+                  <Input field="groupKey" label="Group" value={groupLabel(this.state.draftGroup)} disabled />
+                  <Input field="type" label="Type" value={this.state.draftType} disabled />
+                </>
+              )}
+
+              {/* Weight + question are only meaningful for score-type rows. */}
+              {this.state.draftType === "score" && (
+                <>
+                  <Input
+                    field="weight"
+                    label="Weight (0-100; active weights across all scoring rows must sum to 100)"
+                    value={this.state.draftWeight}
+                    onChange={(v) => this.setState({ draftWeight: v.replace(/[^0-9]/g, "") })}
+                  />
+                  <Input
+                    field="sortOrder"
+                    label="Sort order (lower shows first within its group)"
+                    value={String(this.state.draftSortOrder)}
+                    onChange={(v) => this.setState({ draftSortOrder: parseInt(v || "0", 10) || 0 })}
+                  />
+                  <div className="c-scorecard__form-wide">
+                    <TextArea
+                      field="question"
+                      label="Question (shown next to the 1-5 slider on the card page)"
+                      value={this.state.draftQuestion}
+                      onChange={(v) => this.setState({ draftQuestion: v })}
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Choices are only meaningful for choice-type rows. Comma-separated,
+                      in the order you want them to appear in the dropdown. */}
+              {this.state.draftType === "choice" && (
+                <div className="c-scorecard__form-wide">
+                  <Input
+                    field="choices"
+                    label="Choices (comma-separated, in order — add :new / :review / :executive after a value to map it to a dashboard tab)"
+                    value={this.state.draftChoicesCSV}
+                    onChange={(v) => this.setState({ draftChoicesCSV: v })}
+                  />
+                </div>
+              )}
+
+              {this.state.draftType !== "score" && (
+                <Input
+                  field="sortOrder"
+                  label="Sort order (lower shows first within its group)"
+                  value={String(this.state.draftSortOrder)}
+                  onChange={(v) => this.setState({ draftSortOrder: parseInt(v || "0", 10) || 0 })}
                 />
-              </>
-            )}
+              )}
 
-            {/* Choices are only meaningful for choice-type rows. Comma-separated,
-                in the order you want them to appear in the dropdown. */}
-            {this.state.draftType === "choice" && (
-              <Input
-                field="choices"
-                label="Choices (comma-separated, in the order you want)"
-                value={this.state.draftChoicesCSV}
-                onChange={(v) => this.setState({ draftChoicesCSV: v })}
-              />
-            )}
+              {!this.state.isAdding && (
+                <Field label="Active">
+                  <Toggle active={this.state.draftIsActive} onToggle={(v) => this.setState({ draftIsActive: v })} />
+                  <p className="text-muted mt-1">Deactivating hides the field from new cards without deleting it — cards that answered it keep showing it.</p>
+                </Field>
+              )}
+            </div>
 
-            <Input
-              field="sortOrder"
-              label="Sort order (lower shows first within its group)"
-              value={String(this.state.draftSortOrder)}
-              onChange={(v) => this.setState({ draftSortOrder: parseInt(v || "0", 10) || 0 })}
-            />
-
-            {!this.state.isAdding && (
-              <Field label="Active">
-                <Toggle active={this.state.draftIsActive} onToggle={(v) => this.setState({ draftIsActive: v })} />
-                <p className="text-muted mt-1">Deactivating hides the field from the card page without deleting it (values already in card JSON stay).</p>
-              </Field>
-            )}
-
-            <HStack spacing={2}>
+            <div className="c-scorecard__form-actions">
               <Button variant="primary" onClick={this.save} disabled={this.state.busy || !canEdit}>
-                Save
+                {this.state.isAdding ? "Add field" : "Save changes"}
               </Button>
               <Button variant="tertiary" onClick={this.cancel}>
                 Cancel
               </Button>
-            </HStack>
+            </div>
           </Form>
-        )}
-
-        {!this.state.isAdding && this.state.editingId == null && (
-          <Button variant="primary" onClick={this.openAdd} disabled={!canEdit}>
-            Add a field
-          </Button>
-        )}
-      </VStack>
+        </div>
+      </div>
     )
   }
 }

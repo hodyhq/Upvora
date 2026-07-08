@@ -36,7 +36,7 @@ type CreateScorecardField struct {
 }
 
 func (a *CreateScorecardField) IsAuthorized(ctx context.Context, user *entity.User) bool {
-	return user != nil && user.Role == enum.RoleAdministrator
+	return user != nil && user.IsCollaborator()
 }
 
 func (a *CreateScorecardField) Validate(ctx context.Context, user *entity.User) *validate.Result {
@@ -94,7 +94,7 @@ type UpdateScorecardField struct {
 }
 
 func (a *UpdateScorecardField) IsAuthorized(ctx context.Context, user *entity.User) bool {
-	return user != nil && user.Role == enum.RoleAdministrator
+	return user != nil && user.IsCollaborator()
 }
 
 func (a *UpdateScorecardField) Validate(ctx context.Context, user *entity.User) *validate.Result {
@@ -117,7 +117,7 @@ type DeleteScorecardField struct {
 }
 
 func (a *DeleteScorecardField) IsAuthorized(ctx context.Context, user *entity.User) bool {
-	return user != nil && user.Role == enum.RoleAdministrator
+	return user != nil && user.IsCollaborator()
 }
 
 func (a *DeleteScorecardField) Validate(ctx context.Context, user *entity.User) *validate.Result {
@@ -180,11 +180,16 @@ type UpdateScorecardSettings struct {
 	BandGood          int    `json:"bandGood"`
 	BandRefine        int    `json:"bandRefine"`
 	BandLow           int    `json:"bandLow"`
+	BandStrongLabel   string `json:"bandStrongLabel"`
+	BandGoodLabel     string `json:"bandGoodLabel"`
+	BandRefineLabel   string `json:"bandRefineLabel"`
+	BandLowLabel      string `json:"bandLowLabel"`
+	BandNoneLabel     string `json:"bandNoneLabel"`
 	TriggerStatusSlug string `json:"triggerStatusSlug"`
 }
 
 func (a *UpdateScorecardSettings) IsAuthorized(ctx context.Context, user *entity.User) bool {
-	return user != nil && user.Role == enum.RoleAdministrator
+	return user != nil && user.IsCollaborator()
 }
 
 func (a *UpdateScorecardSettings) Validate(ctx context.Context, user *entity.User) *validate.Result {
@@ -196,6 +201,23 @@ func (a *UpdateScorecardSettings) Validate(ctx context.Context, user *entity.Use
 	}
 	if a.BandStrong <= a.BandGood || a.BandGood <= a.BandRefine || a.BandRefine <= a.BandLow {
 		result.AddFieldFailure("bandStrong", "Band thresholds must be strictly descending: strong > good > refine > low.")
+	}
+	// Stage names: default any blank label to its factory name so a partial
+	// payload can never blank out the scale.
+	defaults := map[*string]string{
+		&a.BandStrongLabel: "Strong Candidate",
+		&a.BandGoodLabel:   "Good Candidate",
+		&a.BandRefineLabel: "Needs Refinement",
+		&a.BandLowLabel:    "Low Priority",
+		&a.BandNoneLabel:   "Not Recommended",
+	}
+	for field, def := range defaults {
+		*field = strings.TrimSpace(*field)
+		if *field == "" {
+			*field = def
+		} else if len(*field) > 60 {
+			result.AddFieldFailure("bandStrongLabel", "Stage names must be 60 characters or fewer.")
+		}
 	}
 	return result
 }

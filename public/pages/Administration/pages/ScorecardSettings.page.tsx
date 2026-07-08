@@ -1,3 +1,5 @@
+import "../../Scorecard/Scorecard.scss"
+
 import React from "react"
 import { Button, Toggle, Form, Field, Input, Select, SelectOption } from "@fider/components"
 import { actions, notify, Fider, Failure } from "@fider/services"
@@ -9,6 +11,11 @@ interface ScorecardSettingsState {
   bandGood: number
   bandRefine: number
   bandLow: number
+  bandStrongLabel: string
+  bandGoodLabel: string
+  bandRefineLabel: string
+  bandLowLabel: string
+  bandNoneLabel: string
   triggerStatusSlug: string
   error?: Failure
 }
@@ -27,6 +34,11 @@ export default class ScorecardSettingsPage extends AdminBasePage<any, ScorecardS
       bandGood: Fider.session.tenant.scorecardBandGood,
       bandRefine: Fider.session.tenant.scorecardBandRefine,
       bandLow: Fider.session.tenant.scorecardBandLow,
+      bandStrongLabel: Fider.session.tenant.scorecardBandStrongLabel || "Strong Candidate",
+      bandGoodLabel: Fider.session.tenant.scorecardBandGoodLabel || "Good Candidate",
+      bandRefineLabel: Fider.session.tenant.scorecardBandRefineLabel || "Needs Refinement",
+      bandLowLabel: Fider.session.tenant.scorecardBandLowLabel || "Low Priority",
+      bandNoneLabel: Fider.session.tenant.scorecardBandNoneLabel || "Not Recommended",
       triggerStatusSlug: Fider.session.tenant.scorecardTriggerStatusSlug ?? "",
     }
   }
@@ -38,6 +50,9 @@ export default class ScorecardSettingsPage extends AdminBasePage<any, ScorecardS
     // a clear error instead of a mysterious "must be a number" NaN failure.
     this.setState({ [key]: Number.isNaN(n) ? 0 : n } as any)
   }
+  private setLabel = (key: "bandStrongLabel" | "bandGoodLabel" | "bandRefineLabel" | "bandLowLabel" | "bandNoneLabel") => (value: string) => {
+    this.setState({ [key]: value } as any)
+  }
 
   private save = async () => {
     const result = await actions.updateScorecardSettings({
@@ -46,6 +61,11 @@ export default class ScorecardSettingsPage extends AdminBasePage<any, ScorecardS
       bandGood: this.state.bandGood,
       bandRefine: this.state.bandRefine,
       bandLow: this.state.bandLow,
+      bandStrongLabel: this.state.bandStrongLabel,
+      bandGoodLabel: this.state.bandGoodLabel,
+      bandRefineLabel: this.state.bandRefineLabel,
+      bandLowLabel: this.state.bandLowLabel,
+      bandNoneLabel: this.state.bandNoneLabel,
       triggerStatusSlug: this.state.triggerStatusSlug,
     })
     if (result.ok) {
@@ -62,68 +82,121 @@ export default class ScorecardSettingsPage extends AdminBasePage<any, ScorecardS
       ...(Fider.session.tenant.statuses ?? []).filter((s) => s.isActive).map((s) => ({ value: s.slug, label: s.label })),
     ]
     return (
-      <Form error={this.state.error}>
-        <Field label="Enable scorecard">
-          <Toggle disabled={!Fider.session.user.isAdministrator} active={this.state.isEnabled} onToggle={this.toggle} />
-          <p className="text-muted mt-1">
-            When enabled, collaborators and administrators see a Scorecard page for reviewing and scoring ideas across the weighted dimensions you define.
-            Visitors never see it.
-          </p>
-        </Field>
+      <div className="c-scorecard__panel">
+        <div className="c-scorecard__form">
+          <div className="c-scorecard__form-head">
+            <span className="c-scorecard__group-label">Scorecard</span>
+            <span className="c-scorecard__group-hint">Feature toggle, auto-create trigger, and the five scoring stages</span>
+          </div>
+          <Form error={this.state.error}>
+            <Field label="Enable scorecard">
+              <Toggle disabled={!Fider.session.user.isCollaborator} active={this.state.isEnabled} onToggle={this.toggle} />
+              <p className="text-muted mt-1">
+                When enabled, collaborators and administrators see a Scorecard page for reviewing and scoring ideas across the weighted dimensions you define.
+                Visitors never see it.
+              </p>
+            </Field>
 
-        <Select
-          field="triggerStatusSlug"
-          label="Auto-create trigger status"
-          defaultValue={this.state.triggerStatusSlug}
-          options={statusOptions}
-          onChange={(o) => this.setState({ triggerStatusSlug: o?.value ?? "" })}
-        />
-        <p className="text-muted -mt-2">
-          When a post&apos;s status changes to this one, a scorecard is automatically created and linked to it. Change the list of statuses at{" "}
-          <a href="/admin/statuses" className="text-link">
-            Site Settings → Statuses
-          </a>
-          . Select &quot;No auto-trigger&quot; if you&apos;d rather create every scorecard by hand.
-        </p>
+            <Select
+              field="triggerStatusSlug"
+              label="Auto-create trigger status"
+              defaultValue={this.state.triggerStatusSlug}
+              options={statusOptions}
+              onChange={(o) => this.setState({ triggerStatusSlug: o?.value ?? "" })}
+            />
+            <p className="text-muted -mt-2">
+              When a post&apos;s status changes to this one, a scorecard is automatically created and linked to it. Change the list of statuses at{" "}
+              <a href="/admin/statuses" className="text-link">
+                Site Settings → Statuses
+              </a>
+              . Select &quot;No auto-trigger&quot; if you&apos;d rather create every scorecard by hand.
+            </p>
 
-        <p className="text-muted mt-4">
-          Band thresholds decide how a weighted score (0–100) maps to a label. Must be strictly descending: Strong &gt; Good &gt; Needs Refinement &gt; Low.
-          Anything below the low threshold is labelled Not Recommended.
-        </p>
+            <div className="c-scorecard__form-head mt-4">
+              <span className="c-scorecard__group-label">Stages</span>
+              <span className="c-scorecard__group-hint">
+                Rename any stage; thresholds must be strictly descending. Stage 5 catches every scored card below stage 4 — cards with no scores show as
+                &quot;Not scored&quot;.
+              </span>
+            </div>
 
-        <Input
-          field="bandStrong"
-          label="Strong Candidate ≥"
-          value={String(this.state.bandStrong)}
-          disabled={!Fider.session.user.isAdministrator}
-          onChange={this.setBand("bandStrong")}
-        />
-        <Input
-          field="bandGood"
-          label="Good Candidate ≥"
-          value={String(this.state.bandGood)}
-          disabled={!Fider.session.user.isAdministrator}
-          onChange={this.setBand("bandGood")}
-        />
-        <Input
-          field="bandRefine"
-          label="Needs Refinement ≥"
-          value={String(this.state.bandRefine)}
-          disabled={!Fider.session.user.isAdministrator}
-          onChange={this.setBand("bandRefine")}
-        />
-        <Input
-          field="bandLow"
-          label="Low Priority ≥"
-          value={String(this.state.bandLow)}
-          disabled={!Fider.session.user.isAdministrator}
-          onChange={this.setBand("bandLow")}
-        />
+            <div className="c-scorecard__form-grid" style={{ gridTemplateColumns: "1fr 110px", alignItems: "end" }}>
+              <Input
+                field="bandStrongLabel"
+                label="Stage 1 name"
+                value={this.state.bandStrongLabel}
+                disabled={!Fider.session.user.isCollaborator}
+                onChange={this.setLabel("bandStrongLabel")}
+              />
+              <Input
+                field="bandStrong"
+                label="Score ≥"
+                value={String(this.state.bandStrong)}
+                disabled={!Fider.session.user.isCollaborator}
+                onChange={this.setBand("bandStrong")}
+              />
+              <Input
+                field="bandGoodLabel"
+                label="Stage 2 name"
+                value={this.state.bandGoodLabel}
+                disabled={!Fider.session.user.isCollaborator}
+                onChange={this.setLabel("bandGoodLabel")}
+              />
+              <Input
+                field="bandGood"
+                label="Score ≥"
+                value={String(this.state.bandGood)}
+                disabled={!Fider.session.user.isCollaborator}
+                onChange={this.setBand("bandGood")}
+              />
+              <Input
+                field="bandRefineLabel"
+                label="Stage 3 name"
+                value={this.state.bandRefineLabel}
+                disabled={!Fider.session.user.isCollaborator}
+                onChange={this.setLabel("bandRefineLabel")}
+              />
+              <Input
+                field="bandRefine"
+                label="Score ≥"
+                value={String(this.state.bandRefine)}
+                disabled={!Fider.session.user.isCollaborator}
+                onChange={this.setBand("bandRefine")}
+              />
+              <Input
+                field="bandLowLabel"
+                label="Stage 4 name"
+                value={this.state.bandLowLabel}
+                disabled={!Fider.session.user.isCollaborator}
+                onChange={this.setLabel("bandLowLabel")}
+              />
+              <Input
+                field="bandLow"
+                label="Score ≥"
+                value={String(this.state.bandLow)}
+                disabled={!Fider.session.user.isCollaborator}
+                onChange={this.setBand("bandLow")}
+              />
+              <Input
+                field="bandNoneLabel"
+                label="Stage 5 name (scored, below stage 4)"
+                value={this.state.bandNoneLabel}
+                disabled={!Fider.session.user.isCollaborator}
+                onChange={this.setLabel("bandNoneLabel")}
+              />
+              <p className="text-muted" style={{ margin: "0 0 14px" }}>
+                &lt; {this.state.bandLow}
+              </p>
+            </div>
 
-        <Button variant="primary" onClick={this.save} disabled={!Fider.session.user.isAdministrator}>
-          Save
-        </Button>
-      </Form>
+            <div className="c-scorecard__form-actions">
+              <Button variant="primary" onClick={this.save} disabled={!Fider.session.user.isCollaborator}>
+                Save
+              </Button>
+            </div>
+          </Form>
+        </div>
+      </div>
     )
   }
 }
