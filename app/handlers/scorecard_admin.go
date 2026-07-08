@@ -38,7 +38,11 @@ func CreateScorecardField() web.HandlerFunc {
 			SortOrder: action.SortOrder,
 		}
 		if err := bus.Dispatch(c, create); err != nil {
-			return c.Failure(err)
+			// Duplicate-key (and similar guard) errors come back as plain
+			// messages — surface them as a 400 the form can display, not a 500.
+			r := validate.Success()
+			r.AddFieldFailure("key", err.Error())
+			return c.HandleValidation(r)
 		}
 		return c.Ok(create.Result)
 	}

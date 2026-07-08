@@ -100,6 +100,12 @@ func getScorecardFieldByID(ctx context.Context, q *query.GetScorecardFieldByID) 
 
 func createScorecardField(ctx context.Context, c *cmd.CreateScorecardField) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
+		// Friendly duplicate check before the INSERT: hitting the UNIQUE
+		// (tenant_id, key) constraint would surface as an opaque 500.
+		var taken bool
+		if err := trx.Scalar(&taken, `SELECT EXISTS(SELECT 1 FROM scorecard_fields WHERE tenant_id = $1 AND key = $2)`, tenant.ID, c.Key); err == nil && taken {
+			return fmt.Errorf("a field with key %q already exists — edit that field instead, or pick a different key", c.Key)
+		}
 		var choicesArg any
 		if len(c.Choices) > 0 {
 			choicesArg = string(c.Choices)
