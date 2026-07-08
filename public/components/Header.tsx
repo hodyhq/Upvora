@@ -16,9 +16,12 @@ export const Header = (props: HeaderProps) => {
   const [isSignInModalOpen, setIsSignInModalOpen] = useState(false)
   const [isRSSModalOpen, setIsRSSModalOpen] = useState(false)
 
-  const pathname = typeof window !== "undefined" ? window.location.pathname : "/"
+  const pathname = typeof window !== "undefined" && window.location && window.location.pathname ? window.location.pathname : "/"
   const isRoadmapActive = pathname === "/roadmap"
-  const isFeedbackActive = !isRoadmapActive
+  const isScorecardActive = pathname === "/scorecard" || pathname.startsWith("/scorecard/")
+  const isFeedbackActive = !isRoadmapActive && !isScorecardActive
+  const showScorecardLink =
+    fider.session.tenant.isScorecardEnabled && fider.session.isAuthenticated && (fider.session.user.isCollaborator || fider.session.user.isAdministrator)
 
   const handleSignInClick = () => {
     setIsSignInModalOpen(true)
@@ -51,6 +54,11 @@ export const Header = (props: HeaderProps) => {
               <a href="/roadmap" className={`c-header__nav-link ${isRoadmapActive ? "c-header__nav-link--active" : ""}`}>
                 <Trans id="header.nav.roadmap">Roadmap</Trans>
               </a>
+              {showScorecardLink && (
+                <a href="/scorecard" className={`c-header__nav-link ${isScorecardActive ? "c-header__nav-link--active" : ""}`}>
+                  <Trans id="header.nav.scorecard">Scorecard</Trans>
+                </a>
+              )}
             </HStack>
             {fider.session.isAuthenticated && (
               <div className="c-header__moderation">

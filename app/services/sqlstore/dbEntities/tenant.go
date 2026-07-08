@@ -1,6 +1,8 @@
 package dbEntities
 
 import (
+	"database/sql"
+
 	"github.com/getfider/fider/app/models/entity"
 	"github.com/getfider/fider/app/models/enum"
 	"github.com/getfider/fider/app/pkg/dbx"
@@ -29,9 +31,16 @@ type Tenant struct {
 	IsPro                 bool         `db:"is_pro"`
 	HasPaddleSubscription bool         `db:"has_paddle_subscription"`
 	ScheduledDeletionAt   dbx.NullTime `db:"scheduled_deletion_at"`
+	ShareIdeaInstructions string       `db:"share_idea_instructions"`
 	SiteBannerEnabled     bool         `db:"site_banner_enabled"`
 	SiteBannerMessage     string       `db:"site_banner_message"`
 	SiteBannerVariant     string       `db:"site_banner_variant"`
+	IsScorecardEnabled         bool           `db:"is_scorecard_enabled"`
+	ScorecardBandStrong        int            `db:"scorecard_band_strong"`
+	ScorecardBandGood          int            `db:"scorecard_band_good"`
+	ScorecardBandRefine        int            `db:"scorecard_band_refine"`
+	ScorecardBandLow           int            `db:"scorecard_band_low"`
+	ScorecardTriggerStatusSlug sql.NullString `db:"scorecard_trigger_status_slug"`
 }
 
 func (t *Tenant) ToModel() *entity.Tenant {
@@ -66,9 +75,19 @@ func (t *Tenant) ToModel() *entity.Tenant {
 		PreventIndexing:     t.PreventIndexing,
 		IsModerationEnabled: isPro && t.IsModerationEnabled,
 		IsPro:               isPro,
+		ShareIdeaInstructions: t.ShareIdeaInstructions,
 		SiteBannerEnabled:   t.SiteBannerEnabled,
 		SiteBannerMessage:   t.SiteBannerMessage,
 		SiteBannerVariant:   t.SiteBannerVariant,
+		IsScorecardEnabled:  t.IsScorecardEnabled,
+		ScorecardBandStrong: t.ScorecardBandStrong,
+		ScorecardBandGood:   t.ScorecardBandGood,
+		ScorecardBandRefine: t.ScorecardBandRefine,
+		ScorecardBandLow:    t.ScorecardBandLow,
+	}
+
+	if t.ScorecardTriggerStatusSlug.Valid {
+		tenant.ScorecardTriggerStatusSlug = t.ScorecardTriggerStatusSlug.String
 	}
 
 	if t.ScheduledDeletionAt.Valid {

@@ -197,6 +197,7 @@ type UpdateTenantSettings struct {
 	WelcomeMessage      string           `json:"welcomeMessage"`
 	WelcomeHeader       string           `json:"welcomeHeader"`
 	DescriptionTemplate string           `json:"descriptionTemplate"`
+	ShareIdeaInstructions string         `json:"shareIdeaInstructions"`
 	Locale              string           `json:"locale"`
 	CNAME               string           `json:"cname" format:"lower"`
 }

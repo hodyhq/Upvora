@@ -14,13 +14,24 @@ const GeneralSettingsPage = () => {
   const [welcomeHeader, setWelcomeHeader] = useState<string>(fider.session.tenant.welcomeHeader)
   const [descriptionTemplate, setDescriptionTemplate] = useState<string>(fider.session.tenant.descriptionTemplate)
   const [invitation, setInvitation] = useState<string>(fider.session.tenant.invitation)
+  const [shareIdeaInstructions, setShareIdeaInstructions] = useState<string>(fider.session.tenant.shareIdeaInstructions ?? "")
   const [logo, setLogo] = useState<ImageUpload | undefined>(undefined)
   const [cname, setCNAME] = useState<string>(fider.session.tenant.cname)
   const [locale, setLocale] = useState<string>(fider.session.tenant.locale)
   const [error, setError] = useState<Failure | undefined>(undefined)
 
   const handleSave = async (e: ButtonClickEvent) => {
-    const result = await actions.updateTenantSettings({ title, cname, welcomeMessage, welcomeHeader, descriptionTemplate, invitation, logo, locale })
+    const result = await actions.updateTenantSettings({
+      title,
+      cname,
+      welcomeMessage,
+      welcomeHeader,
+      descriptionTemplate,
+      shareIdeaInstructions,
+      invitation,
+      logo,
+      locale,
+    })
     if (result.ok) {
       e.preventEnable()
       location.href = `/`
@@ -85,6 +96,19 @@ const GeneralSettingsPage = () => {
           onChange={setDescriptionTemplate}
         >
           <p className="text-muted">If set, all new ideas submitted by users will use this text as the default description.</p>
+        </TextArea>
+
+        <TextArea
+          field="shareIdeaInstructions"
+          label="Share Your Idea instructions"
+          value={shareIdeaInstructions}
+          disabled={!fider.session.user.isAdministrator}
+          onChange={setShareIdeaInstructions}
+        >
+          <p className="text-muted">
+            Optional Markdown shown at the top of the &quot;Share your idea&quot; modal, right under the header. Guide submitters on what to include (context,
+            screenshots, expected outcome, etc.).
+          </p>
         </TextArea>
 
         <Input

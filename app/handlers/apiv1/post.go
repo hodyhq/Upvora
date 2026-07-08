@@ -12,6 +12,8 @@ import (
 	"github.com/getfider/fider/app/models/query"
 	"github.com/getfider/fider/app/pkg/bus"
 	"github.com/getfider/fider/app/pkg/env"
+	"github.com/getfider/fider/app/pkg/errors"
+	"github.com/getfider/fider/app/pkg/log"
 	"github.com/getfider/fider/app/pkg/web"
 	"github.com/getfider/fider/app/tasks"
 )
@@ -226,6 +228,22 @@ func SetResponse() web.HandlerFunc {
 		}
 
 		c.Enqueue(tasks.NotifyAboutStatusChange(getPost.Result, prevStatusSlug))
+
+		// Scorecard auto-create trigger: if the tenant has the feature on and
+		// picked this status_slug as the auto-trigger, drop a card for the
+		// post. CreateScorecard is idempotent per (tenant, post_id) — the
+		// UNIQUE index + existing-row check makes re-firing a no-op, so we
+		// don't need a prev-status guard.
+		tenant := c.Tenant()
+		if tenant != nil && tenant.IsScorecardEnabled && tenant.ScorecardTriggerStatusSlug != "" &&
+			getPost.Result.StatusSlug == tenant.ScorecardTriggerStatusSlug {
+			postID := getPost.Result.ID
+			if err := bus.Dispatch(c, &cmd.CreateScorecard{PostID: &postID, Title: getPost.Result.Title}); err != nil {
+				// Publish (not Dispatch) so a missing listener doesn't crash the
+				// whole PUT — best-effort logging of the underlying failure.
+				log.Error(c, errors.Wrap(err, "scorecard auto-create failed for post %d", postID))
+			}
+		}
 
 		return c.Ok(web.Map{})
 	}

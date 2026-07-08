@@ -105,6 +105,14 @@ func TestCheckAvailabilityHandler_ValidSubdomain(t *testing.T) {
 		return nil
 	})
 
+	bus.AddHandler(func(ctx context.Context, c *cmd.SeedTenantStatuses) error {
+		return nil
+	})
+
+	bus.AddHandler(func(ctx context.Context, c *cmd.SeedTenantScorecardFields) error {
+		return nil
+	})
+
 	server := mock.NewServer()
 	code, response := server.AddParam("subdomain", "mycompany").ExecuteAsJSON(handlers.CheckAvailability())
 
@@ -144,6 +152,14 @@ func TestCreateTenantHandler_WithSocialAccount(t *testing.T) {
 
 	bus.AddHandler(func(ctx context.Context, q *query.IsSubdomainAvailable) error {
 		q.Result = true
+		return nil
+	})
+
+	bus.AddHandler(func(ctx context.Context, c *cmd.SeedTenantStatuses) error {
+		return nil
+	})
+
+	bus.AddHandler(func(ctx context.Context, c *cmd.SeedTenantScorecardFields) error {
 		return nil
 	})
 
@@ -210,6 +226,14 @@ func TestCreateTenantHandler_SingleHost_WithSocialAccount(t *testing.T) {
 		return nil
 	})
 
+	bus.AddHandler(func(ctx context.Context, c *cmd.SeedTenantStatuses) error {
+		return nil
+	})
+
+	bus.AddHandler(func(ctx context.Context, c *cmd.SeedTenantScorecardFields) error {
+		return nil
+	})
+
 	server := mock.NewSingleTenantServer()
 	token, _ := jwt.Encode(jwt.OAuthClaims{
 		OAuthID:       "123",
@@ -252,6 +276,14 @@ func TestCreateTenantHandler_WithEmailAndName(t *testing.T) {
 
 	bus.AddHandler(func(ctx context.Context, q *query.IsSubdomainAvailable) error {
 		q.Result = true
+		return nil
+	})
+
+	bus.AddHandler(func(ctx context.Context, c *cmd.SeedTenantStatuses) error {
+		return nil
+	})
+
+	bus.AddHandler(func(ctx context.Context, c *cmd.SeedTenantScorecardFields) error {
 		return nil
 	})
 

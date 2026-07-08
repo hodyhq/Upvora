@@ -164,6 +164,12 @@ func routes(r *web.Engine) *web.Engine {
 		// From this step, only Collaborators and Administrators are allowed
 		ui.Use(middlewares.IsAuthorized(enum.RoleCollaborator, enum.RoleAdministrator))
 
+		ui.Get("/scorecard", handlers.ScorecardPage())
+		ui.Get("/scorecard/:id", handlers.ScorecardCardPage())
+		ui.Post("/_api/scorecards", handlers.CreateScorecard())
+		ui.Put("/_api/scorecards/:id", handlers.UpdateScorecard())
+		ui.Delete("/_api/scorecards/:id", handlers.DeleteScorecard())
+
 		// locale is forced to English for administrative pages.
 		// This is meant to be removed when all pages are translated.
 		ui.Use(middlewares.SetLocale("en"))
@@ -175,6 +181,8 @@ func routes(r *web.Engine) *web.Engine {
 		ui.Get("/admin/users", handlers.ManageMembers())
 		ui.Get("/admin/tags", handlers.ManageTags())
 		ui.Get("/admin/statuses", handlers.ManageStatuses())
+		ui.Get("/admin/scorecard-settings", handlers.ManageScorecardSettings())
+		ui.Get("/admin/scorecard-fields", handlers.ManageScorecardFields())
 			ui.Get("/admin/banner", handlers.ManageBanner())
 		ui.Get("/admin/authentication", handlers.ManageAuthentication())
 		ui.Get("/_api/admin/oauth/:provider", handlers.GetOAuthConfig())
@@ -218,6 +226,12 @@ func routes(r *web.Engine) *web.Engine {
 		ui.Post("/_api/admin/statuses", handlers.CreateStatus())
 		ui.Put("/_api/admin/statuses/:id", handlers.UpdateStatus())
 		ui.Delete("/_api/admin/statuses/:id", handlers.DeleteStatus())
+
+		ui.Get("/_api/admin/scorecard-fields", handlers.ListScorecardFields())
+		ui.Post("/_api/admin/scorecard-fields", handlers.CreateScorecardField())
+		ui.Put("/_api/admin/scorecard-fields/:id", handlers.UpdateScorecardField())
+		ui.Delete("/_api/admin/scorecard-fields/:id", handlers.DeleteScorecardField())
+		ui.Post("/_api/admin/scorecard-settings", handlers.UpdateScorecardSettings())
 		ui.Post("/_api/admin/oauth", handlers.SaveOAuthConfig())
 		ui.Post("/_api/admin/oauth/:provider/status", handlers.SetSystemProviderStatus())
 		ui.Post("/_api/admin/roles/:role/users", handlers.ChangeUserRole())

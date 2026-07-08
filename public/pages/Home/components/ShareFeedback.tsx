@@ -3,6 +3,7 @@ import "./ShareFeedback.scss"
 import React, { useEffect, useRef, useState } from "react"
 import { SignInControl } from "@fider/components/common/SignInControl"
 import { Modal, CloseIcon, Form, Button, Input, LegalFooter } from "@fider/components/common"
+import { Markdown } from "@fider/components/common/Markdown"
 import { useFider } from "@fider/hooks"
 import { Trans } from "@lingui/react/macro"
 import { actions, Failure, querystring, classSet, cache } from "@fider/services"
@@ -226,6 +227,14 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
           <h1 className="text-large pb-6">
             <Trans id="newpost.modal.title">Share your idea...</Trans>
           </h1>
+          {fider.session.tenant.shareIdeaInstructions && (
+            <div
+              className="mb-4 p-3"
+              style={{ background: "var(--colors-gray-50, #f8fafc)", border: "1px solid var(--colors-gray-200)", borderRadius: 8, fontSize: 14 }}
+            >
+              <Markdown text={fider.session.tenant.shareIdeaInstructions} style="full" />
+            </div>
+          )}
           <div className="c-share-feedback-form">
             <Form error={error}>
               <div ref={editorRef} className="mb-4">

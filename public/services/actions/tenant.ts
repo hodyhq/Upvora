@@ -30,6 +30,7 @@ export interface UpdateTenantSettingsRequest {
   welcomeMessage: string
   welcomeHeader: string
   descriptionTemplate: string
+  shareIdeaInstructions: string
   cname: string
   locale: string
 }

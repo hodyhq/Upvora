@@ -184,12 +184,12 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
 
     if (showModeration) {
       cache.session.remove("POST_CREATED_MODERATION")
-      notify.success(t({ id: "showpost.moderation.postsuccess", message: "Your idea has been submitted and is awaiting moderation 📝" }))
+      notify.success(t({ id: "showpost.moderation.postsuccess", message: "Your idea is awaiting moderation 📝" }))
     }
 
     if (showCommentModeration) {
       cache.session.remove("COMMENT_CREATED_MODERATION")
-      notify.success(t({ id: "showpost.moderation.commentsuccess", message: "Your comment has been submitted and is awaiting moderation 📝" }))
+      notify.success(t({ id: "showpost.moderation.commentsuccess", message: "Your comment is awaiting moderation 📝" }))
     }
   }, [])
 
@@ -440,7 +440,23 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
 
                 {Fider.session.isAuthenticated && Fider.session.user.isCollaborator && (
                   <ActionButton icon={IconChat} onClick={onActionSelected("status")}>
-                    <Trans id="action.respond">Respond</Trans>
+                    <Trans id="action.respond">Update Status</Trans>
+                  </ActionButton>
+                )}
+
+                {Fider.session.isAuthenticated && Fider.session.user.isCollaborator && Fider.session.tenant.isScorecardEnabled && (
+                  <ActionButton
+                    icon={IconChat}
+                    onClick={async () => {
+                      const r = await actions.createScorecard({ postId: post.id })
+                      if (r.ok && r.data) {
+                        window.location.href = `/scorecard/${r.data.id}`
+                      } else {
+                        notify.error("Could not open scorecard for this idea.")
+                      }
+                    }}
+                  >
+                    <Trans id="action.scorecard">Score this idea</Trans>
                   </ActionButton>
                 )}
 

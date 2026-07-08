@@ -80,6 +80,12 @@ func CreateTenant() web.HandlerFunc {
 			return c.Failure(err)
 		}
 
+		// Seed the 8 locked scorecard scoring dimensions so the feature toggle
+		// works out of the box (weights sum to 100, band math has inputs).
+		if err := bus.Dispatch(c, &cmd.SeedTenantScorecardFields{TenantID: createTenant.Result.ID}); err != nil {
+			return c.Failure(err)
+		}
+
 		user := &entity.User{
 			Tenant: createTenant.Result,
 			Role:   enum.RoleAdministrator,
