@@ -687,6 +687,55 @@
     }
   }
 
+  &__order-num {
+    font-family: $font-code;
+    font-size: 11px;
+    color: var(--colors-gray-600);
+    font-variant-numeric: tabular-nums;
+    min-width: 24px;
+    text-align: right;
+  }
+
+  // admin add/edit form panel
+  &__form {
+    padding: 16px 24px 20px;
+  }
+
+  &__form-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--colors-gray-200);
+  }
+
+  &__form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0 22px;
+
+    > * {
+      min-width: 0;
+    }
+
+    @include media("sm") {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__form-wide {
+    grid-column: 1 / -1;
+  }
+
+  &__form-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    padding-top: 14px;
+    border-top: 1px solid var(--colors-gray-200);
+  }
+
   &__row-title {
     font-weight: 600;
     color: var(--colors-gray-900);
