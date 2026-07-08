@@ -103,10 +103,18 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
     timer.current = window.setTimeout(() => void doSave(), SAVE_DEBOUNCE_MS)
   }
 
+  // Read save state through a ref so the beforeunload effect registers ONCE.
+  // Depending on saveState here would re-run the effect on every state flip,
+  // and its cleanup would clearTimeout the just-scheduled save — which made
+  // single discrete edits (like the status dropdown) save only every other
+  // time. The timer is cleared on real unmount only.
+  const saveStateRef = useRef<SaveState>("idle")
+  saveStateRef.current = saveState
+
   useEffect(() => {
-    // Warn on navigation while an edit is unsaved or a save is mid-flight.
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (saveState === "dirty" || saveState === "saving" || saveState === "error") {
+      const s = saveStateRef.current
+      if (s === "dirty" || s === "saving" || s === "error") {
         e.preventDefault()
         e.returnValue = ""
       }
@@ -116,7 +124,7 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
       window.removeEventListener("beforeunload", onBeforeUnload)
       window.clearTimeout(timer.current)
     }
-  }, [saveState])
+  }, [])
 
   // Active fields always show. Inactive ("retired") fields show only where this
   // card already answered them — read-only history, hidden on new cards.
