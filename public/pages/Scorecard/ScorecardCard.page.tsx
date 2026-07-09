@@ -1,7 +1,9 @@
 import "./Scorecard.scss"
 
+import IconTag from "@fider/assets/images/heroicons-tagsolid.svg"
+
 import React, { useEffect, useMemo, useRef, useState } from "react"
-import { Button, Header } from "@fider/components"
+import { Button, Header, Icon } from "@fider/components"
 import { ScorecardField, ScorecardFieldChoice, Post, User } from "@fider/models"
 import { actions, notify, Fider } from "@fider/services"
 import { computeWeightedScore, bandForScore } from "./ScoreBand"
@@ -360,6 +362,7 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
                     <span className="c-scorecard__meta-tags">
                       {post.tags.map((t: any) => (
                         <span key={String(t)} className="c-scorecard__chip c-scorecard__chip--neutral c-scorecard__chip--plain">
+                          <Icon sprite={IconTag} className="c-scorecard__tag-icon" />
                           {String(t)}
                         </span>
                       ))}

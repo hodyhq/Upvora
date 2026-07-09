@@ -1,10 +1,11 @@
 import "./Roadmap.page.scss"
 import IconArrowLeft from "@fider/assets/images/heroicons-arrowleft.svg"
 import IconCheckCircle from "@fider/assets/images/heroicons-check-circle.svg"
+import IconTag from "@fider/assets/images/heroicons-tagsolid.svg"
 
 import React, { useState, useCallback } from "react"
 import { Post, Status, Tag } from "@fider/models"
-import { Header, Button, Icon, ShowTag, Moment } from "@fider/components"
+import { Header, Button, Icon, Moment } from "@fider/components"
 import { VStack, HStack } from "@fider/components/layout"
 import { useFider, usePostOverlay } from "@fider/hooks"
 import { actions } from "@fider/services"
@@ -65,9 +66,12 @@ const RoadmapPost = (props: { post: Post; tags: Tag[]; status: string; kind?: st
           )}
         </HStack>
         {props.tags.length >= 1 && (
-          <HStack spacing={0} className="gap-x-4 flex-wrap">
+          <HStack spacing={1} className="flex-wrap">
             {props.tags.map((tag) => (
-              <ShowTag key={tag.id} tag={tag} />
+              <span key={tag.id} className="c-roadmap-post__tag">
+                <Icon sprite={IconTag} className="c-roadmap-post__tag-icon" />
+                {tag.name}
+              </span>
             ))}
           </HStack>
         )}
