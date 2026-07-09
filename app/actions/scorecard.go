@@ -14,11 +14,11 @@ import (
 var scorecardKeyRegex = regexp.MustCompile(`^[a-z0-9_]+$`)
 
 var allowedScorecardFieldTypes = map[string]bool{
-	"text": true, "note": true, "date": true, "number": true, "url": true, "choice": true, "score": true, "user": true,
+	"text": true, "note": true, "date": true, "number": true, "url": true, "choice": true, "score": true, "user": true, "multiline": true,
 }
 
 var allowedScorecardGroups = map[string]bool{
-	"intake": true, "context": true, "workflow": true, "ownership": true, "classification": true, "scoring": true, "decision": true,
+	"header": true, "intake": true, "context": true, "workflow": true, "ownership": true, "classification": true, "scoring": true, "decision": true,
 }
 
 // CreateScorecardField is the admin action to add a new field to the tenant's
@@ -62,11 +62,11 @@ func (a *CreateScorecardField) Validate(ctx context.Context, user *entity.User) 
 	}
 
 	if !allowedScorecardGroups[a.GroupKey] {
-		result.AddFieldFailure("groupKey", "Group must be one of: intake, context, workflow, ownership, classification, scoring, decision.")
+		result.AddFieldFailure("groupKey", "Group must be one of: header, intake, context, workflow, ownership, classification, scoring, decision.")
 	}
 
 	if !allowedScorecardFieldTypes[a.Type] {
-		result.AddFieldFailure("type", "Type must be one of: text, note, date, number, url, choice, score.")
+		result.AddFieldFailure("type", "Type must be one of: text, multiline, note, date, number, url, choice, score, user.")
 	}
 
 	if a.Type == "score" && a.GroupKey != "scoring" {

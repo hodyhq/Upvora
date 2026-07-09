@@ -476,6 +476,13 @@
     }
   }
 
+  // multiline type: starts at input height, drag-expands like a note, but
+  // keeps text-field width (no --wide) so two share a row.
+  &__field--multiline textarea {
+    min-height: 38px;
+    height: 38px;
+  }
+
   &__field-retired {
     font-size: 10px;
     font-weight: 700;

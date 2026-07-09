@@ -23,7 +23,7 @@ export interface CreateScorecardFieldRequest {
   key: string
   label: string
   groupKey: string
-  type: "text" | "note" | "date" | "number" | "url" | "choice" | "score" | "user"
+  type: "text" | "multiline" | "note" | "date" | "number" | "url" | "choice" | "score" | "user"
   choices?: unknown
   weight?: number
   question?: string

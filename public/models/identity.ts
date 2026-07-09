@@ -52,7 +52,7 @@ export interface ScorecardField {
   key: string
   label: string
   groupKey: string
-  type: "text" | "note" | "date" | "number" | "url" | "choice" | "score" | "user"
+  type: "text" | "multiline" | "note" | "date" | "number" | "url" | "choice" | "score" | "user"
   choices?: ScorecardFieldChoice[]
   weight?: number
   question?: string
