@@ -24,12 +24,12 @@
     // Hide the default scrollbar while keeping the surface scrollable.
     scrollbar-width: thin;
 
-    // Fluid lanes with a floor: up to 5 columns fit the xl container (1140px)
-    // side by side; fewer columns stretch wider, more overflow into a
-    // horizontal scroll instead of crushing below 218px.
+    // Fluid lanes with a floor: 5 columns fit without scrolling from the lg
+    // container (960px) up — 5×180 + 4×12px gaps = 948. Fewer columns stretch
+    // wider (capped at 340); a 6th and beyond overflow into horizontal scroll.
     > .c-roadmap-column {
-      flex: 1 1 240px;
-      min-width: 218px;
+      flex: 1 1 220px;
+      min-width: 180px;
       max-width: 340px;
     }
   }
@@ -136,6 +136,28 @@
       font-variant-numeric: tabular-nums;
       color: var(--colors-gray-900);
     }
+  }
+
+  // tag chips — identical treatment to the scorecard card's meta tags
+  &__tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.015em;
+    padding: 3px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+    background: var(--colors-gray-200);
+    color: var(--colors-gray-700);
+  }
+
+  &__tag-icon {
+    height: 11px;
+    width: 11px;
+    opacity: 0.65;
+    flex-shrink: 0;
   }
 
   &__completed {
