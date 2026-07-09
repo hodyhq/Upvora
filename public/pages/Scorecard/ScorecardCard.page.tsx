@@ -262,6 +262,17 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
       )
     }
 
+    if (f.type === "multiline") {
+      // Hybrid: text-field width (half the row, so two sit side by side) but a
+      // vertically expandable textarea like note. Starts input-height.
+      return (
+        <div key={key} className="c-scorecard__field c-scorecard__field--multiline">
+          {label}
+          <textarea id={`sc-${key}`} rows={1} value={strVal} disabled={retired} onChange={(e) => setValue(key, e.target.value)} />
+        </div>
+      )
+    }
+
     if (f.type === "date") {
       return (
         <div key={key} className="c-scorecard__field">

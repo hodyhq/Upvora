@@ -42,7 +42,8 @@ const groupOptions: SelectOption[] = [
 
 const typeOptions: SelectOption[] = [
   { value: "text", label: "Text — single line" },
-  { value: "note", label: "Note — multi-line" },
+  { value: "multiline", label: "Multiline — text-sized box that grows, two fit per row" },
+  { value: "note", label: "Note — multi-line, full row width" },
   { value: "date", label: "Date" },
   { value: "number", label: "Number" },
   { value: "url", label: "URL" },
