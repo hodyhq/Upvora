@@ -2,6 +2,8 @@
 
 #p-roadmap {
   background-color: var(--colors-gray-100);
+  background-image: radial-gradient(1000px 480px at 85% -10%, var(--brand-glow), transparent 60%);
+  background-repeat: no-repeat;
   padding-top: spacing(8);
   padding-bottom: spacing(12);
 }

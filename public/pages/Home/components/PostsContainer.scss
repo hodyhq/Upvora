@@ -107,6 +107,10 @@
   &[data-status="planned"]::after {
     background: var(--colors-blue-500);
   }
+  &[data-status="review"]::after,
+  &[data-status="under-review"]::after {
+    background: var(--colors-yellow-500);
+  }
   &[data-status="started"]::after {
     background: var(--colors-yellow-600);
   }

@@ -5,6 +5,9 @@
   grid-template-columns: 1fr;
   gap: spacing(6);
   background-color: var(--colors-gray-100);
+  // Ambient brand glow (prototype): soft radial field bleeding from the top-right.
+  background-image: radial-gradient(1000px 480px at 85% -10%, var(--brand-glow), transparent 60%);
+  background-repeat: no-repeat;
   padding-top: spacing(10);
   padding-bottom: spacing(12);
 
@@ -43,6 +46,26 @@
         position: sticky;
         top: spacing(4);
         align-self: start;
+      }
+    }
+
+    &__eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: spacing(2);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--colors-primary-base);
+      margin-bottom: spacing(3);
+
+      &::before {
+        content: "";
+        width: 20px;
+        height: 2px;
+        border-radius: 2px;
+        background: var(--brand-grad);
       }
     }
 
@@ -145,6 +168,78 @@
       display: flex;
       flex-wrap: wrap;
       gap: spacing(2);
+    }
+
+    // By-status breakdown rows
+    &__statusbrk {
+      display: flex;
+      flex-direction: column;
+      gap: spacing(2);
+    }
+
+    &__statusrow {
+      --st: var(--colors-gray-500);
+      display: flex;
+      align-items: center;
+      gap: spacing(2);
+      font-size: 12.5px;
+
+      &--blue {
+        --st: var(--colors-blue-500);
+      }
+      &--green {
+        --st: var(--colors-green-600);
+      }
+      &--yellow {
+        --st: var(--colors-yellow-600);
+      }
+      &--red {
+        --st: var(--colors-red-600);
+      }
+    }
+
+    &__statuschip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 96px;
+      font-weight: 650;
+      color: var(--st);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    &__statusdot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--st);
+      box-shadow: 0 0 7px var(--st);
+      flex-shrink: 0;
+    }
+
+    &__statusbar {
+      flex: 1;
+      height: 5px;
+      border-radius: 3px;
+      background: color-mix(in srgb, var(--colors-gray-900) 8%, transparent);
+      overflow: hidden;
+
+      i {
+        display: block;
+        height: 100%;
+        border-radius: 3px;
+        background: var(--st);
+      }
+    }
+
+    &__statusnum {
+      color: var(--colors-gray-600);
+      font-weight: 700;
+      min-width: 20px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
     }
   }
 }
