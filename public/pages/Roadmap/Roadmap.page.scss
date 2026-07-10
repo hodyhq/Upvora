@@ -43,10 +43,6 @@
     max-width: 60ch;
   }
 
-  background-color: var(--colors-gray-100);
-  background-image: radial-gradient(1000px 520px at 88% -10%, var(--brand-glow), transparent 58%),
-    radial-gradient(700px 420px at 6% -4%, rgba(59, 130, 246, 0.1), transparent 55%);
-  background-repeat: no-repeat;
   padding-top: spacing(8);
   padding-bottom: spacing(12);
 }

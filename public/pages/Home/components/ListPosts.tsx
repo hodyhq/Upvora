@@ -36,9 +36,11 @@ const ListPostItem = (props: {
   }
 
   const status = postStatusValue(props.post)
+  const builtInColors: { [key: string]: string } = { open: "blue", planned: "blue", started: "yellow", completed: "green", declined: "red", duplicate: "gray" }
+  const statusColor = fider.session.tenant.statuses?.find((s) => s.slug === status)?.color || builtInColors[status] || "gray"
 
   return (
-    <a href={`/posts/${props.post.number}/${props.post.slug}`} className="c-post" data-status={status} onClick={handleClick}>
+    <a href={`/posts/${props.post.number}/${props.post.slug}`} className="c-post" data-status={status} data-color={statusColor} onClick={handleClick}>
       <div className="c-post__vote" data-voted={props.post.hasVoted ? "true" : "false"}>
         <svg
           className="c-post__chev"

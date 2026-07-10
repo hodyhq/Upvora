@@ -1,7 +1,6 @@
 @use "~@fider/assets/styles/variables.scss" as *;
 
 #p-show-post {
-  background-color: var(--colors-gray-100);
   padding-top: spacing(4);
   padding-bottom: spacing(12);
 
@@ -62,7 +61,7 @@
     }
 
     &__vote-section {
-      margin-top: spacing(10);
+      margin-top: spacing(5);
     }
 
     &__description-section {

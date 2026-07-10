@@ -52,7 +52,7 @@
   &__list {
     display: flex;
     flex-direction: column;
-    gap: spacing(3);
+    gap: 10px;
   }
 
   &__post-minimal {
@@ -78,7 +78,7 @@
   background-color: var(--colors-white);
   border: 1px solid var(--colors-gray-200);
   border-radius: get("border.radius.large");
-  padding: spacing(4) spacing(5);
+  padding: 14px 18px;
   transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
 
   @include dark-mode {
@@ -110,27 +110,20 @@
     background: transparent;
     transition: background 0.16s ease;
   }
-  &[data-status="planned"]::after {
+  &[data-color="blue"]::after {
     background: var(--colors-blue-500);
   }
-  &[data-status="review"]::after,
-  &[data-status="under-review"]::after {
+  &[data-color="yellow"]::after {
     background: var(--colors-yellow-500);
   }
-  &[data-status="started"]::after {
-    background: var(--colors-yellow-600);
-  }
-  &[data-status="completed"]::after {
+  &[data-color="green"]::after {
     background: var(--colors-green-600);
   }
-  &[data-status="declined"]::after {
+  &[data-color="red"]::after {
     background: var(--colors-red-600);
   }
-  &[data-status="duplicate"]::after {
+  &[data-color="gray"]::after {
     background: var(--colors-gray-500);
-  }
-  &[data-status="open"]:hover::after {
-    background: var(--colors-primary-base);
   }
 
   &__vote {
