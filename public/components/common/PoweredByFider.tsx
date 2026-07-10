@@ -22,8 +22,8 @@ export const PoweredByFider = (props: PoweredByFiderProps) => {
 
   return (
     <div className={className}>
-      <a rel="noopener" className="text-2xs" href="https://github.com/hodyhq/fiderH" target="_blank">
-        Powered by FiderH ⚡
+      <a rel="noopener" className="text-2xs" href="https://github.com/hodyhq/Upvora" target="_blank">
+        Powered by Upvora ⚡
       </a>
       {versionString && <span className="text-2xs block">{versionString}</span>}
     </div>
