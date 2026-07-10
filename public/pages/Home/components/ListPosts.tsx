@@ -2,7 +2,6 @@ import React, { useState } from "react"
 import { Post, Tag, CurrentUser, postStatusValue } from "@fider/models"
 import { ShowTag, Markdown, Icon, ResponseLozenge } from "@fider/components"
 import IconChatAlt2 from "@fider/assets/images/heroicons-chat-alt-2.svg"
-import IconCheck from "@fider/assets/images/heroicons-check.svg"
 import { HStack, VStack } from "@fider/components/layout"
 import { useFider } from "@fider/hooks"
 import { Trans } from "@lingui/react/macro"
@@ -35,49 +34,51 @@ const ListPostItem = (props: {
     }
   }
 
+  const status = postStatusValue(props.post)
+
   return (
-    <a href={`/posts/${props.post.number}/${props.post.slug}`} className="c-posts-container__post-link" onClick={handleClick}>
-      <VStack className="c-posts-container__post w-full" spacing={4}>
-        <HStack justify="between" align="start">
-          <HStack spacing={2} align="start" className="w-full">
-            <h3 className="c-posts-container__post-title text-break">{props.post.title}</h3>
-            {isPending && (
-              <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded flex-shrink-0">
-                <Trans id="post.pending">pending</Trans>
-              </span>
-            )}
-          </HStack>
-          {props.post.commentsCount > 0 && (
-            <HStack spacing={1} className="c-posts-container__post-comments flex-shrink-0">
-              <span>{props.post.commentsCount}</span>
-              <Icon sprite={IconChatAlt2} className="h-5 w-5" />
-            </HStack>
+    <a href={`/posts/${props.post.number}/${props.post.slug}`} className="c-post" data-status={status} onClick={handleClick}>
+      <div className="c-post__vote" data-voted={props.post.hasVoted ? "true" : "false"}>
+        <svg
+          className="c-post__chev"
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M5 12l5-5 5 5" />
+        </svg>
+        <span className="c-post__votes">{props.post.votesCount}</span>
+        <span className="c-post__voteslabel">{props.post.votesCount === 1 ? <Trans id="label.vote">Vote</Trans> : <Trans id="label.votes">Votes</Trans>}</span>
+      </div>
+      <div className="c-post__body">
+        <div className="c-post__titlerow">
+          <h3 className="c-post__title text-break">{props.post.title}</h3>
+          {isPending && (
+            <span className="c-post__pending">
+              <Trans id="post.pending">pending</Trans>
+            </span>
           )}
-        </HStack>
-        <Markdown className="c-posts-container__postdescription" maxLength={300} text={props.post.description} style="plainText" />
-        {props.tags.length >= 1 && (
-          <HStack spacing={0} className="gap-x-4 flex-wrap">
-            {props.tags.map((tag) => (
-              <ShowTag key={tag.id} tag={tag} />
-            ))}
-          </HStack>
+        </div>
+        <Markdown className="c-post__desc" maxLength={140} text={props.post.description} style="plainText" />
+        <div className="c-post__meta">
+          {props.showStatus !== false && status !== "open" && <ResponseLozenge status={status} response={props.post.response} size={"small"} />}
+          {props.tags.map((tag) => (
+            <ShowTag key={tag.id} tag={tag} />
+          ))}
+        </div>
+      </div>
+      <div className="c-post__side">
+        {props.post.commentsCount > 0 && (
+          <span className="c-post__cmts">
+            <Icon sprite={IconChatAlt2} className="h-4 w-4" />
+            {props.post.commentsCount}
+          </span>
         )}
-        <HStack justify="between" align="center">
-          <div className="c-posts-container__post-votes">
-            <span className="text-semibold text-2xl">{props.post.votesCount}</span>{" "}
-            <span className="text-gray-700">{props.post.votesCount === 1 ? <Trans id="label.vote">Vote</Trans> : <Trans id="label.votes">Votes</Trans>}</span>
-            {props.post.hasVoted && (
-              <span className="text-xs text-blue-600 ml-2 inline-flex flex-items-center">
-                <Icon sprite={IconCheck} className="h-3 w-3 mr-1" />
-                <Trans id="action.voted">Voted!</Trans>
-              </span>
-            )}
-          </div>
-          {props.showStatus !== false && postStatusValue(props.post) !== "open" && (
-            <ResponseLozenge status={postStatusValue(props.post)} response={props.post.response} size={"small"} />
-          )}
-        </HStack>
-      </VStack>
+      </div>
     </a>
   )
 }

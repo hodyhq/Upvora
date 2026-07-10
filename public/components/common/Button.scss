@@ -46,13 +46,17 @@
 
   &--primary {
     color: var(--colors-white);
+    // Solid fill is the reliable base (always visible); the gradient rides on top
+    // as background-image, so if it ever fails to resolve the button still shows.
     background-color: var(--colors-primary-base);
+    background-image: var(--brand-grad);
     border: 1px solid var(--colors-primary-base);
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    box-shadow: 0 6px 16px -8px var(--brand-glow), 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 
     &:hover {
+      filter: brightness(1.05);
       background-color: var(--colors-primary-dark);
-      box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 22px -8px var(--brand-glow), 0 2px 4px 0 rgba(0, 0, 0, 0.1);
     }
   }
 

@@ -28,6 +28,9 @@ type Tenant struct {
 	IsModerationEnabled bool              `json:"isModerationEnabled"`
 	IsPro               bool              `json:"isPro"`
 	ShareIdeaInstructions string          `json:"shareIdeaInstructions"`
+	RailCtaHeading      string            `json:"railCtaHeading"`
+	RailCtaText         string            `json:"railCtaText"`
+	RailCtaButton       string            `json:"railCtaButton"`
 	SiteBannerEnabled   bool              `json:"siteBannerEnabled"`
 	SiteBannerMessage   string            `json:"siteBannerMessage"`
 	SiteBannerVariant   string            `json:"siteBannerVariant"`

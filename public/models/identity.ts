@@ -11,6 +11,9 @@ export interface Tenant {
   welcomeHeader: string
   descriptionTemplate: string
   shareIdeaInstructions: string
+  railCtaHeading: string
+  railCtaText: string
+  railCtaButton: string
   status: TenantStatus
   isPrivate: boolean
   logoBlobKey: string

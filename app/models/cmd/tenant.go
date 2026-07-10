@@ -34,6 +34,9 @@ type UpdateTenantSettings struct {
 	WelcomeHeader         string
 	DescriptionTemplate   string
 	ShareIdeaInstructions string
+	RailCtaHeading        string
+	RailCtaText           string
+	RailCtaButton         string
 	CNAME                 string
 	Locale                string
 }

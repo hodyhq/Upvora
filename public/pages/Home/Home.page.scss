@@ -3,16 +3,18 @@
 #p-home {
   display: grid;
   grid-template-columns: 1fr;
-  column-gap: 0;
-  row-gap: spacing(8);
+  gap: spacing(6);
   background-color: var(--colors-gray-100);
-  padding-top: spacing(12);
+  padding-top: spacing(10);
   padding-bottom: spacing(12);
 
   @include media("lg") {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-areas:
+      "head head"
+      "main rail";
     column-gap: spacing(8);
-    row-gap: 0;
+    row-gap: spacing(6);
   }
 
   @include dark-mode {
@@ -22,55 +24,68 @@
   }
 
   .p-home {
-    &__welcome-col {
+    &__head {
+      grid-area: head;
+    }
+
+    &__main {
+      grid-area: main;
+      min-width: 0;
+    }
+
+    &__rail {
+      grid-area: rail;
+      display: flex;
+      flex-direction: column;
+      gap: spacing(4);
+
       @include media("lg") {
-        padding-right: spacing(4);
+        position: sticky;
+        top: spacing(4);
+        align-self: start;
       }
     }
 
     &__welcome-title {
-      font-size: 32px;
+      font-size: 30px;
       font-weight: get("font.weight.xbold");
-      line-height: 1.2;
+      line-height: 1.1;
       color: var(--colors-gray-900);
-      letter-spacing: -0.5px;
+      letter-spacing: -0.9px;
 
       @include media("lg") {
-        font-size: 36px;
+        font-size: 40px;
       }
     }
 
     &__welcome-body {
-      // font-size: get("font.size.lg");
       line-height: 1.6;
-      // color: var(--colors-gray-700);
-    }
-
-    &__posts-col {
-      grid-column: span 2 / span 2;
+      color: var(--colors-gray-700);
+      max-width: 60ch;
     }
 
     &__add-idea-btn {
       width: 100%;
-      margin-bottom: spacing(6);
+      margin-bottom: spacing(5);
       padding: spacing(5);
       background-color: var(--colors-white);
       border: 1px solid var(--colors-gray-200);
-      border-radius: get("border.radius.xlarge");
-      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+      border-radius: get("border.radius.large");
+      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.08);
       cursor: pointer;
-      transition: box-shadow 0.2s ease-in-out;
+      transition: box-shadow 0.2s ease-in-out, border-color 0.16s ease;
       font-size: get("font.size.lg");
       font-weight: get("font.weight.medium");
       color: var(--colors-gray-700);
       text-align: left;
 
       @include dark-mode {
-        background-color: var(--colors-gray-200);
+        background-color: var(--colors-gray-100);
       }
 
       &:hover {
-        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        border-color: color-mix(in srgb, var(--colors-primary-base) 40%, transparent);
+        box-shadow: 0 12px 26px -16px rgba(0, 0, 0, 0.28);
       }
 
       &:focus {
@@ -80,10 +95,56 @@
     }
 
     &__add-idea-icon {
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 36px;
       color: var(--colors-primary-base);
       flex-shrink: 0;
+    }
+
+    &__panel {
+      background-color: var(--colors-white);
+      border: 1px solid var(--colors-gray-200);
+      border-radius: get("border.radius.large");
+      padding: spacing(4);
+
+      @include dark-mode {
+        background-color: var(--colors-gray-100);
+        border-color: var(--colors-gray-300);
+      }
+
+      &--cta {
+        background-image: linear-gradient(150deg, color-mix(in srgb, var(--colors-primary-base) 12%, var(--colors-white)), var(--colors-white));
+
+        @include dark-mode {
+          background-image: linear-gradient(150deg, color-mix(in srgb, var(--colors-primary-base) 22%, var(--colors-gray-100)), var(--colors-gray-100));
+        }
+      }
+    }
+
+    &__panel-title {
+      font-size: get("font.size.sm");
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--colors-gray-600);
+      font-weight: 700;
+      margin-bottom: spacing(3);
+    }
+
+    &__panel-text {
+      color: var(--colors-gray-700);
+      font-size: get("font.size.sm");
+      line-height: 1.5;
+      margin-bottom: spacing(3);
+    }
+
+    &__cta-btn {
+      width: 100%;
+    }
+
+    &__tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: spacing(2);
     }
   }
 }

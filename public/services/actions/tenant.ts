@@ -31,6 +31,9 @@ export interface UpdateTenantSettingsRequest {
   welcomeHeader: string
   descriptionTemplate: string
   shareIdeaInstructions: string
+  railCtaHeading: string
+  railCtaText: string
+  railCtaButton: string
   cname: string
   locale: string
 }
