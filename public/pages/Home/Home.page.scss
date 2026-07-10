@@ -127,8 +127,8 @@
     &__panel {
       background-color: var(--colors-white);
       border: 1px solid var(--colors-gray-200);
-      border-radius: get("border.radius.large");
-      padding: spacing(4);
+      border-radius: 14px;
+      padding: 16px 18px;
 
       @include dark-mode {
         background-color: var(--colors-white);
@@ -150,9 +150,9 @@
     }
 
     &__panel-title {
-      font-size: get("font.size.sm");
+      font-size: 11.5px;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.11em;
       color: var(--colors-gray-600);
       font-weight: 700;
       margin-bottom: spacing(3);
@@ -160,8 +160,8 @@
 
     &__panel-text {
       color: var(--colors-gray-700);
-      font-size: get("font.size.sm");
-      line-height: 1.5;
+      font-size: 13.5px;
+      line-height: 1.55;
       margin-bottom: spacing(3);
     }
 

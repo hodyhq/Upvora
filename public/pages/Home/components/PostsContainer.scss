@@ -66,6 +66,41 @@
   }
 }
 
+/* Segmented sort control (prototype tabs) */
+.c-posts-sort {
+  display: inline-flex;
+  gap: 2px;
+  background-color: color-mix(in srgb, var(--colors-gray-900) 5%, transparent);
+  border: 1px solid var(--colors-gray-200);
+  border-radius: 11px;
+  padding: 3px;
+
+  &__tab {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--colors-gray-600);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 13px;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.12s ease, background-color 0.12s ease;
+
+    &:hover {
+      color: var(--colors-gray-900);
+    }
+
+    &--active {
+      background-color: var(--colors-white);
+      color: var(--colors-gray-900);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    }
+  }
+}
+
 /* Dense feedback row — the board's flagship element */
 .c-post {
   position: relative;

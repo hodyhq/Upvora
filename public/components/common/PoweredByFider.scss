@@ -1,12 +1,75 @@
 @use "~@fider/assets/styles/variables.scss" as *;
 
 .c-powered {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: spacing(2);
+  padding: spacing(3) 0;
 
-  a {
-    color: var(--colors-blue-700);
+  &__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--colors-gray-600);
+    text-decoration: none;
+    transition: color 0.15s ease;
+
+    strong {
+      color: var(--colors-gray-900);
+      font-weight: 750;
+      letter-spacing: -0.01em;
+    }
+
+    &:hover {
+      color: var(--colors-gray-900);
+
+      strong {
+        color: var(--colors-primary-base);
+      }
+    }
   }
-  a:hover {
+
+  &__mark {
+    width: 16px;
+    height: 16px;
     color: var(--colors-gray-900);
+    filter: drop-shadow(0 2px 6px var(--brand-glow));
+  }
+
+  &__version {
+    font-size: 11px;
+    color: var(--colors-gray-500);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__hody {
+    margin-top: spacing(1);
+    opacity: 0.75;
+    transition: opacity 0.15s ease;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  &__hody-logo {
+    width: 74px;
+    display: block;
+
+    &--dark {
+      display: none;
+    }
+  }
+
+  @include dark-mode {
+    .c-powered__hody-logo--light {
+      display: none;
+    }
+    .c-powered__hody-logo--dark {
+      display: block;
+    }
   }
 }
