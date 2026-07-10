@@ -178,6 +178,17 @@ const RoadmapBoard = (props: RoadmapPageProps) => {
   return (
     <div id="p-roadmap" className="page container">
       <div style={selectedPostId !== null ? { display: "none" } : undefined}>
+        <div className="p-roadmap__head">
+          <span className="p-roadmap__eyebrow">
+            <Trans id="roadmap.head.eyebrow">Roadmap</Trans>
+          </span>
+          <h1 className="p-roadmap__title">
+            <Trans id="roadmap.head.title">Where things stand</Trans>
+          </h1>
+          <p className="p-roadmap__subtitle">
+            <Trans id="roadmap.head.subtitle">From triage to shipped. Every card started as a vote on the board.</Trans>
+          </p>
+        </div>
         <VStack spacing={4}>
           <div className="c-roadmap-board">
             {columns.map((col) => (

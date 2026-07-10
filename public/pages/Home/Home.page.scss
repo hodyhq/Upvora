@@ -1,8 +1,11 @@
 @use "~@fider/assets/styles/variables.scss" as *;
 
 #p-home {
-  display: grid;
-  grid-template-columns: 1fr;
+  // Mobile-first: simple column flow. The grid (and its named areas) only
+  // exists at lg+ — a grid-area with no matching template stacks every child
+  // into the same cell, which is exactly the overlap bug this avoids.
+  display: flex;
+  flex-direction: column;
   gap: spacing(6);
   background-color: var(--colors-gray-100);
   // Ambient field (prototype): brand glow top-right + cool blue counter-glow top-left.
@@ -13,6 +16,7 @@
   padding-bottom: spacing(12);
 
   @include media("lg") {
+    display: grid;
     grid-template-columns: minmax(0, 1fr) 300px;
     grid-template-areas:
       "head head"
