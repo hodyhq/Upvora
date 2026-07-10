@@ -44,7 +44,7 @@ func TestSendInvites(t *testing.T) {
 	Expect(emailmock.MessageHistory[0].Tenant).Equals(mock.DemoTenant)
 	Expect(emailmock.MessageHistory[0].Props).Equals(dto.Props{
 		"subject": "My Subject",
-		"logo":    "https://demo.test.fider.io:3000/static/assets/logo.png",
+		"logo":    "http://domain.com/static/assets/logo.png",
 	})
 	Expect(emailmock.MessageHistory[0].From).Equals(dto.Recipient{
 		Name: "Jon Snow",

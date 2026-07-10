@@ -91,7 +91,7 @@ func TestNotifyAboutStatusChangeTask(t *testing.T) {
 		"view":        "<a href='http://domain.com/posts/1/add-support-for-typescript'>view it on your browser</a>",
 		"change":      "<a href='http://domain.com/settings'>change your notification preferences</a>",
 		"unsubscribe": "<a href='http://domain.com/posts/1/add-support-for-typescript'>unsubscribe from it</a>",
-		"logo":        "https://demo.test.fider.io:3000/static/assets/logo.png",
+		"logo":        "http://domain.com/static/assets/logo.png",
 	})
 	Expect(emailmock.MessageHistory[0].From).Equals(dto.Recipient{
 		Name: "Jon Snow",
@@ -220,7 +220,7 @@ func TestNotifyAboutStatusChangeTask_Duplicate(t *testing.T) {
 		"view":        "<a href='http://domain.com/posts/2/i-need-typescript'>view it on your browser</a>",
 		"change":      "<a href='http://domain.com/settings'>change your notification preferences</a>",
 		"unsubscribe": "<a href='http://domain.com/posts/2/i-need-typescript'>unsubscribe from it</a>",
-		"logo":        "https://demo.test.fider.io:3000/static/assets/logo.png",
+		"logo":        "http://domain.com/static/assets/logo.png",
 	})
 	Expect(emailmock.MessageHistory[0].From).Equals(dto.Recipient{
 		Name: "Jon Snow",
