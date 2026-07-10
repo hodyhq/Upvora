@@ -9,7 +9,11 @@
 // Upvora brand accents — derived from the tenant's primary color so brand
 // customization (admin theme setting or Custom CSS) flows through the gradient
 // and glow too, not just flat fills. Falls back to Upvora Orange.
-:root {
+// MUST live on body, not :root: the --colors-* tokens are defined on
+// body[data-theme], and a custom property resolves its inner var()s where it
+// is DEFINED — on :root they don't exist yet, which computes the whole token
+// to guaranteed-invalid and silently blanks every gradient and glow.
+body {
   --brand-grad: linear-gradient(
     135deg,
     var(--colors-primary-light),
