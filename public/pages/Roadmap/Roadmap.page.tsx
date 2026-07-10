@@ -97,7 +97,7 @@ const RoadmapColumn = (props: RoadmapColumnProps) => {
   const hasMore = props.posts.length >= props.currentLimit
 
   return (
-    <div className="c-roadmap-column">
+    <div className={`c-roadmap-column c-roadmap-column--${props.statusColor || "blue"}`}>
       <div className="c-roadmap-column__header">
         <span className={`c-roadmap-column__chip c-roadmap-column__chip--${props.statusColor || "blue"}`}>{props.statusLabel}</span>
         <span className="c-roadmap-column__count">{props.posts.length}</span>
