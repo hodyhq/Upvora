@@ -5,10 +5,10 @@ import IconArrowLeft from "@fider/assets/images/heroicons-arrowleft.svg"
 
 import React, { useEffect, useState, useRef } from "react"
 import { Post, Tag, PostStatus } from "@fider/models"
-import { Markdown, Hint, PoweredByFider, Icon, Header, Button } from "@fider/components"
+import { Markdown, Hint, PoweredByFider, Icon, Header, Button, ShowTag } from "@fider/components"
 import { PostsContainer } from "./components/PostsContainer"
 import { useFider, usePostOverlay } from "@fider/hooks"
-import { HStack, VStack } from "@fider/components/layout"
+import { HStack } from "@fider/components/layout"
 import { ShareFeedback } from "./components/ShareFeedback"
 import { i18n } from "@lingui/core"
 import { Trans } from "@lingui/react/macro"
@@ -137,22 +137,13 @@ What can we do better? This is the place for you to vote, discuss and share idea
           style={selectedPostId !== null ? { display: "none" } : undefined}
           {...(isShareFeedbackOpen && !fider.isReadOnly && { inert: "true" })}
         >
-          <div className="p-home__welcome-col">
-            <div className="p-home__welcome-card">
-              <VStack spacing={6}>
-                <div>
-                  {fider.session.tenant.welcomeHeader && (
-                    <h1 className="p-home__welcome-title mb-5">{parseWelcomeHeader(fider.session.tenant.welcomeHeader)}</h1>
-                  )}
-                  <Markdown className="p-home__welcome-body" text={fider.session.tenant.welcomeMessage || defaultWelcomeMessage} style="full" />
-                </div>
-              </VStack>
-            </div>
-            <div>
-              <PoweredByFider slot="home-input" className="sm:hidden md:hidden lg:block mt-3" />
-            </div>
+          <div className="p-home__head">
+            {fider.session.tenant.welcomeHeader && (
+              <h1 className="p-home__welcome-title mb-3">{parseWelcomeHeader(fider.session.tenant.welcomeHeader)}</h1>
+            )}
+            <Markdown className="p-home__welcome-body" text={fider.session.tenant.welcomeMessage || defaultWelcomeMessage} style="full" />
           </div>
-          <div className="p-home__posts-col">
+          <div className="p-home__main">
             <button className="p-home__add-idea-btn" onClick={handleNewPost} aria-label={fider.session.tenant.invitation || defaultInvitation}>
               <HStack spacing={4} align="center" justify="center">
                 <Icon sprite={IconPlusCircle} className="p-home__add-idea-icon" />
@@ -172,6 +163,26 @@ What can we do better? This is the place for you to vote, discuss and share idea
             )}
             <PoweredByFider slot="home-footer" className="lg:hidden xl:hidden mt-8" />
           </div>
+          <aside className="p-home__rail">
+            <div className="p-home__panel p-home__panel--cta">
+              <h4 className="p-home__panel-title">Have an idea?</h4>
+              <p className="p-home__panel-text">Post a suggestion and let the community vote it up.</p>
+              <button className="c-button c-button--primary p-home__cta-btn" onClick={handleNewPost}>
+                {fider.session.tenant.invitation || defaultButtonLabel}
+              </button>
+            </div>
+            {props.tags.length > 0 && (
+              <div className="p-home__panel">
+                <h4 className="p-home__panel-title">Popular tags</h4>
+                <div className="p-home__tags">
+                  {props.tags.slice(0, 10).map((tag) => (
+                    <ShowTag key={tag.id} tag={tag} />
+                  ))}
+                </div>
+              </div>
+            )}
+            <PoweredByFider slot="home-rail" className="mt-3" />
+          </aside>
         </div>
         {selectedPostId !== null && (
           <div className="page container">
