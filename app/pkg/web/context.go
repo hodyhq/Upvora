@@ -601,7 +601,7 @@ func LogoURL(ctx context.Context) string {
 	if hasTenant && tenant.LogoBlobKey != "" {
 		return AssetsURL(ctx, "/static/images/%s?size=200", tenant.LogoBlobKey)
 	}
-	return AssetsURL(ctx, "/static/logo.png")
+	return AssetsURL(ctx, "/static/assets/logo.png")
 }
 
 // BaseURL return the base URL from given context
