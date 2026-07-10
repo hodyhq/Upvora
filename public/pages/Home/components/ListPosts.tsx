@@ -39,13 +39,20 @@ const ListPostItem = (props: {
   return (
     <a href={`/posts/${props.post.number}/${props.post.slug}`} className="c-post" data-status={status} onClick={handleClick}>
       <div className="c-post__vote" data-voted={props.post.hasVoted ? "true" : "false"}>
-        <svg className="c-post__chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg
+          className="c-post__chev"
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
           <path d="M5 12l5-5 5 5" />
         </svg>
         <span className="c-post__votes">{props.post.votesCount}</span>
-        <span className="c-post__voteslabel">
-          {props.post.votesCount === 1 ? <Trans id="label.vote">Vote</Trans> : <Trans id="label.votes">Votes</Trans>}
-        </span>
+        <span className="c-post__voteslabel">{props.post.votesCount === 1 ? <Trans id="label.vote">Vote</Trans> : <Trans id="label.votes">Votes</Trans>}</span>
       </div>
       <div className="c-post__body">
         <div className="c-post__titlerow">
@@ -58,9 +65,7 @@ const ListPostItem = (props: {
         </div>
         <Markdown className="c-post__desc" maxLength={140} text={props.post.description} style="plainText" />
         <div className="c-post__meta">
-          {props.showStatus !== false && status !== "open" && (
-            <ResponseLozenge status={status} response={props.post.response} size={"small"} />
-          )}
+          {props.showStatus !== false && status !== "open" && <ResponseLozenge status={status} response={props.post.response} size={"small"} />}
           {props.tags.map((tag) => (
             <ShowTag key={tag.id} tag={tag} />
           ))}

@@ -129,13 +129,7 @@ const GeneralSettingsPage = () => {
           <p className="text-muted">Heading of the call-to-action box in the board sidebar. Leave empty to use the default.</p>
         </Input>
 
-        <TextArea
-          field="railCtaText"
-          label="Sidebar text"
-          value={railCtaText}
-          disabled={!fider.session.user.isAdministrator}
-          onChange={setRailCtaText}
-        >
+        <TextArea field="railCtaText" label="Sidebar text" value={railCtaText} disabled={!fider.session.user.isAdministrator} onChange={setRailCtaText}>
           <p className="text-muted">Short description under the sidebar heading. Leave empty to use the default.</p>
         </TextArea>
 
