@@ -140,7 +140,8 @@
     }
 
     &[data-voted="true"] {
-      background: var(--brand-grad);
+      background-color: var(--colors-primary-base);
+      background-image: var(--brand-grad);
       border-color: transparent;
       box-shadow: 0 8px 18px -10px var(--brand-glow);
 
