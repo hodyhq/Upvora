@@ -165,11 +165,13 @@ What can we do better? This is the place for you to vote, discuss and share idea
           </div>
           <aside className="p-home__rail">
             <div className="p-home__panel p-home__panel--cta">
-              <h4 className="p-home__panel-title">Have an idea?</h4>
-              <p className="p-home__panel-text">Post a suggestion and let the community vote it up.</p>
-              <button className="c-button c-button--primary p-home__cta-btn" onClick={handleNewPost}>
-                {fider.session.tenant.invitation || defaultButtonLabel}
-              </button>
+              <h4 className="p-home__panel-title">{fider.session.tenant.railCtaHeading || "Have an idea?"}</h4>
+              <p className="p-home__panel-text">{fider.session.tenant.railCtaText || "Post a suggestion and let the community vote it up."}</p>
+              {fider.session.tenant.railCtaButton && (
+                <button className="c-button c-button--primary p-home__cta-btn" onClick={handleNewPost}>
+                  {fider.session.tenant.railCtaButton}
+                </button>
+              )}
             </div>
             {props.tags.length > 0 && (
               <div className="p-home__panel">
