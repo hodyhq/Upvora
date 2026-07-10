@@ -130,11 +130,11 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
-    width: 66px;
-    padding: spacing(3) spacing(1);
-    border: 1px solid var(--colors-gray-300);
-    border-radius: 12px;
+    gap: 3px;
+    width: 68px;
+    padding: 13px 6px;
+    border: 1px solid var(--colors-gray-400);
+    border-radius: 13px;
     background-color: var(--colors-gray-100);
     transition: border-color 0.16s ease, background 0.16s ease;
 
@@ -167,7 +167,7 @@
     stroke: var(--colors-primary-base);
   }
   &__votes {
-    font-size: 1.3rem;
+    font-size: 1.28rem;
     font-weight: 800;
     line-height: 1.05;
     letter-spacing: -0.02em;
@@ -175,11 +175,11 @@
     font-variant-numeric: tabular-nums;
   }
   &__voteslabel {
-    font-size: 10px;
+    font-size: 0.63rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    font-weight: 600;
-    color: var(--colors-gray-600);
+    font-weight: 700;
+    color: var(--colors-gray-500);
   }
 
   &__body {

@@ -49,7 +49,7 @@ export const Header = (props: HeaderProps) => {
             </a>
             <HStack spacing={4} className="c-header__nav flex-items-center">
               <a href="/" className={`c-header__nav-link ${isFeedbackActive ? "c-header__nav-link--active" : ""}`}>
-                <Trans id="header.nav.feedback">All Feedback</Trans>
+                <Trans id="header.nav.feedback">Board</Trans>
               </a>
               <a href="/roadmap" className={`c-header__nav-link ${isRoadmapActive ? "c-header__nav-link--active" : ""}`}>
                 <Trans id="header.nav.roadmap">Roadmap</Trans>
