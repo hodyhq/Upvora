@@ -34,6 +34,11 @@
     &__main {
       grid-area: main;
       min-width: 0;
+      order: 3;
+
+      @include media("lg") {
+        order: 0;
+      }
     }
 
     &__rail {
@@ -41,6 +46,11 @@
       display: flex;
       flex-direction: column;
       gap: spacing(4);
+      order: 2;
+
+      @include media("lg") {
+        order: 0;
+      }
 
       @include media("lg") {
         position: sticky;
