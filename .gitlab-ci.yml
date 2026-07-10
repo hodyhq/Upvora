@@ -1,0 +1,137 @@
+# .gitlab-ci.yml — Upvora
+# Port of .github/workflows/build.yml to GitLab CI.
+# Gate: runs on merge requests TARGETING main (the beta->main promotion) and on main pushes.
+# Runner: VM112 homelab-docker (Docker executor, run_untagged). DinD used for image build.
+#
+# BRING-UP STATE: lint/unit/build run automatically. e2e is `when: manual` until the
+# TLS-cert + service-network wiring is tuned on a live run (see notes at bottom).
+# The `ci/*` escape-hatch rule lets this branch trigger a pipeline; remove it before
+# merging to beta/main.
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH =~ /^ci\//'   # bring-up only — remove before merge
+
+stages:
+  - lint-test
+  - build
+  - e2e
+
+variables:
+  DATABASE_URL: "postgres://fider_ci:fider_ci_pw@postgres:5432/fider_ci?sslmode=disable"
+  POSTGRES_USER: fider_ci
+  POSTGRES_PASSWORD: fider_ci_pw
+  POSTGRES_DB: fider_ci
+
+# ---------------------------------------------------------------------------
+# lint-test stage
+# ---------------------------------------------------------------------------
+
+test-ui:
+  stage: lint-test
+  image: node:22-bookworm
+  cache:
+    key:
+      files: [package-lock.json]
+    paths: [.npm/]
+  before_script:
+    - npm ci --cache .npm --prefer-offline
+  script:
+    - make lint-ui
+    - make test-ui
+
+test-server:
+  stage: lint-test
+  image: golang:1.25-bookworm
+  services:
+    - name: postgres:17
+      alias: postgres
+    - name: getfider/minio:0.0.2
+      alias: minio
+  variables:
+    MINIO_ACCESS_KEY: s3user
+    MINIO_SECRET_KEY: s3user-s3cr3t
+    BLOB_STORAGE_S3_ENDPOINT_URL: "http://minio:9000"
+    FF_NETWORK_PER_BUILD: "true"   # let the go job reach the postgres/minio service aliases
+    GOCACHE: "$CI_PROJECT_DIR/.gocache"
+  cache:
+    - key: { files: [go.sum] }
+      paths: [.gocache/]
+    - key: { files: [package-lock.json] }
+      paths: [.npm/]
+  before_script:
+    # node is needed for build-ssr (lingui + esbuild) and npm ci (esbuild binary)
+    - curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+    - apt-get install -y nodejs
+    - npm ci --cache .npm --prefer-offline
+    - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.7.2
+    - go install github.com/joho/godotenv/cmd/godotenv@latest
+  script:
+    - make lint-server
+    - mkdir -p ./dist
+    - make test-server SHORT=false
+
+# ---------------------------------------------------------------------------
+# build stage — validates the production image builds (no push yet)
+# ---------------------------------------------------------------------------
+
+build:
+  stage: build
+  image: docker:27-cli
+  services:
+    - docker:27-dind
+  variables:
+    DOCKER_HOST: "tcp://docker:2376"
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_CERT_PATH: "/certs/client"
+    DOCKER_TLS_VERIFY: "1"
+  script:
+    - docker build --build-arg VERSION=ci-$CI_COMMIT_SHORT_SHA --build-arg COMMITHASH=$CI_COMMIT_SHORT_SHA -t upvora:ci-$CI_COMMIT_SHORT_SHA .
+    # TODO(e2e): push to $CI_REGISTRY_IMAGE once registry is confirmed, so e2e can pull it.
+
+# ---------------------------------------------------------------------------
+# e2e stage  ⚠️ manual until tuned (full-parity target) — see notes
+# ---------------------------------------------------------------------------
+
+.e2e-base:
+  stage: e2e
+  image: mcr.microsoft.com/playwright:v1.55.0-noble
+  when: manual        # flip to automatic once cert/service-network wiring is proven
+  allow_failure: true
+  variables:
+    FF_NETWORK_PER_BUILD: "true"   # REQUIRED: app service must reach postgres/mailhog services
+  services:
+    - name: postgres:17
+      alias: postgres
+    - name: mailhog/mailhog:latest
+      alias: mailhog
+  before_script:
+    - npm ci --cache .npm --prefer-offline
+    # ⚠️ OPEN ITEM: run a Fider instance the tests can hit. GitHub bind-mounts ./etc for the
+    #   dev TLS cert; a GitLab service can't bind-mount. Resolve during tuning:
+    #     (a) run e2e over HTTP (drop SSL_CERT) if the harness allows — try first, smallest, or
+    #     (b) bake etc/ into a CI-only image and run it as a service with app env, or
+    #     (c) launch the app via DinD with a volume mount.
+
+test-e2e-ui:
+  extends: .e2e-base
+  script:
+    - make test-e2e-ui
+
+test-e2e-server:
+  extends: .e2e-base
+  script:
+    - make test-e2e-server
+
+# ===========================================================================
+# NOTES / open items to resolve on the first live run
+# 1. FF_NETWORK_PER_BUILD must be enabled (set per-job above); confirm the runner
+#    doesn't force a network_mode that overrides it.
+# 2. Runner DNS gotcha (homelab-gitlab memory): job/service containers need
+#    dns 10.99.90.1 in the runner daemon.json to resolve git.hody.sh — already
+#    fixed on VM112, but re-verify if clone/registry pulls fail.
+# 3. e2e TLS cert availability — the (a)/(b)/(c) decision above.
+# 4. golangci-lint v2.7.2 pin matches the GitHub workflow; bump in lockstep.
+# ===========================================================================
