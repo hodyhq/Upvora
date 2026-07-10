@@ -65,7 +65,7 @@
 
 @include media("xl") {
   .container {
-    width: 1140px;
+    width: 1400px;
     margin-left: auto;
     margin-right: auto;
   }
@@ -73,7 +73,7 @@
 
 @include media("xl2") {
   .container {
-    width: 1320px;
+    width: min(1640px, 94vw);
     margin-left: auto;
     margin-right: auto;
   }

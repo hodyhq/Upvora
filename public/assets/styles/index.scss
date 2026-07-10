@@ -6,5 +6,18 @@
 @include theme($light-colors, '[data-theme="light"]');
 @include theme($dark-colors, '[data-theme="dark"]');
 
+// Upvora brand accents — derived from the tenant's primary color so brand
+// customization (admin theme setting or Custom CSS) flows through the gradient
+// and glow too, not just flat fills. Falls back to Upvora Orange.
+:root {
+  --brand-grad: linear-gradient(
+    135deg,
+    var(--colors-primary-light),
+    var(--colors-primary-base) 55%,
+    var(--colors-primary-dark)
+  );
+  --brand-glow: color-mix(in srgb, var(--colors-primary-base) 32%, transparent);
+}
+
 // HCM brand overrides — keep last so they win the cascade.
 @import "site-banner.scss";
