@@ -173,7 +173,6 @@ What can we do better? This is the place for you to vote, discuss and share idea
                 onPostClick={handlePostClick}
               />
             )}
-            <PoweredByFider slot="home-footer" className="lg:hidden xl:hidden mt-8" />
           </div>
           <aside className="p-home__rail">
             <div className="p-home__panel p-home__panel--cta">
