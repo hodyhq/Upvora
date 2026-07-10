@@ -146,7 +146,7 @@ func (r *Renderer) Render(w io.Writer, statusCode int, props Props, ctx *Context
 	}
 
 	tenant := ctx.Tenant()
-	tenantName := "Fider"
+	tenantName := "Upvora"
 	if tenant != nil {
 		tenantName = tenant.Name
 	}

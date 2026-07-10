@@ -30,10 +30,10 @@ func TestSendSignUpEmailTask(t *testing.T) {
 	Expect(emailmock.MessageHistory[0].TemplateName).Equals("signup_email")
 	Expect(emailmock.MessageHistory[0].Tenant).IsNil()
 	Expect(emailmock.MessageHistory[0].Props).Equals(dto.Props{
-		"logo": "https://login.fider.io/static/assets/logo.png",
+		"logo": ":///static/assets/logo.png",
 	})
 	Expect(emailmock.MessageHistory[0].From).Equals(dto.Recipient{
-		Name: "Fider",
+		Name: "Upvora",
 	})
 	Expect(emailmock.MessageHistory[0].To).HasLen(1)
 	Expect(emailmock.MessageHistory[0].To[0]).Equals(dto.Recipient{

@@ -22,7 +22,7 @@ func SendDeleteAccountScheduledEmail(owner *entity.User, tenantName string, sche
 		})
 
 		bus.Publish(c, &cmd.SendMail{
-			From:         dto.Recipient{Name: "Fider"},
+			From:         dto.Recipient{Name: "Upvora"},
 			To:           []dto.Recipient{to},
 			TemplateName: "delete_account_requested",
 			Props: dto.Props{

@@ -119,7 +119,7 @@ func sendCompletionEmail(ctx Context, tenant *entity.Tenant, owner *entity.User)
 
 	to := dto.NewRecipient(owner.Name, owner.Email, dto.Props{})
 	bus.Publish(ctx, &cmd.SendMail{
-		From:         dto.Recipient{Name: "Fider"},
+		From:         dto.Recipient{Name: "Upvora"},
 		To:           []dto.Recipient{to},
 		TemplateName: "delete_account_completed",
 		Props: dto.Props{
