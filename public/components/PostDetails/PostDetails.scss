@@ -20,12 +20,13 @@
   &__post-card {
     background-color: var(--colors-white);
     @include dark-mode {
-      background-color: var(--colors-gray-200);
+      background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 40%);
+      border-color: var(--colors-gray-300);
     }
-    border-radius: get("border.radius.xlarge");
+    border: 1px solid var(--colors-gray-200);
+    border-radius: 14px;
     padding: spacing(7);
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-    transition: box-shadow 0.2s ease-in-out;
+    box-shadow: 0 14px 34px -26px rgba(0, 0, 0, 0.3);
   }
 
   &__title {
@@ -64,7 +65,7 @@
   }
 
   &__actions {
-    border-top: 5px solid var(--colors-blue-500);
+    border-top: 1px solid var(--colors-gray-200);
     padding-top: spacing(4);
     margin-top: spacing(8);
 
