@@ -82,8 +82,14 @@
   transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
 
   @include dark-mode {
-    background-color: var(--colors-gray-100);
+    // Raised card above the near-black page + the prototype's top sheen.
+    background-color: var(--colors-white);
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 45%);
     border-color: var(--colors-gray-300);
+
+    &:hover {
+      box-shadow: 0 14px 40px -20px var(--brand-glow);
+    }
   }
 
   &:hover {

@@ -5,8 +5,9 @@
   grid-template-columns: 1fr;
   gap: spacing(6);
   background-color: var(--colors-gray-100);
-  // Ambient brand glow (prototype): soft radial field bleeding from the top-right.
-  background-image: radial-gradient(1000px 480px at 85% -10%, var(--brand-glow), transparent 60%);
+  // Ambient field (prototype): brand glow top-right + cool blue counter-glow top-left.
+  background-image: radial-gradient(1000px 520px at 88% -10%, var(--brand-glow), transparent 58%),
+    radial-gradient(700px 420px at 6% -4%, rgba(59, 130, 246, 0.1), transparent 55%);
   background-repeat: no-repeat;
   padding-top: spacing(10);
   padding-bottom: spacing(12);
@@ -131,7 +132,8 @@
       padding: spacing(4);
 
       @include dark-mode {
-        background-color: var(--colors-gray-100);
+        background-color: var(--colors-white);
+        background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 40%);
         border-color: var(--colors-gray-300);
       }
 
@@ -139,7 +141,7 @@
         background-image: linear-gradient(150deg, color-mix(in srgb, var(--colors-primary-base) 12%, var(--colors-white)), var(--colors-white));
 
         @include dark-mode {
-          background-image: linear-gradient(150deg, color-mix(in srgb, var(--colors-primary-base) 22%, var(--colors-gray-100)), var(--colors-gray-100));
+          background-image: linear-gradient(150deg, color-mix(in srgb, var(--colors-primary-base) 22%, var(--colors-white)), var(--colors-white));
         }
       }
     }

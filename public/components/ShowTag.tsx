@@ -38,7 +38,7 @@ export const ShowTag = (props: TagProps) => {
       className={className}
       onClick={clickHandler}
     >
-      <span style={{ backgroundColor: `#${props.tag.color}` }} />
+      {props.circular && <span style={{ backgroundColor: `#${props.tag.color}` }} />}
       {!props.tag.isPublic && !props.circular && <Icon height="14" width="14" sprite={EyeSlash} className="mr-1" />}
       {props.circular ? "" : props.tag.name || "Tag"}
     </a>

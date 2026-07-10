@@ -29,7 +29,8 @@
     &__post-card {
       background-color: var(--colors-white);
       @include dark-mode {
-        background-color: var(--colors-gray-100);
+        background-color: var(--colors-white);
+        background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 40%);
         border-color: var(--colors-gray-300);
       }
       border: 1px solid var(--colors-gray-200);
@@ -145,7 +146,8 @@
       > .card {
         background-color: var(--colors-white);
         @include dark-mode {
-          background-color: var(--colors-gray-100);
+          background-color: var(--colors-white);
+          background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 40%);
           border-color: var(--colors-gray-300);
         }
         border: 1px solid var(--colors-gray-200);
@@ -182,7 +184,8 @@
     flex-grow: 1;
     background-color: var(--colors-white);
     @include dark-mode {
-      background-color: var(--colors-gray-100);
+      background-color: var(--colors-white);
+      background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 40%);
       border-color: var(--colors-gray-300);
     }
     border: 1px solid var(--colors-gray-200);
@@ -196,7 +199,7 @@
       flex-grow: 1;
       background-color: color-mix(in srgb, var(--colors-primary-base) 8%, var(--colors-white));
       @include dark-mode {
-        background-color: color-mix(in srgb, var(--colors-primary-base) 14%, var(--colors-gray-100));
+        background-color: color-mix(in srgb, var(--colors-primary-base) 14%, var(--colors-white));
         border-color: var(--colors-gray-300);
       }
       border: 1px solid color-mix(in srgb, var(--colors-primary-base) 24%, transparent);
