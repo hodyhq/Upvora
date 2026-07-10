@@ -29,12 +29,13 @@
     &__post-card {
       background-color: var(--colors-white);
       @include dark-mode {
-        background-color: var(--colors-gray-200);
+        background-color: var(--colors-gray-100);
+        border-color: var(--colors-gray-300);
       }
-      border-radius: get("border.radius.xlarge");
+      border: 1px solid var(--colors-gray-200);
+      border-radius: 14px;
       padding: spacing(7);
-      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-      transition: box-shadow 0.2s ease-in-out;
+      box-shadow: 0 14px 34px -26px rgba(0, 0, 0, 0.3);
     }
 
     &__title {
@@ -66,13 +67,13 @@
     &__description-section {
       margin-top: spacing(7);
     }
-     ch &__description {
+    &__description {
       color: var(--colors-gray-800);
       line-height: 1.6;
     }
 
     &__actions {
-      border-top: 5px solid var(--colors-blue-500);
+      border-top: 1px solid var(--colors-gray-200);
       padding-top: spacing(4);
       margin-top: spacing(8);
 
@@ -98,14 +99,11 @@
       width: 25px;
       height: 25px;
       margin-left: spacing(4);
-      border-radius: 9999px;
+      border-radius: 8px;
       text-align: center;
-      background-color: var(--colors-blue-100);
-      color: var(--colors-blue-400);
-      @include dark-mode {
-        background-color: var(--colors-blue-500);
-        color: var(--colors-blue-800);
-      }
+      font-variant-numeric: tabular-nums;
+      background-color: color-mix(in srgb, var(--colors-primary-base) 14%, transparent);
+      color: var(--colors-primary-dark);
     }
 
     &__powered-by-mobile {
@@ -147,11 +145,13 @@
       > .card {
         background-color: var(--colors-white);
         @include dark-mode {
-          background-color: var(--colors-gray-200);
+          background-color: var(--colors-gray-100);
+          border-color: var(--colors-gray-300);
         }
-        border-radius: get("border.radius.xlarge");
+        border: 1px solid var(--colors-gray-200);
+        border-radius: 14px;
         padding: spacing(6);
-        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        box-shadow: 0 14px 34px -26px rgba(0, 0, 0, 0.3);
       }
 
       &__follow-button--follow,
@@ -182,23 +182,26 @@
     flex-grow: 1;
     background-color: var(--colors-white);
     @include dark-mode {
-      background-color: var(--colors-gray-200);
+      background-color: var(--colors-gray-100);
+      border-color: var(--colors-gray-300);
     }
-    border-radius: get("border.radius.xlarge");
+    border: 1px solid var(--colors-gray-200);
+    border-radius: 14px;
     padding: spacing(6);
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    box-shadow: 0 14px 34px -26px rgba(0, 0, 0, 0.3);
   }
 
   .c-response-details {
     &__card {
       flex-grow: 1;
-      background-color: var(--colors-blue-50);
+      background-color: color-mix(in srgb, var(--colors-primary-base) 8%, var(--colors-white));
       @include dark-mode {
-        background-color: var(--colors-gray-200);
+        background-color: color-mix(in srgb, var(--colors-primary-base) 14%, var(--colors-gray-100));
+        border-color: var(--colors-gray-300);
       }
-      border-radius: get("border.radius.xlarge");
+      border: 1px solid color-mix(in srgb, var(--colors-primary-base) 24%, transparent);
+      border-radius: 14px;
       padding: spacing(6);
-      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
     }
 
     &__content {

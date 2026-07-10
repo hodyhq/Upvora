@@ -1,6 +1,5 @@
 import "./Home.page.scss"
 import NoDataIllustration from "@fider/assets/images/undraw-no-data.svg"
-import IconPlusCircle from "@fider/assets/images/heroicons-pluscircle.svg"
 import IconArrowLeft from "@fider/assets/images/heroicons-arrowleft.svg"
 
 import React, { useEffect, useState, useRef } from "react"
@@ -142,12 +141,6 @@ What can we do better? This is the place for you to vote, discuss and share idea
             <Markdown className="p-home__welcome-body" text={fider.session.tenant.welcomeMessage || defaultWelcomeMessage} style="full" />
           </div>
           <div className="p-home__main">
-            <button className="p-home__add-idea-btn" onClick={handleNewPost} aria-label={fider.session.tenant.invitation || defaultInvitation}>
-              <HStack spacing={4} align="center" justify="center">
-                <Icon sprite={IconPlusCircle} className="p-home__add-idea-icon" />
-                <span>{fider.session.tenant.invitation || defaultButtonLabel}</span>
-              </HStack>
-            </button>
             {isLonely() ? (
               <Lonely />
             ) : (
@@ -165,11 +158,9 @@ What can we do better? This is the place for you to vote, discuss and share idea
             <div className="p-home__panel p-home__panel--cta">
               <h4 className="p-home__panel-title">{fider.session.tenant.railCtaHeading || "Have an idea?"}</h4>
               <p className="p-home__panel-text">{fider.session.tenant.railCtaText || "Post a suggestion and let the community vote it up."}</p>
-              {fider.session.tenant.railCtaButton && (
-                <button className="c-button c-button--primary p-home__cta-btn" onClick={handleNewPost}>
-                  {fider.session.tenant.railCtaButton}
-                </button>
-              )}
+              <button className="c-button c-button--primary p-home__cta-btn" onClick={handleNewPost}>
+                {fider.session.tenant.railCtaButton || defaultButtonLabel}
+              </button>
             </div>
             {props.tags.length > 0 && (
               <div className="p-home__panel">

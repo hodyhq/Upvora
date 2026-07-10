@@ -37,7 +37,7 @@ export const Header = (props: HeaderProps) => {
   const hideRSSModal = () => setIsRSSModalOpen(false)
 
   return (
-    <div id="c-header" className="bg-white" style={{ borderBottom: "1px solid var(--colors-gray-200)" }} {...(props.hasInert && { inert: "true" })}>
+    <div id="c-header" {...(props.hasInert && { inert: "true" })}>
       <SignInModal isOpen={isSignInModalOpen} onClose={hideSignInModal} />
       <RSSModal isOpen={isRSSModalOpen} onClose={hideRSSModal} url={`${fider.settings.baseURL}/feed/global.atom`} />
       <HStack className="c-menu p-4 w-full">

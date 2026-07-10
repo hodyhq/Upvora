@@ -39,13 +39,30 @@
 // hairline borders instead of drop shadows, squared 4px radii, tighter
 // padding, small-caps lane headers with a mono count.
 .c-roadmap-column {
+  // Lane accent color, consumed by each card's left edge.
+  &--blue {
+    --lane-color: var(--colors-blue-500);
+  }
+  &--green {
+    --lane-color: var(--colors-green-600);
+  }
+  &--yellow {
+    --lane-color: var(--colors-yellow-600);
+  }
+  &--red {
+    --lane-color: var(--colors-red-600);
+  }
+  &--gray {
+    --lane-color: var(--colors-gray-500);
+  }
+
   &__header {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: spacing(2);
-    padding-bottom: spacing(2);
+    padding: 0 spacing(1);
     margin-bottom: spacing(3);
-    border-bottom: 2px solid var(--colors-gray-300);
   }
 
   // Status chip in the scorecard design language: squared tag, dot, tinted
@@ -91,10 +108,21 @@
     font-variant-numeric: tabular-nums;
   }
 
+  // Recessed lane surface (prototype): the cards float inside a tinted well.
   &__body {
     display: flex;
     flex-direction: column;
     gap: spacing(2);
+    background-color: color-mix(in srgb, var(--colors-gray-900) 4%, transparent);
+    border: 1px solid var(--colors-gray-200);
+    border-radius: 14px;
+    padding: spacing(3);
+    min-height: 120px;
+
+    @include dark-mode {
+      background-color: color-mix(in srgb, var(--colors-black) 30%, transparent);
+      border-color: var(--colors-gray-300);
+    }
   }
 }
 
@@ -105,26 +133,40 @@
 }
 
 .c-roadmap-post {
+  position: relative;
+  overflow: hidden;
   background-color: var(--colors-white);
   @include dark-mode {
-    background-color: var(--colors-gray-200);
+    background-color: var(--colors-gray-100);
   }
   border: 1px solid var(--colors-gray-200);
-  border-radius: 4px;
+  border-radius: 10px;
   padding: spacing(3) spacing(4);
-  transition: border-color 0.12s ease, background-color 0.12s ease;
+  transition: border-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+
+  // Status-colored left edge, inherited from the lane.
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--lane-color, var(--colors-primary-base));
+  }
 
   .c-roadmap-post-link:hover & {
-    border-color: var(--colors-primary-base);
-    background-color: var(--colors-gray-100);
+    border-color: color-mix(in srgb, var(--colors-primary-base) 40%, transparent);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 34px -22px rgba(0, 0, 0, 0.35);
   }
 
   &__title {
-    font-size: 13.5px;
-    font-weight: 600;
-    letter-spacing: -0.005em;
+    font-size: 14px;
+    font-weight: 650;
+    letter-spacing: -0.012em;
     color: var(--colors-gray-900);
-    line-height: 1.35;
+    line-height: 1.3;
   }
 
   &__votes {
@@ -134,7 +176,8 @@
     .text-semibold {
       font-family: $font-code;
       font-variant-numeric: tabular-nums;
-      color: var(--colors-gray-900);
+      font-weight: 700;
+      color: var(--colors-primary-base);
     }
   }
 

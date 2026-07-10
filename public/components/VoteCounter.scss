@@ -8,41 +8,27 @@
     text-align: center;
     margin: 0 auto;
     padding: spacing(3) 0;
-    color: var(--colors-primary-base);
+    color: var(--colors-gray-900);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: spacing(2);
-    border-radius: 16px;
+    border-radius: 13px;
     transition: all 0.2s ease;
-    background-color: var(--colors-blue-50);
-    border: 2px solid var(--colors-blue-100);
+    background-color: var(--colors-gray-100);
+    border: 1px solid var(--colors-gray-300);
 
     @include dark-mode {
-      background-color: var(--colors-blue-900);
-      border-color: var(--colors-blue-800);
-      color: var(--colors-blue-300);
+      background-color: var(--colors-gray-200);
     }
 
     &:hover {
-      background-color: var(--colors-blue-100);
       border-color: var(--colors-primary-base);
-      color: var(--colors-primary-base);
-
-      @include dark-mode {
-        background-color: var(--colors-blue-800);
-        border-color: var(--colors-blue-500);
-        color: var(--colors-blue-200);
-      }
+      background-color: color-mix(in srgb, var(--colors-primary-base) 10%, transparent);
 
       .c-vote-counter__icon {
-        color: var(--colors-primary-base);
         transform: translateY(-1px);
-
-        @include dark-mode {
-          color: var(--colors-blue-200);
-        }
       }
     }
 
@@ -50,36 +36,25 @@
       padding: spacing(3) 0;
       gap: spacing(2);
       font-weight: get("font.weight.bold");
-      background-color: var(--colors-blue-100);
-      color: var(--colors-primary-base);
-      border-color: var(--colors-primary-base);
-
-      @include dark-mode {
-        background-color: var(--colors-blue-800);
-        color: var(--colors-blue-200);
-        border-color: var(--colors-blue-500);
-      }
+      background-color: var(--colors-primary-base);
+      background-image: var(--brand-grad);
+      color: #fff; // literal: --colors-white flips dark in dark mode
+      border-color: transparent;
+      box-shadow: 0 8px 18px -10px var(--brand-glow);
 
       .c-vote-counter__icon {
-        color: var(--colors-primary-base);
-
-        @include dark-mode {
-          color: var(--colors-blue-200);
-        }
+        color: #fff;
       }
 
       .c-vote-counter__count {
         font-weight: get("font.weight.bold");
+        color: #fff;
       }
 
       &:hover {
-        background-color: var(--colors-blue-200);
-        border-color: var(--colors-primary-base);
-
-        @include dark-mode {
-          background-color: var(--colors-blue-700);
-          border-color: var(--colors-blue-400);
-        }
+        filter: brightness(1.05);
+        border-color: transparent;
+        background-color: var(--colors-primary-dark);
       }
     }
 
@@ -94,7 +69,7 @@
       height: sizing(20);
       padding: spacing(5) 0;
       gap: spacing(2);
-      border-radius: 20px;
+      border-radius: 16px;
 
       .c-vote-counter__icon {
         width: 28px;
@@ -106,6 +81,7 @@
         font-size: 24px;
         font-weight: get("font.weight.bold");
         line-height: 1;
+        font-variant-numeric: tabular-nums;
       }
     }
   }
@@ -116,15 +92,12 @@
     color: var(--colors-primary-base);
     transition: all 0.2s ease;
     flex-shrink: 0;
-
-    @include dark-mode {
-      color: var(--colors-blue-300);
-    }
   }
 
   &__count {
     font-size: get("font.size.sm");
     font-weight: get("font.weight.semibold");
     line-height: 1;
+    font-variant-numeric: tabular-nums;
   }
 }

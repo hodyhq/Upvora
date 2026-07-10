@@ -7,15 +7,23 @@
 
 .c-scorecard {
   // ─────────── panel ───────────
+  // Surfaces harmonized to the app-wide prototype language (rounded 14px,
+  // hairline + soft depth); inner chips/tables keep the scorecard's own
+  // condensed treatment.
   &__panel {
     background: var(--colors-white);
     border: 1px solid var(--colors-gray-200);
-    border-radius: 6px;
+    border-radius: 14px;
     overflow: hidden;
+    box-shadow: 0 14px 34px -26px rgba(0, 0, 0, 0.3);
 
-    // Fider's stock buttons squared off to match the panel language.
+    @include dark-mode {
+      background: var(--colors-gray-100);
+      border-color: var(--colors-gray-300);
+    }
+
     .c-button {
-      border-radius: 4px;
+      border-radius: 9px;
       font-size: 13px;
       padding: 7px 14px;
 
