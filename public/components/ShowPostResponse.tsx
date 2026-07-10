@@ -158,7 +158,7 @@ const extractSubstage = (text?: string): string | null => {
 export const ResponseLozenge = (props: PostResponseProps): JSX.Element | null => {
   const status = PostStatus.Get(props.status)
   const tenantStatus = resolveStatus(Fider.session.tenant, props.status)
-  const { icon, bg, color, border } = getLozengeProps(status, tenantStatus)
+  const { icon, bg, color } = getLozengeProps(status, tenantStatus)
   const translatedStatus = getStatusTranslation(status, tenantStatus)
   const substage = props.size === "small" || props.size === "xsmall" || !props.size ? extractSubstage(props.response?.text || undefined) : null
 
@@ -182,7 +182,7 @@ export const ResponseLozenge = (props: PostResponseProps): JSX.Element | null =>
 
   return (
     <div>
-      <HStack align="center" className={`${color} ${bg} border ${border} rounded-full p-1 px-3`}>
+      <HStack align="center" className={`${color} ${bg} rounded-full p-1 px-3`}>
         {!props.size && <Icon sprite={icon} className={`h-5 c-status-col--${status.value}`} />}
         <span className={`c-status-col--${status.value} ${props.size === "small" ? "text-sm" : "text-semibold"}`}>
           {translatedStatus}

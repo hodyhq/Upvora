@@ -20,6 +20,7 @@ const ListPostItem = (props: {
   post: Post
   user?: CurrentUser
   tags: Tag[]
+  rank?: number
   showStatus?: boolean
   onPostClick?: (postNumber: number, slug: string) => void
 }) => {
@@ -72,6 +73,7 @@ const ListPostItem = (props: {
         </div>
       </div>
       <div className="c-post__side">
+        {props.rank !== undefined && <span className="c-post__rank">#{props.rank}</span>}
         {props.post.commentsCount > 0 && (
           <span className="c-post__cmts">
             <Icon sprite={IconChatAlt2} className="h-4 w-4" />
@@ -148,10 +150,11 @@ export const ListPosts = (props: ListPostsProps) => {
         </VStack>
       ) : (
         <>
-          {visiblePosts.map((post) => (
+          {visiblePosts.map((post, idx) => (
             <ListPostItem
               key={post.id}
               post={post}
+              rank={idx + 1}
               tags={props.tags.filter((tag) => post.tags.indexOf(tag.slug) >= 0)}
               showStatus={props.showStatus}
               onPostClick={props.onPostClick}

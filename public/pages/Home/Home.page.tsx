@@ -152,7 +152,13 @@ What can we do better? This is the place for you to vote, discuss and share idea
             <span className="p-home__eyebrow">
               <Trans id="home.head.eyebrow">Feedback</Trans>
             </span>
-            {fider.session.tenant.welcomeHeader && <h1 className="p-home__welcome-title mb-3">{parseWelcomeHeader(fider.session.tenant.welcomeHeader)}</h1>}
+            <h1 className="p-home__welcome-title mb-3">
+              {fider.session.tenant.welcomeHeader ? (
+                parseWelcomeHeader(fider.session.tenant.welcomeHeader)
+              ) : (
+                <Trans id="home.head.title">What should we build next?</Trans>
+              )}
+            </h1>
             <Markdown className="p-home__welcome-body" text={fider.session.tenant.welcomeMessage || defaultWelcomeMessage} style="full" />
           </div>
           <div className="p-home__main">
