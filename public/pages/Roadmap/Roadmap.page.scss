@@ -47,6 +47,48 @@
   padding-bottom: spacing(12);
 }
 
+// Roadmap v2 toolbar: search + tag filter chips
+.c-roadmap-toolbar {
+  display: flex;
+  align-items: center;
+  gap: spacing(3);
+  flex-wrap: wrap;
+  margin-bottom: spacing(4);
+
+  &__search {
+    flex: 0 1 260px;
+    background-color: var(--colors-white);
+    border: 1px solid var(--colors-gray-300);
+    border-radius: 10px;
+    color: var(--colors-gray-900);
+    font: inherit;
+    font-size: 14px;
+    padding: 8px 12px;
+    outline: none;
+
+    &:focus {
+      border-color: var(--colors-primary-base);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--colors-primary-base) 16%, transparent);
+    }
+  }
+
+  &__tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  &__tag {
+    cursor: pointer;
+    border: 1px solid transparent;
+
+    &--on {
+      border-color: var(--colors-primary-base);
+      color: var(--colors-primary-base);
+    }
+  }
+}
+
 // Horizontal scrolling lane strip. Tenants can publish N status lanes via
 // /admin/statuses; each lane gets a fixed-width column and the board scrolls
 // horizontally instead of wrapping to a second row.
@@ -104,6 +146,11 @@
     gap: spacing(2);
     padding: 0 spacing(1);
     margin-bottom: spacing(3);
+
+    &--clickable {
+      cursor: pointer;
+      user-select: none;
+    }
   }
 
   // Status chip in the scorecard design language: squared tag, dot, tinted
@@ -163,6 +210,11 @@
     @include dark-mode {
       background-color: color-mix(in srgb, var(--colors-black) 30%, transparent);
       border-color: var(--colors-gray-300);
+    }
+
+    &--over {
+      border-color: var(--colors-primary-base);
+      background-color: color-mix(in srgb, var(--colors-primary-base) 7%, transparent);
     }
   }
 }
@@ -248,6 +300,51 @@
   &__completed {
     font-size: 12px;
     color: var(--colors-gray-600);
+  }
+
+  &__desc {
+    color: var(--colors-gray-700);
+    font-size: 12.5px;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  &__votebtn {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    padding: 2px 6px;
+    margin-left: -6px;
+    border-radius: 7px;
+    font: inherit;
+    font-size: 12px;
+    color: var(--colors-primary-base);
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+
+    .text-semibold {
+      font-family: $font-code;
+      font-variant-numeric: tabular-nums;
+    }
+
+    &:hover {
+      background-color: color-mix(in srgb, var(--colors-primary-base) 12%, transparent);
+    }
+
+    &--voted {
+      background-color: var(--colors-primary-base);
+      background-image: var(--brand-grad);
+      color: #fff;
+      box-shadow: 0 6px 14px -8px var(--brand-glow);
+
+      &:hover {
+        background-color: var(--colors-primary-dark);
+      }
+    }
   }
 }
 
