@@ -14,6 +14,7 @@ export interface Tenant {
   railCtaHeading: string
   railCtaText: string
   railCtaButton: string
+  defaultTheme: string
   status: TenantStatus
   isPrivate: boolean
   logoBlobKey: string

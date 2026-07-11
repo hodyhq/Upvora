@@ -62,6 +62,7 @@ func UpdateSettings() web.HandlerFunc {
 				RailCtaHeading:        action.RailCtaHeading,
 				RailCtaText:           action.RailCtaText,
 				RailCtaButton:         action.RailCtaButton,
+				DefaultTheme:          action.DefaultTheme,
 				CNAME:                 action.CNAME,
 				Locale:                action.Locale,
 			},

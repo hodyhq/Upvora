@@ -37,6 +37,7 @@ type UpdateTenantSettings struct {
 	RailCtaHeading        string
 	RailCtaText           string
 	RailCtaButton         string
+	DefaultTheme          string
 	CNAME                 string
 	Locale                string
 }

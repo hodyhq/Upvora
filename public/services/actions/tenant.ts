@@ -34,6 +34,7 @@ export interface UpdateTenantSettingsRequest {
   railCtaHeading: string
   railCtaText: string
   railCtaButton: string
+  defaultTheme: string
   cname: string
   locale: string
 }

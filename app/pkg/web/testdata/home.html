@@ -64,7 +64,11 @@
               const newUrl = `${window.location.pathname}?${params.toString()}`
               window.history.replaceState({}, "", newUrl)
             } else {
-              theme = localStorage.getItem("theme") || "light"
+              theme = localStorage.getItem("theme") || "light" || "light"
+            }
+
+            if (theme === "system") {
+              theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
             }
 
             if (theme == "light" || theme == "dark") {
