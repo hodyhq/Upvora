@@ -147,8 +147,12 @@ func (r *Renderer) Render(w io.Writer, statusCode int, props Props, ctx *Context
 
 	tenant := ctx.Tenant()
 	tenantName := "Upvora"
+	defaultTheme := "light"
 	if tenant != nil {
 		tenantName = tenant.Name
+		if tenant.DefaultTheme != "" {
+			defaultTheme = tenant.DefaultTheme
+		}
 	}
 
 	title := tenantName
@@ -165,6 +169,7 @@ func (r *Renderer) Render(w io.Writer, statusCode int, props Props, ctx *Context
 
 	private["assets"] = r.assets
 	private["logo"] = LogoURL(ctx)
+	private["defaultTheme"] = defaultTheme
 
 	locale := i18n.GetLocale(ctx)
 	localeDirection := i18n.GetLocaleDirection(ctx)

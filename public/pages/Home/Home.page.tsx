@@ -92,6 +92,18 @@ What can we do better? This is the place for you to vote, discuss and share idea
     setIsShareFeedbackOpen(true)
   }
 
+  // Rail "By status" breakdown — tenant status catalogue when present,
+  // built-in statuses otherwise; counts come from the server payload.
+  const statusRows = (
+    fider.session.tenant.statuses && fider.session.tenant.statuses.length > 0
+      ? fider.session.tenant.statuses
+          .filter((s) => s.isActive)
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((s) => ({ slug: s.slug, label: s.label, color: s.color || "gray" }))
+      : PostStatus.All.filter((p) => p.filterable).map((p) => ({ slug: p.value, label: p.title, color: "gray" }))
+  ).map((s) => ({ ...s, count: props.countPerStatus[s.slug] || 0 }))
+  const maxStatusCount = Math.max(1, ...statusRows.map((r) => r.count))
+
   const parseWelcomeHeader = (text: string): JSX.Element[] => {
     const parts: JSX.Element[] = []
     let currentIndex = 0
@@ -137,7 +149,16 @@ What can we do better? This is the place for you to vote, discuss and share idea
           {...(isShareFeedbackOpen && !fider.isReadOnly && { inert: "true" })}
         >
           <div className="p-home__head">
-            {fider.session.tenant.welcomeHeader && <h1 className="p-home__welcome-title mb-3">{parseWelcomeHeader(fider.session.tenant.welcomeHeader)}</h1>}
+            <span className="p-home__eyebrow">
+              <Trans id="home.head.eyebrow">Feedback</Trans>
+            </span>
+            <h1 className="p-home__welcome-title mb-3">
+              {fider.session.tenant.welcomeHeader ? (
+                parseWelcomeHeader(fider.session.tenant.welcomeHeader)
+              ) : (
+                <Trans id="home.head.title">What should we build next?</Trans>
+              )}
+            </h1>
             <Markdown className="p-home__welcome-body" text={fider.session.tenant.welcomeMessage || defaultWelcomeMessage} style="full" />
           </div>
           <div className="p-home__main">
@@ -152,7 +173,6 @@ What can we do better? This is the place for you to vote, discuss and share idea
                 onPostClick={handlePostClick}
               />
             )}
-            <PoweredByFider slot="home-footer" className="lg:hidden xl:hidden mt-8" />
           </div>
           <aside className="p-home__rail">
             <div className="p-home__panel p-home__panel--cta">
@@ -162,6 +182,25 @@ What can we do better? This is the place for you to vote, discuss and share idea
                 {fider.session.tenant.railCtaButton || defaultButtonLabel}
               </button>
             </div>
+            {statusRows.length > 0 && (
+              <div className="p-home__panel">
+                <h4 className="p-home__panel-title">By status</h4>
+                <div className="p-home__statusbrk">
+                  {statusRows.map((r) => (
+                    <div key={r.slug} className={`p-home__statusrow p-home__statusrow--${r.color}`}>
+                      <span className="p-home__statuschip">
+                        <span className="p-home__statusdot" />
+                        {r.label}
+                      </span>
+                      <span className="p-home__statusbar">
+                        <i style={{ width: `${(r.count / maxStatusCount) * 100}%` }} />
+                      </span>
+                      <span className="p-home__statusnum">{r.count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {props.tags.length > 0 && (
               <div className="p-home__panel">
                 <h4 className="p-home__panel-title">Popular tags</h4>

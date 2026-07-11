@@ -16,7 +16,11 @@
   right: 0;
   bottom: 0;
   z-index: 9999;
-  background-color: var(--colors-white);
+  background-color: var(--colors-gray-100);
+  background-image: radial-gradient(1100px 560px at 92% -6%, var(--brand-glow), transparent 58%),
+    radial-gradient(760px 460px at 4% -4%, rgba(59, 130, 246, 0.09), transparent 55%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   animation: fadeIn 0.2s ease-out;
   overflow-y: auto;
 

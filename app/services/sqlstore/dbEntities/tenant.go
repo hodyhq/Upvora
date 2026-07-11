@@ -35,6 +35,7 @@ type Tenant struct {
 	RailCtaHeading        string       `db:"rail_cta_heading"`
 	RailCtaText           string       `db:"rail_cta_text"`
 	RailCtaButton         string       `db:"rail_cta_button"`
+	DefaultTheme          string       `db:"default_theme"`
 	SiteBannerEnabled     bool         `db:"site_banner_enabled"`
 	SiteBannerMessage     string       `db:"site_banner_message"`
 	SiteBannerVariant     string       `db:"site_banner_variant"`
@@ -87,6 +88,7 @@ func (t *Tenant) ToModel() *entity.Tenant {
 		RailCtaHeading:      t.RailCtaHeading,
 		RailCtaText:         t.RailCtaText,
 		RailCtaButton:       t.RailCtaButton,
+		DefaultTheme:        t.DefaultTheme,
 		SiteBannerEnabled:   t.SiteBannerEnabled,
 		SiteBannerMessage:   t.SiteBannerMessage,
 		SiteBannerVariant:   t.SiteBannerVariant,

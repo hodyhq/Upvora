@@ -18,6 +18,10 @@ body {
 
   color: var(--colors-gray-800);
   background-color: var(--colors-gray-100);
+  background-image: radial-gradient(1100px 560px at 92% -6%, var(--brand-glow), transparent 58%),
+    radial-gradient(760px 460px at 4% -4%, rgba(59, 130, 246, 0.09), transparent 55%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   font-size: get("font.size.base");
   font-family: $font-base;
   line-height: 1.6;
