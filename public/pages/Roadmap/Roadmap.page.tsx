@@ -254,7 +254,7 @@ const RoadmapBoard = (props: RoadmapPageProps) => {
         })
       )
     move(source.status.slug, targetStatus)
-    const result = await actions.respond(postNumber, { status: targetStatus, text: post.response?.text || "" })
+    const result = await actions.respond(postNumber, { status: targetStatus, text: post.response?.text || "", originalNumber: 0 })
     if (!result.ok) {
       move(targetStatus, source.status.slug)
       notify.error("Could not change the status. Please try again.")
