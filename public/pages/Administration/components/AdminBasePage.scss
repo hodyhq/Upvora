@@ -181,3 +181,45 @@
     }
   }
 }
+
+/* Full visual conformance for every settings tab - the statuses/scorecard
+   language everywhere: eyebrow section heads, compact type scale, tight fit */
+.c-admin-content {
+  // legacy section headings become eyebrow group labels
+  h2 {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--colors-primary-base);
+    margin: spacing(6) 0 spacing(2);
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  p {
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--colors-gray-700);
+  }
+
+  .c-form-field > label {
+    font-size: 13px;
+    font-weight: 650;
+    color: var(--colors-gray-800);
+    margin-bottom: 6px;
+  }
+
+  input.c-input,
+  textarea.c-input {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+
+  select.c-select {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+}
