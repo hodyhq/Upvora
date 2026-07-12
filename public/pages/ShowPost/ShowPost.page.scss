@@ -92,9 +92,71 @@
       border-top: 1px solid var(--colors-gray-200);
     }
 
-    &__voteblock:disabled {
-      cursor: not-allowed;
-      opacity: 0.55;
+    // self-contained vote block (PostsContainer.scss isn't bundled on this page)
+    &__voteblock {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      width: 68px;
+      padding: 13px 6px;
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+      appearance: none;
+      border: 1px solid var(--colors-gray-400);
+      border-radius: 13px;
+      background-color: var(--colors-gray-100);
+      transition: border-color 0.16s ease, background 0.16s ease;
+
+      @include dark-mode {
+        background-color: var(--colors-gray-50);
+      }
+
+      &:hover {
+        border-color: var(--colors-primary-base);
+      }
+
+      &:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      .c-post__chev {
+        width: 17px;
+        height: 17px;
+        color: var(--colors-primary-base);
+        stroke: var(--colors-primary-base);
+      }
+      .c-post__votes {
+        font-size: 1.28rem;
+        font-weight: 800;
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+        color: var(--colors-gray-900);
+        font-variant-numeric: tabular-nums;
+      }
+      .c-post__voteslabel {
+        font-size: 0.63rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-weight: 700;
+        color: var(--colors-gray-500);
+      }
+
+      &[data-voted="true"] {
+        background-color: var(--colors-primary-base);
+        background-image: var(--brand-grad);
+        border-color: transparent;
+        box-shadow: 0 8px 18px -10px var(--brand-glow);
+
+        .c-post__chev,
+        .c-post__votes,
+        .c-post__voteslabel {
+          color: #fff;
+          stroke: #fff;
+        }
+      }
     }
 
     &__description-section {
