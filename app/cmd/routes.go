@@ -183,7 +183,7 @@ func routes(r *web.Engine) *web.Engine {
 		ui.Get("/admin/invitations", handlers.Page("Invitations · Site Settings", "", "Administration/pages/Invitations.page"))
 		ui.Get("/admin/tags", handlers.ManageTags())
 		ui.Get("/admin/scorecard-settings", handlers.ManageScorecardSettings())
-		ui.Get("/admin/scorecard-fields", handlers.ManageScorecardFields())
+		ui.Get("/admin/scorecard-fields", handlers.LegacyScorecardFieldsRedirect())
 		ui.Get("/_api/admin/scorecard-fields", handlers.ListScorecardFields())
 		ui.Post("/_api/admin/scorecard-fields", handlers.CreateScorecardField())
 		ui.Put("/_api/admin/scorecard-fields/:id", handlers.UpdateScorecardField())
