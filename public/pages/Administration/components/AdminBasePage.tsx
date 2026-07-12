@@ -29,7 +29,15 @@ export const AdminPageContainer = (props: AdminPageContainerProps) => {
 
         <div className="c-admin-basepage">
           <SideMenu activeItem={props.name} />
-          <div className={props.bare ? "c-admin-content c-admin-content--bare" : "c-admin-content"}>{props.children}</div>
+          <div className={props.bare ? "c-admin-content c-admin-content--bare" : "c-admin-content"}>
+            {!props.bare && (
+              <div className="c-admin-content__head">
+                <span className="c-admin-content__eyebrow">{props.title}</span>
+                <span className="c-admin-content__hint">{props.subtitle}</span>
+              </div>
+            )}
+            {props.children}
+          </div>
         </div>
       </div>
     </>

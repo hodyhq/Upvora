@@ -68,6 +68,35 @@
     border-color: var(--colors-gray-300);
   }
 
+  // statuses-style header row at the top of every card
+  &__head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-bottom: 10px;
+    margin-bottom: spacing(5);
+    border-bottom: 1px solid var(--colors-gray-200);
+
+    @include dark-mode {
+      border-bottom-color: var(--colors-gray-300);
+    }
+  }
+
+  &__eyebrow {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--colors-primary-base);
+    white-space: nowrap;
+  }
+
+  &__hint {
+    font-size: 13px;
+    color: var(--colors-gray-600);
+  }
+
   &--bare {
     background: none;
     background-image: none;
@@ -248,6 +277,21 @@
   select.c-select {
     padding: 8px 12px;
     font-size: 14px;
+  }
+
+  // full-bleed 1100px inputs read airy no matter the font - cap single-line
+  // controls at a settings-panel width; textareas stay wide but shorter
+  .c-form-field input.c-input {
+    max-width: 620px;
+  }
+
+  .c-form-field select.c-select {
+    max-width: 620px;
+  }
+
+  textarea.c-textarea,
+  textarea.c-input {
+    min-height: 84px;
   }
 
   // toggle rows and checkbox captions sit on the same 13px scale
