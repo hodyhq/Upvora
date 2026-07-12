@@ -239,7 +239,8 @@
   }
 
   input.c-input,
-  textarea.c-input {
+  textarea.c-input,
+  textarea.c-textarea {
     padding: 8px 12px;
     font-size: 14px;
   }
@@ -247,5 +248,17 @@
   select.c-select {
     padding: 8px 12px;
     font-size: 14px;
+  }
+
+  // toggle rows and checkbox captions sit on the same 13px scale
+  .c-toggle,
+  .c-checkbox,
+  span.text-sm {
+    font-size: 13px;
+  }
+
+  // list-style rows (oauth providers, webhooks) read like table rows
+  .c-form-field .row > * {
+    font-size: 13px;
   }
 }
