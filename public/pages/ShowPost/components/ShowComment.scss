@@ -25,3 +25,30 @@
     }
   }
 }
+
+/* Condensed discussion type scale (prototype: body .92rem, meta .82rem) */
+.c-comment__card {
+  font-size: 14px;
+
+  .c-username {
+    font-size: 13.5px;
+    font-weight: 650;
+  }
+
+  .text-xs {
+    font-size: 12px;
+  }
+
+  .c-markdown {
+    font-size: 14px;
+    line-height: 1.6;
+
+    p {
+      margin-bottom: 0.5em;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}

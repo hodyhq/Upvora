@@ -327,6 +327,22 @@
 }
 
 .c-response-details {
+  font-size: 14px;
+
+  .c-username {
+    font-size: 13.5px;
+    font-weight: 650;
+  }
+
+  .text-xs {
+    font-size: 12px;
+  }
+
+  .c-markdown {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
   &__card {
     flex-grow: 1;
     background-color: color-mix(in srgb, var(--colors-primary-base) 8%, var(--colors-white));
