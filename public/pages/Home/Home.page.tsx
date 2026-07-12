@@ -73,7 +73,7 @@ What can we do better? This is the place for you to vote, discuss and share idea
   })
 
   const defaultInvitation = i18n._({ id: "home.form.defaultinvitation", message: "Enter your suggestion here..." })
-  const defaultButtonLabel = i18n._({ id: "home.button.defaultlabel", message: "Submit Your Idea" })
+  const defaultButtonLabel = i18n._({ id: "home.button.defaultlabel", message: "Share an Idea" })
 
   const isLonely = () => {
     const len = Object.keys(props.countPerStatus).length
@@ -97,7 +97,7 @@ What can we do better? This is the place for you to vote, discuss and share idea
   const statusRows = (
     fider.session.tenant.statuses && fider.session.tenant.statuses.length > 0
       ? fider.session.tenant.statuses
-          .filter((s) => s.isActive)
+          .filter((s) => s.isActive && s.showOnHome)
           .sort((a, b) => a.sortOrder - b.sortOrder)
           .map((s) => ({ slug: s.slug, label: s.label, color: s.color || "gray" }))
       : PostStatus.All.filter((p) => p.filterable).map((p) => ({ slug: p.value, label: p.title, color: "gray" }))

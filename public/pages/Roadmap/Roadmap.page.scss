@@ -174,17 +174,44 @@
       background: currentColor;
     }
 
-    &--blue   { background: #e3ecf9; color: #1e3a8a; }
-    &--green  { background: #e5f4e9; color: #14532d; }
-    &--yellow { background: #fbf1d8; color: #78350f; }
-    &--red    { background: #fae3e3; color: #7f1d1d; }
-    &--gray   { background: var(--colors-gray-200); color: var(--colors-gray-700); }
+    &--blue {
+      background: #e3ecf9;
+      color: #1e3a8a;
+    }
+    &--green {
+      background: #e5f4e9;
+      color: #14532d;
+    }
+    &--yellow {
+      background: #fbf1d8;
+      color: #78350f;
+    }
+    &--red {
+      background: #fae3e3;
+      color: #7f1d1d;
+    }
+    &--gray {
+      background: var(--colors-gray-200);
+      color: var(--colors-gray-700);
+    }
 
     @include dark-mode {
-      &--blue   { background: #16223f; color: #9bb8f4; }
-      &--green  { background: #12301f; color: #7ee3a6; }
-      &--yellow { background: #32240b; color: #f0c878; }
-      &--red    { background: #331414; color: #f0a0a0; }
+      &--blue {
+        background: #16223f;
+        color: #9bb8f4;
+      }
+      &--green {
+        background: #12301f;
+        color: #7ee3a6;
+      }
+      &--yellow {
+        background: #32240b;
+        color: #f0c878;
+      }
+      &--red {
+        background: #331414;
+        color: #f0a0a0;
+      }
     }
   }
 
@@ -208,7 +235,8 @@
     min-height: 120px;
 
     @include dark-mode {
-      background-color: color-mix(in srgb, var(--colors-black) 30%, transparent);
+      // recessed well: slightly lighter than the near-black page, darker than cards
+      background-color: color-mix(in srgb, var(--colors-white) 38%, transparent);
       border-color: var(--colors-gray-300);
     }
 

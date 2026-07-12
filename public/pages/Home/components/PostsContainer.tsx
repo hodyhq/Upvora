@@ -4,7 +4,7 @@ import React from "react"
 
 import { Post, Tag, CurrentUser } from "@fider/models"
 import { Loader, Input } from "@fider/components"
-import { actions, navigator, querystring } from "@fider/services"
+import { actions, navigator, notify, querystring } from "@fider/services"
 import IconSearch from "@fider/assets/images/heroicons-search.svg"
 import IconX from "@fider/assets/images/heroicons-x.svg"
 import { PostFilter } from "./PostFilter"
@@ -132,6 +132,21 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
     }
   }
 
+  private handleVote = async (post: Post) => {
+    // optimistic flip; revert on failure
+    const apply = (delta: number, voted: boolean) =>
+      this.setState((s) => ({
+        posts: s.posts?.map((p) => (p.number === post.number ? { ...p, votesCount: p.votesCount + delta, hasVoted: voted } : p)),
+      }))
+    const wasVoted = post.hasVoted
+    apply(wasVoted ? -1 : 1, !wasVoted)
+    const result = await actions.toggleVote(post.number)
+    if (!result.ok) {
+      apply(wasVoted ? 1 : -1, wasVoted)
+      notify.error("Could not register your vote. Please try again.")
+    }
+  }
+
   private handleFilterChanged = (filterState: FilterState) => {
     this.changeFilterCriteria({ filterState }, true)
   }
@@ -192,6 +207,7 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
             tags={this.props.tags}
             emptyText={i18n._({ id: "home.postscontainer.label.noresults", message: "No results matched your search, try something different." })}
             onPostClick={this.props.onPostClick}
+            onVote={this.handleVote}
           />
           {this.state.loading && <Loader />}
           {showMoreLink && (

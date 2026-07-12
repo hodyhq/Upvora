@@ -11,12 +11,15 @@
   &__card {
     flex-grow: 1;
     background-color: var(--colors-white);
+    border: 1px solid var(--colors-gray-200);
     @include dark-mode {
-      background-color: var(--colors-gray-200);
+      background-color: var(--colors-white);
+      background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 45%);
+      border-color: var(--colors-gray-300);
     }
-    border-radius: get("border.radius.xlarge");
-    padding: spacing(6);
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    border-radius: 12px;
+    padding: spacing(4) spacing(4);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.08);
   }
 
   &__content {

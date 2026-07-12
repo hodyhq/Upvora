@@ -266,7 +266,7 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
           </Trans>
         </p>
 
-        <table className="w-full text-sm">
+        <table className="c-status-table w-full text-sm">
           <thead>
             <tr className="text-left text-muted">
               <th className="py-2">
@@ -298,9 +298,12 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
           </thead>
           <tbody>
             {this.state.statuses.map((s) => (
-              <tr key={s.id} className="border-t">
-                <td className="py-2">
-                  {s.label}{" "}
+              <tr key={s.id}>
+                <td>
+                  <span className="c-status-table__pill" data-color={s.color}>
+                    <span className="c-status-table__dot" />
+                    {s.label}
+                  </span>
                   {s.isSystem && (
                     <span className="text-xs text-muted ml-1">
                       <Trans id="admin.statuses.table.system">(system)</Trans>
@@ -311,7 +314,10 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
                   <code>{s.slug}</code>
                 </td>
                 <td>{s.kind}</td>
-                <td>{s.color}</td>
+                <td>
+                  <span className="c-status-table__swatch" data-color={s.color} />
+                  {s.color}
+                </td>
                 <td>{s.showOnHome ? i18n._({ id: "admin.statuses.table.yes", message: "yes" }) : "—"}</td>
                 <td>{s.showOnRoadmap ? i18n._({ id: "admin.statuses.table.yes", message: "yes" }) : "—"}</td>
                 <td>{s.filterable ? i18n._({ id: "admin.statuses.table.yes", message: "yes" }) : "—"}</td>

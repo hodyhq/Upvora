@@ -51,3 +51,93 @@
     grid-template-columns: 1fr 4fr 1fr;
   }
 }
+
+/* Statuses admin table — new-language treatment */
+.c-status-table {
+  border-collapse: collapse;
+
+  th {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--colors-gray-600);
+    padding: spacing(2) spacing(2);
+  }
+
+  td {
+    padding: spacing(3) spacing(2);
+    border-top: 1px solid var(--colors-gray-200);
+    vertical-align: middle;
+
+    @include dark-mode {
+      border-top-color: var(--colors-gray-300);
+    }
+  }
+
+  tbody tr {
+    transition: background-color 0.12s ease;
+
+    &:hover {
+      background-color: color-mix(in srgb, var(--colors-gray-900) 3%, transparent);
+    }
+  }
+
+  code {
+    font-size: 12px;
+    background-color: color-mix(in srgb, var(--colors-gray-900) 6%, transparent);
+    border-radius: 6px;
+    padding: 2px 6px;
+  }
+
+  &__pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 650;
+    padding: 3px 9px;
+    border-radius: 7px;
+    white-space: nowrap;
+    color: var(--st);
+    background: color-mix(in srgb, var(--st) 15%, transparent);
+  }
+
+  &__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--st);
+    box-shadow: 0 0 7px var(--st);
+  }
+
+  &__swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    margin-right: 6px;
+    background: var(--st);
+    vertical-align: -1px;
+  }
+
+  &__pill,
+  &__swatch {
+    // prototype status hues (design contract)
+    &[data-color="blue"] {
+      --st: #3b82f6;
+    }
+    &[data-color="yellow"] {
+      --st: #f59e0b;
+    }
+    &[data-color="green"] {
+      --st: #22c55e;
+    }
+    &[data-color="red"] {
+      --st: #ef4444;
+    }
+    &[data-color="gray"] {
+      --st: #7c8490;
+    }
+  }
+}

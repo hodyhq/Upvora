@@ -26,6 +26,8 @@
     }
 
     &__post-card {
+      position: relative;
+      overflow: hidden;
       background-color: var(--colors-white);
       @include dark-mode {
         background-color: var(--colors-white);
@@ -33,23 +35,47 @@
         border-color: var(--colors-gray-300);
       }
       border: 1px solid var(--colors-gray-200);
-      border-radius: 14px;
+      border-radius: 16px;
       padding: spacing(7);
       box-shadow: 0 14px 34px -26px rgba(0, 0, 0, 0.3);
+
+      // colored status edge (prototype hues, same map as board rows)
+      &::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: transparent;
+      }
+      &[data-color="blue"]::before {
+        background: #3b82f6;
+      }
+      &[data-color="yellow"]::before {
+        background: #f59e0b;
+      }
+      &[data-color="green"]::before {
+        background: #22c55e;
+      }
+      &[data-color="red"]::before {
+        background: #ef4444;
+      }
+      &[data-color="gray"]::before {
+        background: #7c8490;
+      }
     }
 
     &__title {
-      font-size: 20px;
-      font-weight: get("font.weight.xbold");
-      line-height: 1.2;
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1.12;
+      letter-spacing: -0.03em;
+      text-wrap: balance;
       color: var(--colors-gray-900);
 
       @include media("md") {
-        font-size: 32px;
-      }
-
-      @include media("lg") {
-        font-size: 36px;
+        font-size: 28px;
       }
     }
 
@@ -62,6 +88,13 @@
 
     &__vote-section {
       margin-top: spacing(5);
+      padding-top: spacing(4);
+      border-top: 1px solid var(--colors-gray-200);
+    }
+
+    &__voteblock:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
     }
 
     &__description-section {
@@ -96,14 +129,15 @@
     }
 
     &__discussion-count {
-      width: 25px;
-      height: 25px;
+      padding: 2px 9px;
       margin-left: spacing(4);
       border-radius: 8px;
       text-align: center;
+      font-size: 0.8rem;
+      font-weight: 800;
       font-variant-numeric: tabular-nums;
-      background-color: color-mix(in srgb, var(--colors-primary-base) 14%, transparent);
-      color: var(--colors-primary-dark);
+      background-color: color-mix(in srgb, var(--colors-primary-base) 16%, transparent);
+      color: var(--colors-primary-base);
     }
 
     &__powered-by-mobile {
@@ -130,6 +164,8 @@
 
         @include media("lg") {
           display: flex;
+          position: sticky;
+          top: 78px;
         }
       }
 

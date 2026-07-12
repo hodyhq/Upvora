@@ -60,10 +60,17 @@ const PostMetaInfo = ({ post, locale }: { post: Post; locale: string }) => (
     </span>
     <span className="text-sm text-gray-400">•</span>
     <Moment className="text-sm text-gray-600" locale={locale} date={post.createdAt} />
-    <span className="text-sm text-gray-400">•</span>
-    <ResponseLozenge status={postStatusValue(post)} response={post.response} size="xsmall" />
   </HStack>
 )
+
+const builtInStatusColors: { [key: string]: string } = {
+  open: "blue",
+  planned: "blue",
+  started: "yellow",
+  completed: "green",
+  declined: "red",
+  duplicate: "gray",
+}
 
 export const PostDetails: React.FC<PostDetailsProps> = (props) => {
   // If we have initial data, use it; otherwise we'll fetch
@@ -311,9 +318,20 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
 
       <div className="p-show-post__main-col">
         {/* Post Card */}
-        <div className="p-show-post__post-card">
+        <div
+          className="p-show-post__post-card"
+          data-color={
+            fider.session.tenant.statuses?.find((s) => s.slug === postStatusValue(post))?.color || builtInStatusColors[postStatusValue(post)] || "gray"
+          }
+        >
           {/* Title and Meta */}
-          <VStack spacing={4}>
+          <VStack spacing={2}>
+            {/* Status pill above the title (prototype) */}
+            {!editMode && postStatusValue(post) !== "open" && (
+              <div>
+                <ResponseLozenge status={postStatusValue(post)} response={post.response} size="small" />
+              </div>
+            )}
             {/* Title */}
             {editMode ? (
               <Form error={error}>
