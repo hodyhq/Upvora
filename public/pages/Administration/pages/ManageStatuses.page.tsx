@@ -273,7 +273,7 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
               </span>
               <span className="c-scorecard__group-hint">
                 <Trans id="admin.statuses.help">
-                  The 6 built-in statuses can be renamed, recolored, or deactivated but not deleted — add custom statuses for your own workflow
+                  Built-in statuses can be renamed, recolored, or deactivated — never deleted. Add custom ones for your own workflow.
                 </Trans>
               </span>
             </div>
