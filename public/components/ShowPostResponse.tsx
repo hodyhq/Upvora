@@ -23,12 +23,12 @@ export const ResponseDetails = (props: PostResponseProps): JSX.Element | null =>
   }
 
   return (
-    <HStack spacing={4} align="start" className="c-response-details">
-      <Avatar user={props.response.user} size="large" />
+    <div className="c-response-details">
       <div className="c-response-details__card">
         <div className="c-response-details__inner">
           <VStack spacing={2}>
             <HStack spacing={2} align="center">
+              <Avatar user={props.response.user} size="small" />
               <UserName user={props.response.user} />
               <span className="text-xs text-gray-600">•</span>
               <Moment className="text-xs text-gray-600" locale={fider.currentLocale} date={props.response.respondedAt} />
@@ -51,7 +51,7 @@ export const ResponseDetails = (props: PostResponseProps): JSX.Element | null =>
           </VStack>
         </div>
       </div>
-    </HStack>
+    </div>
   )
 }
 

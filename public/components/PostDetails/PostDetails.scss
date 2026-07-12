@@ -283,15 +283,6 @@
   }
 }
 
-.c-comment-input {
-  // Hide avatar on mobile for comment input
-  @include media("sm") {
-    .c-avatar {
-      display: none;
-    }
-  }
-}
-
 /* Discussion editor - prototype ceditor language */
 .c-comment-input-card {
   flex-grow: 1;

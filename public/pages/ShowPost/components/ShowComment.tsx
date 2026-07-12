@@ -185,102 +185,100 @@ export const ShowComment = (props: ShowCommentProps) => {
   return (
     <div id={`comment-${comment.id}`} className="c-comment">
       {modal()}
-      <HStack spacing={4} align="start">
-        <Avatar user={comment.user} size="large" />
-        <div ref={node} className={`c-comment__card ${classList}`}>
-          <div className="mb-1">
-            <HStack justify="between">
-              <HStack>
-                <UserName user={comment.user} /> <span className="text-sm text-gray-400">•</span>
-                <div className="text-xs">
-                  <Moment locale={fider.currentLocale} date={comment.createdAt} /> {editedMetadata}
-                </div>
-              </HStack>
-              {!isEditing && (
-                <Dropdown position="left" renderHandle={<Icon sprite={IconDotsHorizontal} width="16" height="16" />}>
-                  <Dropdown.ListItem onClick={onActionSelected("copylink")}>
-                    <Trans id="action.copylink">Copy link</Trans>
-                  </Dropdown.ListItem>
-                  {canEditComment() && (
-                    <>
-                      <Dropdown.Divider />
-                      <Dropdown.ListItem onClick={onActionSelected("edit")}>
-                        <Trans id="action.edit">Edit</Trans>
-                      </Dropdown.ListItem>
-                      <Dropdown.ListItem onClick={onActionSelected("delete")} className="text-red-700">
-                        <Trans id="action.delete">Delete</Trans>
-                      </Dropdown.ListItem>
-                    </>
-                  )}
-                </Dropdown>
-              )}
+      <div ref={node} className={`c-comment__card ${classList}`}>
+        <div className="mb-1">
+          <HStack justify="between">
+            <HStack align="center">
+              <Avatar user={comment.user} size="small" />
+              <UserName user={comment.user} /> <span className="text-sm text-gray-400">•</span>
+              <div className="text-xs">
+                <Moment locale={fider.currentLocale} date={comment.createdAt} /> {editedMetadata}
+              </div>
             </HStack>
-          </div>
-          <div>
-            {isEditing ? (
-              <Form error={error}>
-                <CommentEditor
-                  field="content"
-                  disabled={!fider.session.isAuthenticated}
-                  initialValue={newContent}
-                  onChange={setNewContent}
-                  placeholder={comment.content}
-                  maxAttachments={2}
-                  maxImageSizeKB={5 * 1024}
-                  maxLength={4000}
-                  onGetImageSrc={getImageSrc}
-                  onImageUploaded={handleImageUploaded}
-                />
-                <div className="mt-2">
-                  <Button size="small" onClick={saveEdit} variant="primary" disabled={newContent.length > 4000}>
-                    <Trans id="action.save">Save</Trans>
-                  </Button>
-                  <Button variant="tertiary" size="small" onClick={cancelEdit}>
-                    <Trans id="action.cancel">Cancel</Trans>
-                  </Button>
-                </div>
-              </Form>
-            ) : (
-              <>
-                <Markdown text={comment.content} style="full" />
-
-                {/* Moderation status banner for unapproved comments */}
-                {fider.session.tenant.isModerationEnabled && !comment.isApproved && (
-                  <div className="mt-3">
-                    {fider.session.isAuthenticated && fider.session.user.id === comment.user.id && (
-                      <div className="text-muted text-xs p-2 bg-yellow-50 rounded-md border-yellow-500">
-                        <Trans id="showpost.moderation.comment.awaiting">Awaiting moderation.</Trans>
-                      </div>
-                    )}
-
-                    {/* Admin moderation buttons */}
-                    {fider.session.isAuthenticated && fider.session.user.isCollaborator && (
-                      <div className="p-2 bg-blue-50 rounded border-l-4 border-blue-500">
-                        <div className="mb-1 text-xs font-medium text-blue-800">
-                          <Trans id="home.postfilter.label.moderation">Moderation</Trans>
-                        </div>
-                        <div className="text-xs text-blue-700 mb-2">
-                          <Trans id="showpost.moderation.comment.admin.description">This comment needs your approval before being published</Trans>
-                        </div>
-                        <HStack spacing={1}>
-                          <Button variant="primary" size="small" onClick={handleApproveComment}>
-                            <Trans id="action.publish">Publish</Trans>
-                          </Button>
-                          <Button variant="danger" size="small" onClick={handleDeclineComment}>
-                            <Trans id="action.delete">Delete</Trans>
-                          </Button>
-                        </HStack>
-                      </div>
-                    )}
-                  </div>
+            {!isEditing && (
+              <Dropdown position="left" renderHandle={<Icon sprite={IconDotsHorizontal} width="16" height="16" />}>
+                <Dropdown.ListItem onClick={onActionSelected("copylink")}>
+                  <Trans id="action.copylink">Copy link</Trans>
+                </Dropdown.ListItem>
+                {canEditComment() && (
+                  <>
+                    <Dropdown.Divider />
+                    <Dropdown.ListItem onClick={onActionSelected("edit")}>
+                      <Trans id="action.edit">Edit</Trans>
+                    </Dropdown.ListItem>
+                    <Dropdown.ListItem onClick={onActionSelected("delete")} className="text-red-700">
+                      <Trans id="action.delete">Delete</Trans>
+                    </Dropdown.ListItem>
+                  </>
                 )}
-
-                <Reactions reactions={localReactionCounts} emojiSelectorRef={emojiSelectorRef} toggleReaction={toggleReaction} />
-              </>
+              </Dropdown>
             )}
-          </div>
+          </HStack>
         </div>
-      </HStack>
+        <div>
+          {isEditing ? (
+            <Form error={error}>
+              <CommentEditor
+                field="content"
+                disabled={!fider.session.isAuthenticated}
+                initialValue={newContent}
+                onChange={setNewContent}
+                placeholder={comment.content}
+                maxAttachments={2}
+                maxImageSizeKB={5 * 1024}
+                maxLength={4000}
+                onGetImageSrc={getImageSrc}
+                onImageUploaded={handleImageUploaded}
+              />
+              <div className="mt-2">
+                <Button size="small" onClick={saveEdit} variant="primary" disabled={newContent.length > 4000}>
+                  <Trans id="action.save">Save</Trans>
+                </Button>
+                <Button variant="tertiary" size="small" onClick={cancelEdit}>
+                  <Trans id="action.cancel">Cancel</Trans>
+                </Button>
+              </div>
+            </Form>
+          ) : (
+            <>
+              <Markdown text={comment.content} style="full" />
+
+              {/* Moderation status banner for unapproved comments */}
+              {fider.session.tenant.isModerationEnabled && !comment.isApproved && (
+                <div className="mt-3">
+                  {fider.session.isAuthenticated && fider.session.user.id === comment.user.id && (
+                    <div className="text-muted text-xs p-2 bg-yellow-50 rounded-md border-yellow-500">
+                      <Trans id="showpost.moderation.comment.awaiting">Awaiting moderation.</Trans>
+                    </div>
+                  )}
+
+                  {/* Admin moderation buttons */}
+                  {fider.session.isAuthenticated && fider.session.user.isCollaborator && (
+                    <div className="p-2 bg-blue-50 rounded border-l-4 border-blue-500">
+                      <div className="mb-1 text-xs font-medium text-blue-800">
+                        <Trans id="home.postfilter.label.moderation">Moderation</Trans>
+                      </div>
+                      <div className="text-xs text-blue-700 mb-2">
+                        <Trans id="showpost.moderation.comment.admin.description">This comment needs your approval before being published</Trans>
+                      </div>
+                      <HStack spacing={1}>
+                        <Button variant="primary" size="small" onClick={handleApproveComment}>
+                          <Trans id="action.publish">Publish</Trans>
+                        </Button>
+                        <Button variant="danger" size="small" onClick={handleDeclineComment}>
+                          <Trans id="action.delete">Delete</Trans>
+                        </Button>
+                      </HStack>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <Reactions reactions={localReactionCounts} emojiSelectorRef={emojiSelectorRef} toggleReaction={toggleReaction} />
+            </>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

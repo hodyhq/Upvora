@@ -1,11 +1,10 @@
 import React, { useCallback, useState, useEffect } from "react"
 
 import { Post } from "@fider/models"
-import { Avatar, Button, Form } from "@fider/components"
+import { Button, Form } from "@fider/components"
 import { SignInModal } from "@fider/components"
 
 import { cache, actions, Failure, Fider } from "@fider/services"
-import { HStack } from "@fider/components/layout"
 import { i18n } from "@lingui/core"
 import { Trans } from "@lingui/react/macro"
 
@@ -85,8 +84,7 @@ export const CommentInput = (props: CommentInputProps) => {
   return (
     <>
       <SignInModal isOpen={isSignInModalOpen} onClose={hideModal} />
-      <HStack spacing={4} className="c-comment-input" align="start">
-        {Fider.session.isAuthenticated && <Avatar user={Fider.session.user} size="large" />}
+      <div className="c-comment-input">
         <div className="c-comment-input-card">
           <Form error={error}>
             {isClient ? (
@@ -118,7 +116,7 @@ export const CommentInput = (props: CommentInputProps) => {
             )}
           </Form>
         </div>
-      </HStack>
+      </div>
     </>
   )
 }
