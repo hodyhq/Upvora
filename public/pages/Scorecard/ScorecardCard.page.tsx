@@ -389,9 +389,10 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
                 { from: Fider.session.tenant.scorecardBandGood, c: "#3B82F6" },
                 { from: Fider.session.tenant.scorecardBandStrong, c: "#22C55E" },
               ]
-              const FEATHER = 2 // % of arc blended between adjacent band hues
+              const FEATHER = 2.5 // % of arc blended between adjacent band hues
+              // conic 0deg = 12 o'clock, matching the tick rotation origin
               const spectrum = (alpha: number) =>
-                `conic-gradient(from -90deg, ${segments
+                `conic-gradient(${segments
                   .map((seg, i) => {
                     const start = seg.from === 0 ? 0 : seg.from + FEATHER
                     const rawEnd = i + 1 < segments.length ? segments[i + 1].from - FEATHER : 100
@@ -400,7 +401,7 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
                     return `${color} ${start}% ${end}%`
                   })
                   .join(", ")})`
-              const arcMask = `conic-gradient(from -90deg, #000 0% ${p}%, transparent ${p}% 100%)`
+              const arcMask = `conic-gradient(#000 0% ${p}%, transparent ${p}% 100%)`
               // Dashes sit exactly where the band color changes.
               const ticks = segments
                 .slice(1)
@@ -415,7 +416,7 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
                     } as React.CSSProperties
                   }
                 >
-                  <span className="c-scorecard__ring-track" style={{ background: spectrum(22) }} />
+                  <span className="c-scorecard__ring-track" style={{ background: spectrum(26) }} />
                   {p > 0 && (
                     <span
                       className="c-scorecard__ring-glow"
