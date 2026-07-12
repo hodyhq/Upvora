@@ -412,7 +412,7 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
           )}
 
           {tags.length >= 1 && (
-            <div className="pt-7">
+            <div className="pt-4">
               <TagsPanel post={post} tags={tags} onDataChanged={props.onDataChanged} />
             </div>
           )}
@@ -421,6 +421,14 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
           {!editMode && (
             <div className="p-show-post__vote-section">
               <VoteSection post={post} votes={post.votesCount} onDataChanged={props.onDataChanged} />
+              {votes.length > 0 && (
+                <div className="p-show-post__vote-avatars">
+                  {votes.slice(0, 5).map((v) => (
+                    <Avatar key={v.user.id} user={v.user} size="small" />
+                  ))}
+                  {votes.length > 5 && <span className="p-show-post__vote-more">+{votes.length - 5}</span>}
+                </div>
+              )}
             </div>
           )}
 

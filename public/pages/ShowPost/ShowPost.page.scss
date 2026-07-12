@@ -28,6 +28,7 @@
     &__post-card {
       position: relative;
       overflow: hidden;
+      padding: spacing(5) spacing(6) spacing(4);
       background-color: var(--colors-white);
       @include dark-mode {
         background-color: var(--colors-white);
@@ -36,7 +37,6 @@
       }
       border: 1px solid var(--colors-gray-200);
       border-radius: 16px;
-      padding: spacing(7);
       box-shadow: 0 14px 34px -26px rgba(0, 0, 0, 0.3);
 
       // colored status edge (prototype hues, same map as board rows)
@@ -87,9 +87,30 @@
     }
 
     &__vote-section {
-      margin-top: spacing(5);
+      display: flex;
+      align-items: center;
+      gap: spacing(4);
+      margin-top: spacing(4);
       padding-top: spacing(4);
       border-top: 1px solid var(--colors-gray-200);
+    }
+
+    &__vote-avatars {
+      display: flex;
+      align-items: center;
+
+      .c-avatar {
+        margin-right: -6px;
+        border: 2px solid var(--colors-white);
+        border-radius: 50%;
+      }
+    }
+
+    &__vote-more {
+      margin-left: spacing(3);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--colors-gray-600);
     }
 
     // self-contained vote block (PostsContainer.scss isn't bundled on this page)
@@ -160,7 +181,7 @@
     }
 
     &__description-section {
-      margin-top: spacing(7);
+      margin-top: spacing(4);
     }
     &__description {
       color: var(--colors-gray-800);
@@ -170,8 +191,8 @@
 
     &__actions {
       border-top: 1px solid var(--colors-gray-200);
-      padding-top: spacing(4);
-      margin-top: spacing(8);
+      padding-top: spacing(3);
+      margin-top: spacing(4);
 
       // Remove flex-grow on mobile so Following button doesn't get pushed to the right
       @include media("sm") {
