@@ -1,7 +1,8 @@
 @use "~@fider/assets/styles/variables.scss" as *;
 
-// PostDetails component uses the same styles as ShowPost page
-// These are duplicated here so the component can be used standalone
+// Single source of truth for the post-detail UI. PostDetails renders both on
+// the standalone /posts page AND inside PostDetailsOverlay (board/roadmap
+// click-through) - styles must live here, unscoped, so both look identical.
 
 .p-show-post {
   &__loading {
@@ -18,29 +19,56 @@
   }
 
   &__post-card {
+    position: relative;
+    overflow: hidden;
+    padding: spacing(5) spacing(6) spacing(4);
     background-color: var(--colors-white);
     @include dark-mode {
+      background-color: var(--colors-white);
       background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 40%);
       border-color: var(--colors-gray-300);
     }
     border: 1px solid var(--colors-gray-200);
-    border-radius: 14px;
-    padding: spacing(7);
+    border-radius: 16px;
     box-shadow: 0 14px 34px -26px rgba(0, 0, 0, 0.3);
+
+    // colored status edge (prototype hues, same map as board rows)
+    &::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: transparent;
+    }
+    &[data-color="blue"]::before {
+      background: #3b82f6;
+    }
+    &[data-color="yellow"]::before {
+      background: #f59e0b;
+    }
+    &[data-color="green"]::before {
+      background: #22c55e;
+    }
+    &[data-color="red"]::before {
+      background: #ef4444;
+    }
+    &[data-color="gray"]::before {
+      background: #7c8490;
+    }
   }
 
   &__title {
-    font-size: 20px;
-    font-weight: get("font.weight.xbold");
-    line-height: 1.2;
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
     color: var(--colors-gray-900);
 
     @include media("md") {
-      font-size: 32px;
-    }
-
-    @include media("lg") {
-      font-size: 36px;
+      font-size: 28px;
     }
   }
 
@@ -52,22 +80,112 @@
   }
 
   &__vote-section {
-    margin-top: spacing(5);
+    display: flex;
+    align-items: center;
+    gap: spacing(4);
+    margin-top: spacing(4);
+    padding-top: spacing(4);
+    border-top: 1px solid var(--colors-gray-200);
+  }
+
+  &__vote-avatars {
+    display: flex;
+    align-items: center;
+
+    .c-avatar {
+      margin-right: -6px;
+      border: 2px solid var(--colors-white);
+      border-radius: 50%;
+    }
+  }
+
+  &__vote-more {
+    margin-left: spacing(3);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--colors-gray-600);
+  }
+
+  // self-contained compact vote block (board styles are not bundled here)
+  &__voteblock {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    width: 58px;
+    padding: 9px 5px;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    appearance: none;
+    border: 1px solid var(--colors-gray-400);
+    border-radius: 12px;
+    background-color: var(--colors-gray-100);
+    transition: border-color 0.16s ease, background 0.16s ease;
+
+    @include dark-mode {
+      background-color: var(--colors-gray-50);
+    }
+
+    &:hover {
+      border-color: var(--colors-primary-base);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .c-post__chev {
+      width: 15px;
+      height: 15px;
+      color: var(--colors-primary-base);
+      stroke: var(--colors-primary-base);
+    }
+    .c-post__votes {
+      font-size: 1.15rem;
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: var(--colors-gray-900);
+      font-variant-numeric: tabular-nums;
+    }
+    .c-post__voteslabel {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+      color: var(--colors-gray-500);
+    }
+
+    &[data-voted="true"] {
+      background-color: var(--colors-primary-base);
+      background-image: var(--brand-grad);
+      border-color: transparent;
+      box-shadow: 0 8px 18px -10px var(--brand-glow);
+
+      .c-post__chev,
+      .c-post__votes,
+      .c-post__voteslabel {
+        color: #fff;
+        stroke: #fff;
+      }
+    }
   }
 
   &__description-section {
-    margin-top: spacing(7);
+    margin-top: spacing(4);
   }
-
   &__description {
     color: var(--colors-gray-800);
-    line-height: 1.6;
+    font-size: 0.97rem;
+    line-height: 1.65;
   }
 
   &__actions {
     border-top: 1px solid var(--colors-gray-200);
-    padding-top: spacing(4);
-    margin-top: spacing(8);
+    padding-top: spacing(3);
+    margin-top: spacing(4);
 
     // Remove flex-grow on mobile so Following button doesn't get pushed to the right
     @include media("sm") {
@@ -88,17 +206,15 @@
   }
 
   &__discussion-count {
-    width: 25px;
-    height: 25px;
+    padding: 2px 9px;
     margin-left: spacing(4);
-    border-radius: 9999px;
+    border-radius: 8px;
     text-align: center;
-    background-color: var(--colors-blue-100);
-    color: var(--colors-blue-400);
-    @include dark-mode {
-      background-color: var(--colors-blue-500);
-      color: var(--colors-blue-800);
-    }
+    font-size: 0.8rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    background-color: color-mix(in srgb, var(--colors-primary-base) 16%, transparent);
+    color: var(--colors-primary-base);
   }
 
   &__powered-by-mobile {
@@ -125,6 +241,8 @@
 
       @include media("lg") {
         display: flex;
+        position: sticky;
+        top: 78px;
       }
     }
 
@@ -140,11 +258,14 @@
     > .card {
       background-color: var(--colors-white);
       @include dark-mode {
-        background-color: var(--colors-gray-200);
+        background-color: var(--colors-white);
+        background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 40%);
+        border-color: var(--colors-gray-300);
       }
-      border-radius: get("border.radius.xlarge");
+      border: 1px solid var(--colors-gray-200);
+      border-radius: 14px;
       padding: spacing(6);
-      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+      box-shadow: 0 14px 34px -26px rgba(0, 0, 0, 0.3);
     }
 
     &__follow-button--follow,
@@ -171,27 +292,60 @@
   }
 }
 
+/* Discussion editor - prototype ceditor language */
 .c-comment-input-card {
   flex-grow: 1;
   background-color: var(--colors-white);
+  border: 1px solid var(--colors-gray-200);
+  border-radius: 12px;
+  padding: spacing(4);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.08);
+
   @include dark-mode {
-    background-color: var(--colors-gray-200);
+    background-color: var(--colors-white);
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 45%);
+    border-color: var(--colors-gray-300);
   }
-  border-radius: get("border.radius.xlarge");
-  padding: spacing(6);
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+
+  .c-editor-toolbar {
+    border-bottom: 1px solid var(--colors-gray-200);
+
+    @include dark-mode {
+      border-bottom-color: var(--colors-gray-300);
+    }
+  }
+
+  .comment-input-placeholder {
+    color: var(--colors-gray-600);
+    font-size: 0.92rem;
+    background-color: color-mix(in srgb, var(--colors-gray-900) 4%, transparent);
+    border: 1px solid var(--colors-gray-200);
+    border-radius: 10px;
+    padding: 11px 14px;
+    cursor: text;
+    transition: border-color 0.15s ease;
+
+    &:hover {
+      border-color: var(--colors-gray-400);
+    }
+
+    @include dark-mode {
+      border-color: var(--colors-gray-300);
+    }
+  }
 }
 
 .c-response-details {
   &__card {
     flex-grow: 1;
-    background-color: var(--colors-blue-50);
+    background-color: color-mix(in srgb, var(--colors-primary-base) 8%, var(--colors-white));
     @include dark-mode {
-      background-color: var(--colors-gray-200);
+      background-color: color-mix(in srgb, var(--colors-primary-base) 14%, var(--colors-white));
+      border-color: var(--colors-gray-300);
     }
-    border-radius: get("border.radius.xlarge");
+    border: 1px solid color-mix(in srgb, var(--colors-primary-base) 24%, transparent);
+    border-radius: 14px;
     padding: spacing(6);
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
   }
 
   &__content {

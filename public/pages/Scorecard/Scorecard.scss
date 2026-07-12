@@ -299,7 +299,6 @@
   }
 
   &__ring {
-    --p: 0;
     --bc: var(--colors-gray-500);
     width: 150px;
     height: 150px;
@@ -308,34 +307,66 @@
     display: grid;
     place-items: center;
     position: relative;
-    background: color-mix(in srgb, var(--colors-gray-900) 9%, transparent);
-    transition: --bc 0.2s ease;
+
+    // donut hole sits above the color layers, below ticks/center
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border-radius: 50%;
+      background: var(--colors-white);
+      z-index: 3;
+    }
+  }
+
+  // faint full-spectrum track (always visible - shows the whole band scale)
+  &__ring-track,
+  &__ring-arc {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+  }
+
+  &__ring-arc {
+    z-index: 2;
+  }
+
+  // soft glow bleeding out from the saturated arc
+  &__ring-glow {
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    filter: blur(10px) saturate(1.35);
+    opacity: 0.45;
+    z-index: 1;
+  }
+
+  // dash exactly where the band color changes (rotated full-box wrapper -
+  // geometry is exact, no origin math)
+  &__ring-tick {
+    position: absolute;
+    inset: 0;
+    transform-origin: 50% 50%;
+    pointer-events: none;
+    z-index: 4;
 
     &::before {
       content: "";
       position: absolute;
-      inset: 11px;
-      border-radius: 50%;
+      top: -1px;
+      left: 50%;
+      width: 3px;
+      height: 14px;
+      margin-left: -1.5px;
+      border-radius: 2px;
       background: var(--colors-white);
     }
-  }
-
-  &__ring-tick {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 2px;
-    height: 11px;
-    margin-top: -75px;
-    margin-left: -1px;
-    background: var(--colors-gray-100);
-    transform-origin: 50% 75px;
-    opacity: 0.9;
   }
 
   &__ring-center {
     position: relative;
     text-align: center;
+    z-index: 4;
   }
 
   &__ring-num {

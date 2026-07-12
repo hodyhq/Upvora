@@ -379,41 +379,56 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
           <div className="c-scorecard__gauge c-scorecard__gauge--ring">
             {(() => {
               const p = Math.min(100, Math.max(0, weightedScore))
-              // Band segments, ascending: each colored slice ends where the
-              // next band starts; the arc is clipped at the current score.
+              // Vibrant band spectrum, ascending. The full spectrum is always
+              // visible as a faint track; the saturated arc is masked to the
+              // score, with a soft glow underneath.
               const segments = [
-                { from: 0, c: "#DC2626" },
+                { from: 0, c: "#EF4444" },
                 { from: Fider.session.tenant.scorecardBandLow, c: "#F97316" },
                 { from: Fider.session.tenant.scorecardBandRefine, c: "#F59E0B" },
-                { from: Fider.session.tenant.scorecardBandGood, c: "#2563EB" },
-                { from: Fider.session.tenant.scorecardBandStrong, c: "#16A34A" },
+                { from: Fider.session.tenant.scorecardBandGood, c: "#3B82F6" },
+                { from: Fider.session.tenant.scorecardBandStrong, c: "#22C55E" },
               ]
-              const stops: string[] = []
-              for (let i = 0; i < segments.length; i++) {
-                const start = segments[i].from
-                const end = Math.min(i + 1 < segments.length ? segments[i + 1].from : 100, p)
-                if (end <= start) break
-                stops.push(`${segments[i].c} ${start}% ${end}%`)
-              }
-              stops.push(`color-mix(in srgb, var(--colors-gray-900) 9%, transparent) ${p}% 100%`)
-              const ringGradient = `conic-gradient(from -90deg, ${stops.join(", ")})`
-              // Dashes sit exactly where the arc changes color - band
-              // thresholds that fall inside the filled part of the ring.
-              const transitions = segments
+              const FEATHER = 2 // % of arc blended between adjacent band hues
+              const spectrum = (alpha: number) =>
+                `conic-gradient(from -90deg, ${segments
+                  .map((seg, i) => {
+                    const start = seg.from === 0 ? 0 : seg.from + FEATHER
+                    const rawEnd = i + 1 < segments.length ? segments[i + 1].from - FEATHER : 100
+                    const end = Math.max(start, rawEnd)
+                    const color = alpha >= 100 ? seg.c : `color-mix(in srgb, ${seg.c} ${alpha}%, transparent)`
+                    return `${color} ${start}% ${end}%`
+                  })
+                  .join(", ")})`
+              const arcMask = `conic-gradient(from -90deg, #000 0% ${p}%, transparent ${p}% 100%)`
+              // Dashes sit exactly where the band color changes.
+              const ticks = segments
                 .slice(1)
                 .map((seg) => seg.from)
-                .filter((th) => th > 0 && th < p)
+                .filter((th) => th > 0 && th < 100)
               return (
                 <div
                   className="c-scorecard__ring"
                   style={
                     {
-                      background: p === 0 ? undefined : ringGradient,
                       "--bc": weightedScore === 0 ? "var(--colors-gray-500)" : band.border,
                     } as React.CSSProperties
                   }
                 >
-                  {transitions.map((th) => (
+                  <span className="c-scorecard__ring-track" style={{ background: spectrum(22) }} />
+                  {p > 0 && (
+                    <span
+                      className="c-scorecard__ring-glow"
+                      style={{ background: spectrum(100), WebkitMaskImage: arcMask, maskImage: arcMask } as React.CSSProperties}
+                    />
+                  )}
+                  {p > 0 && (
+                    <span
+                      className="c-scorecard__ring-arc"
+                      style={{ background: spectrum(100), WebkitMaskImage: arcMask, maskImage: arcMask } as React.CSSProperties}
+                    />
+                  )}
+                  {ticks.map((th) => (
                     <span key={th} className="c-scorecard__ring-tick" style={{ transform: `rotate(${th * 3.6}deg)` }} />
                   ))}
                   <div className="c-scorecard__ring-center">
