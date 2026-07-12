@@ -429,9 +429,11 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
             </VStack>
           </Form>
         ) : (
-          <Button variant="primary" onClick={this.openAdd}>
-            <Trans id="admin.statuses.add">Add a custom status</Trans>
-          </Button>
+          <div>
+            <Button variant="primary" onClick={this.openAdd}>
+              <Trans id="admin.statuses.add">Add a custom status</Trans>
+            </Button>
+          </div>
         )}
       </VStack>
     )

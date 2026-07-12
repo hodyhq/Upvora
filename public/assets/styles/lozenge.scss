@@ -1,0 +1,73 @@
+@use "~@fider/assets/styles/variables.scss" as *;
+
+/* Status lozenge - tinted pill + glow dot (prototype design contract) */
+.c-lozenge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  font-weight: 650;
+  padding: 3px 9px;
+  border-radius: 7px;
+  letter-spacing: 0.005em;
+  white-space: nowrap;
+  color: var(--st);
+  background: color-mix(in srgb, var(--st) 15%, transparent);
+
+  /* prototype status hues (design contract) */
+  &[data-color="blue"] {
+    --st: #3b82f6;
+  }
+  &[data-color="yellow"] {
+    --st: #f59e0b;
+  }
+  &[data-color="green"] {
+    --st: #22c55e;
+  }
+  &[data-color="red"] {
+    --st: #ef4444;
+  }
+  &[data-color="gray"] {
+    --st: #7c8490;
+  }
+
+  @include dark-mode {
+    &[data-color="gray"] {
+      --st: #8b93a0;
+    }
+  }
+
+  &__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--st);
+    box-shadow: 0 0 7px var(--st);
+    flex-shrink: 0;
+  }
+
+  &__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__substage {
+    font-weight: 500;
+    opacity: 0.85;
+  }
+
+  &--xsmall {
+    font-size: 0.68rem;
+    padding: 2px 8px;
+
+    .c-lozenge__dot {
+      width: 5px;
+      height: 5px;
+    }
+  }
+
+  &--micro {
+    background: none;
+    padding: 0;
+  }
+}

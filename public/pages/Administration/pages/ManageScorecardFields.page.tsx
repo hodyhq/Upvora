@@ -110,6 +110,7 @@ const groupLabel = (key: string): string => {
 }
 
 export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScorecardFieldsPageProps, ManageScorecardFieldsPageState> {
+  public bare = true
   public id = "p-admin-scorecard-fields"
   public name = "scorecard-fields"
   public title = "Scorecard Fields"

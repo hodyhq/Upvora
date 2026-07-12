@@ -105,12 +105,10 @@ const ListPostItem = (props: {
       </div>
       <div className="c-post__side">
         {props.rank !== undefined && <span className="c-post__rank">#{props.rank}</span>}
-        {props.post.commentsCount > 0 && (
-          <span className="c-post__cmts">
-            <Icon sprite={IconChatAlt2} className="h-4 w-4" />
-            {props.post.commentsCount}
-          </span>
-        )}
+        <span className="c-post__cmts">
+          <Icon sprite={IconChatAlt2} className="h-4 w-4" />
+          {props.post.commentsCount}
+        </span>
       </div>
     </div>
   )

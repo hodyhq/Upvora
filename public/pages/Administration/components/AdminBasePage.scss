@@ -141,3 +141,37 @@
     }
   }
 }
+
+/* Shared admin content card - every settings tab renders inside this panel */
+.c-admin-content {
+  background-color: var(--colors-white);
+  border: 1px solid var(--colors-gray-200);
+  border-radius: 16px;
+  padding: spacing(6) spacing(7);
+  box-shadow: 0 14px 34px -26px rgba(0, 0, 0, 0.3);
+  min-width: 0;
+
+  @include dark-mode {
+    background-color: var(--colors-white);
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 40%);
+    border-color: var(--colors-gray-300);
+  }
+
+  // tame legacy section headings ("OAuth Providers", "Import & Export Tags", ...)
+  h2 {
+    font-size: 1.05rem;
+    font-weight: 750;
+    letter-spacing: -0.01em;
+    color: var(--colors-gray-900);
+    margin-bottom: spacing(2);
+  }
+
+  &--bare {
+    background: none;
+    background-image: none;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+}

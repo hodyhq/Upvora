@@ -21,6 +21,7 @@ interface ScorecardSettingsState {
 }
 
 export default class ScorecardSettingsPage extends AdminBasePage<any, ScorecardSettingsState> {
+  public bare = true
   public id = "p-admin-scorecard-settings"
   public name = "scorecard-settings"
   public title = "Scorecard"

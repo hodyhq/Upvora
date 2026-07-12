@@ -65,7 +65,7 @@ const GeneralSettingsPage = () => {
   return (
     <AdminPageContainer id="p-admin-general" name="general" title="General" subtitle="Manage your site settings">
       <Form error={error}>
-        <Input field="title" label="Your Fider board's title" maxLength={60} value={title} disabled={!fider.session.user.isAdministrator} onChange={setTitle}>
+        <Input field="title" label="Your board's title" maxLength={60} value={title} disabled={!fider.session.user.isAdministrator} onChange={setTitle}>
           <p className="text-muted">Keep it short and snappy. Your product / service name is usually best.</p>
         </Input>
 

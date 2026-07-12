@@ -29,14 +29,47 @@ type scorecardSeedRow struct {
 }
 
 var scorecardScoringSeeds = []scorecardSeedRow{
-	{"score_strategic", "Strategic alignment", 20, "Does this support a firm priority?", 10},
-	{"score_business_value", "Business value", 20, "Does this improve margin, delivery, quality, risk, speed, or decision-making?", 20},
-	{"score_ownership", "Ownership clarity", 15, "Is there a real business owner, not just IT interest?", 30},
-	{"score_workflow", "Workflow clarity", 15, "Is the current and future workflow understood?", 40},
-	{"score_data_readiness", "Data readiness", 10, "Is the needed data available, trusted, and usable?", 50},
-	{"score_risk", "Risk manageability", 10, "Can confidentiality, accuracy, security, and review risks be managed?", 60},
-	{"score_adoption", "Adoption likelihood", 5, "Will people actually use this?", 70},
-	{"score_supportability", "Supportability", 5, "Can this be supported after the pilot?", 80},
+	{"score_strategic", "Strategic alignment", 20, "Does this advance a stated company goal or priority?", 10},
+	{"score_business_value", "Business value", 20, "Will this measurably improve revenue, cost, quality, or speed?", 20},
+	{"score_ownership", "Ownership clarity", 15, "Is there a clear owner accountable for the outcome?", 30},
+	{"score_workflow", "Workflow clarity", 15, "Do we understand how day-to-day work changes once this ships?", 40},
+	{"score_data_readiness", "Readiness", 10, "Are the inputs - data, content, integrations - available and reliable?", 50},
+	{"score_risk", "Risk manageability", 10, "Can security, privacy, and compliance risks be managed?", 60},
+	{"score_adoption", "Adoption likelihood", 5, "Will people actually use this without heavy change management?", 70},
+	{"score_supportability", "Supportability", 5, "Can we support and maintain this for the long haul?", 80},
+}
+
+// scorecardDefaultFieldSeeds are the non-system starter fields seeded for new
+// tenants. They exercise every field type across every body group so a fresh
+// scorecard demonstrates the whole form; admins can edit or delete them.
+// Kept in sync with migrations/202607120100_universal_scorecard_defaults.up.sql.
+type scorecardDefaultFieldSeed struct {
+	Key       string
+	Label     string
+	GroupKey  string
+	Type      string
+	Choices   string // empty = NULL
+	Question  string
+	SortOrder int
+}
+
+var scorecardDefaultFieldSeeds = []scorecardDefaultFieldSeed{
+	{"requesting_team", "Requesting team", "intake", "text", "", "Which team or department is asking for this?", 110},
+	{"requested_by", "Requested by", "intake", "user", "", "Who raised or sponsors this request?", 120},
+	{"problem_statement", "Problem statement", "context", "note", "", "What problem does this solve, and what happens if we do nothing?", 210},
+	{"reference_link", "Reference link", "context", "url", "", "Link to a doc, mockup, or example that explains the idea.", 220},
+	{"process_affected", "Process affected", "workflow", "multiline", "", "Which process or workflow would this change, and how is it handled today?", 310},
+	{"needed_by", "Needed by", "workflow", "date", "", "When does this need to be in place to matter?", 320},
+	{"business_owner", "Business owner", "ownership", "user", "", "Who owns this after it ships?", 410},
+	{"effort_estimate", "Effort estimate", "classification", "choice", `[
+  {"value": "Small",       "color": "mint"},
+  {"value": "Medium",      "color": "gold"},
+  {"value": "Large",       "color": "salmon"},
+  {"value": "Extra Large", "color": "coral"}
+]`, "How big is this likely to be?", 510},
+	{"people_impacted", "People impacted", "classification", "number", "", "Roughly how many people would use or benefit from this?", 520},
+	{"decision_notes", "Decision notes", "decision", "note", "", "Rationale, conditions, and next steps for the decision.", 910},
+	{"next_review", "Next review", "decision", "date", "", "When should this decision be revisited?", 920},
 }
 
 func listScorecardFieldsForTenant(ctx context.Context, q *query.ListScorecardFieldsForTenant) error {
@@ -270,6 +303,21 @@ func seedTenantScorecardFields(ctx context.Context, c *cmd.SeedTenantScorecardFi
 				VALUES ($1, $2, $3, 'scoring', 'score', $4, $5, $6, TRUE, TRUE)
 				ON CONFLICT (tenant_id, key) DO NOTHING
 			`, c.TenantID, seed.Key, seed.Label, seed.Weight, seed.Question, seed.SortOrder)
+			if err != nil {
+				return errors.Wrap(err, "failed to seed scorecard field %q for tenant %d", seed.Key, c.TenantID)
+			}
+		}
+		for _, seed := range scorecardDefaultFieldSeeds {
+			var choices interface{}
+			if seed.Choices != "" {
+				choices = seed.Choices
+			}
+			_, err := trx.Execute(`
+				INSERT INTO scorecard_fields
+					(tenant_id, key, label, group_key, type, choices, weight, question, sort_order, is_system, is_active)
+				VALUES ($1, $2, $3, $4, $5, $6::jsonb, 0, $7, $8, FALSE, TRUE)
+				ON CONFLICT (tenant_id, key) DO NOTHING
+			`, c.TenantID, seed.Key, seed.Label, seed.GroupKey, seed.Type, choices, seed.Question, seed.SortOrder)
 			if err != nil {
 				return errors.Wrap(err, "failed to seed scorecard field %q for tenant %d", seed.Key, c.TenantID)
 			}
