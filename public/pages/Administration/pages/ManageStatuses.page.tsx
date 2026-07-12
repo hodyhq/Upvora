@@ -286,7 +286,7 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
             </div>
           </div>
           <div className="c-scorecard__table-wrap">
-            <table className="c-scorecard__table c-scorecard__table--static text-sm">
+            <table className="c-scorecard__table c-scorecard__table--static c-status-table text-sm">
               <thead>
                 <tr>
                   <th>
@@ -319,28 +319,23 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
               <tbody>
                 {this.state.statuses.map((s) => (
                   <tr key={s.id}>
-                    <td>
-                      <span className="c-status-table__pill" data-color={s.color}>
+                    <td className="c-status-table__labelcell">
+                      <span className="c-status-table__pill" data-color={s.color} title={s.isSystem ? "system status" : undefined}>
                         <span className="c-status-table__dot" />
                         {s.label}
                       </span>
-                      {s.isSystem && (
-                        <span className="text-xs text-muted ml-1">
-                          <Trans id="admin.statuses.table.system">(system)</Trans>
-                        </span>
-                      )}
+                      {s.isSystem && <span className="c-status-table__sys">sys</span>}
                     </td>
                     <td>
                       <code>{s.slug}</code>
                     </td>
                     <td>{s.kind}</td>
                     <td>
-                      <span className="c-status-table__swatch" data-color={s.color} />
-                      {s.color}
+                      <span className="c-status-table__swatch" data-color={s.color} title={s.color} />
                     </td>
-                    <td>{s.showOnHome ? i18n._({ id: "admin.statuses.table.yes", message: "yes" }) : "—"}</td>
-                    <td>{s.showOnRoadmap ? i18n._({ id: "admin.statuses.table.yes", message: "yes" }) : "—"}</td>
-                    <td>{s.filterable ? i18n._({ id: "admin.statuses.table.yes", message: "yes" }) : "—"}</td>
+                    <td className="c-status-table__flag">{s.showOnHome ? "✓" : "—"}</td>
+                    <td className="c-status-table__flag">{s.showOnRoadmap ? "✓" : "—"}</td>
+                    <td className="c-status-table__flag">{s.filterable ? "✓" : "—"}</td>
                     <td>
                       <Toggle active={s.isActive} onToggle={() => this.toggleActive(s)} />
                     </td>

@@ -52,49 +52,49 @@
   }
 }
 
-/* Statuses admin table — new-language treatment */
+/* Statuses admin table — compact so it fits the panel without scrolling */
 .c-status-table {
-  border-collapse: collapse;
-
-  th {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--colors-gray-600);
-    padding: spacing(2) spacing(2);
-  }
-
+  th,
   td {
-    padding: spacing(3) spacing(2);
-    border-top: 1px solid var(--colors-gray-200);
-    vertical-align: middle;
-
-    @include dark-mode {
-      border-top-color: var(--colors-gray-300);
-    }
-  }
-
-  tbody tr {
-    transition: background-color 0.12s ease;
-
-    &:hover {
-      background-color: color-mix(in srgb, var(--colors-gray-900) 3%, transparent);
-    }
+    padding: 8px 8px !important;
+    white-space: nowrap;
   }
 
   code {
-    font-size: 12px;
-    background-color: color-mix(in srgb, var(--colors-gray-900) 6%, transparent);
-    border-radius: 6px;
-    padding: 2px 6px;
+    font-size: 11.5px;
+  }
+
+  td {
+    font-size: 12.5px;
+  }
+
+  &__labelcell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__sys {
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--colors-gray-500);
+    border: 1px solid var(--colors-gray-300);
+    border-radius: 5px;
+    padding: 1px 4px;
+  }
+
+  &__flag {
+    text-align: center;
+    color: var(--colors-gray-600);
   }
 
   &__pill {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.78rem;
+    font-size: 0.74rem;
     font-weight: 650;
     padding: 3px 9px;
     border-radius: 7px;
@@ -113,10 +113,9 @@
 
   &__swatch {
     display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 3px;
-    margin-right: 6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 4px;
     background: var(--st);
     vertical-align: -1px;
   }
@@ -139,39 +138,5 @@
     &[data-color="gray"] {
       --st: #7c8490;
     }
-  }
-}
-
-/* Shared admin content card - every settings tab renders inside this panel */
-.c-admin-content {
-  background-color: var(--colors-white);
-  border: 1px solid var(--colors-gray-200);
-  border-radius: 16px;
-  padding: spacing(6) spacing(7);
-  box-shadow: 0 14px 34px -26px rgba(0, 0, 0, 0.3);
-  min-width: 0;
-
-  @include dark-mode {
-    background-color: var(--colors-white);
-    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 40%);
-    border-color: var(--colors-gray-300);
-  }
-
-  // tame legacy section headings ("OAuth Providers", "Import & Export Tags", ...)
-  h2 {
-    font-size: 1.05rem;
-    font-weight: 750;
-    letter-spacing: -0.01em;
-    color: var(--colors-gray-900);
-    margin-bottom: spacing(2);
-  }
-
-  &--bare {
-    background: none;
-    background-image: none;
-    border: 0;
-    border-radius: 0;
-    padding: 0;
-    box-shadow: none;
   }
 }
