@@ -40,7 +40,6 @@ export interface Post {
   commentsCount: number
   tags: string[]
   isApproved: boolean
-  isInternal: boolean
 }
 
 export interface InternalNote {
@@ -110,6 +109,7 @@ export interface Comment {
   editedAt?: string
   editedBy?: User
   isApproved: boolean
+  isInternal: boolean
 }
 
 export interface Tag {
