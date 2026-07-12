@@ -52,6 +52,32 @@
   }
 }
 
+/* Shared admin content card - every settings tab renders inside this panel.
+   Pages that ship their own panel (statuses, scorecard) opt out via `bare`. */
+.c-admin-content {
+  background-color: var(--colors-white);
+  border: 1px solid var(--colors-gray-200);
+  border-radius: 16px;
+  padding: spacing(6) spacing(7);
+  box-shadow: 0 14px 34px -26px rgba(0, 0, 0, 0.3);
+  min-width: 0;
+
+  @include dark-mode {
+    background-color: var(--colors-white);
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 40%);
+    border-color: var(--colors-gray-300);
+  }
+
+  &--bare {
+    background: none;
+    background-image: none;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+}
+
 /* Statuses admin table — compact so it fits the panel without scrolling */
 .c-status-table {
   th,

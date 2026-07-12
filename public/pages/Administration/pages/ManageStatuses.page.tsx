@@ -54,6 +54,7 @@ const slugify = (s: string): string =>
     .slice(0, 50)
 
 export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPageProps, ManageStatusesPageState> {
+  public bare = true
   public id = "p-admin-statuses"
   public name = "statuses"
   public title = i18n._({ id: "admin.statuses.page.title", message: "Statuses" })
