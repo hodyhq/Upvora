@@ -328,7 +328,7 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
           <VStack spacing={2}>
             {/* Status pill above the title (prototype) */}
             {!editMode && postStatusValue(post) !== "open" && (
-              <div>
+              <div className="align-self-start">
                 <ResponseLozenge status={postStatusValue(post)} response={post.response} size="small" />
               </div>
             )}
