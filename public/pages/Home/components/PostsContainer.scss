@@ -199,6 +199,9 @@
       .c-post__votes,
       .c-post__voteslabel {
         color: #fff;
+        // the CSS stroke property on the base class beats the svg's
+        // stroke="currentColor" attribute - override it explicitly
+        stroke: #fff;
       }
     }
   }
