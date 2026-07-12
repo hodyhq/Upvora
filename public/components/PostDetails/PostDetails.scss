@@ -77,6 +77,12 @@
     align-items: center;
     flex-wrap: wrap;
     row-gap: spacing(2);
+    font-size: 13px;
+
+    .c-username {
+      font-size: 13.5px;
+      font-weight: 650;
+    }
   }
 
   &__vote-section {
@@ -178,7 +184,7 @@
   }
   &__description {
     color: var(--colors-gray-800);
-    font-size: 0.97rem;
+    font-size: 14.5px;
     line-height: 1.65;
   }
 
@@ -203,6 +209,12 @@
 
   &__discussion-header {
     margin-bottom: spacing(2);
+
+    h2 {
+      font-size: 18px;
+      font-weight: 750;
+      letter-spacing: -0.015em;
+    }
   }
 
   &__discussion-count {
@@ -217,13 +229,9 @@
     color: var(--colors-primary-base);
   }
 
-  &__powered-by-mobile {
+  &__powered-by {
     display: block;
     margin-top: spacing(6);
-
-    @include media("lg") {
-      display: none;
-    }
   }
 
   &__action-col {
@@ -361,22 +369,8 @@
   }
 }
 
-@include media("lg") {
-  .p-show-post {
-    display: grid;
-    gap: spacing(6);
-    grid-template-columns: 320px 1fr;
-    grid-template-rows: auto;
-    grid-template-areas:
-      "Action Main"
-      "Action Main";
-
-    &__main-col {
-      grid-area: Main;
-    }
-
-    &__action-col {
-      grid-area: Action;
-    }
-  }
+// single centered column at a comfortable reading measure (prototype width)
+.p-show-post {
+  max-width: 960px;
+  margin-inline: auto;
 }

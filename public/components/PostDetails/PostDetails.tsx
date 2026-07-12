@@ -23,7 +23,6 @@ import { HStack, VStack } from "@fider/components/layout"
 import { Trans } from "@lingui/react/macro"
 import { DeletePostModal } from "@fider/pages/ShowPost/components/DeletePostModal"
 import { ResponseModal } from "@fider/pages/ShowPost/components/ResponseModal"
-import { VotesPanel } from "@fider/pages/ShowPost/components/VotesPanel"
 import { TagsPanel } from "@fider/pages/ShowPost/components/TagsPanel"
 import { ActionButton } from "@fider/pages/ShowPost/components/ActionButton"
 import { t } from "@lingui/macro"
@@ -309,13 +308,6 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
 
   return (
     <div className="p-show-post">
-      {/* Left Sidebar - hidden on mobile, shown on desktop */}
-      <div className="p-show-post__action-col p-show-post__action-col--desktop">
-        <VotesPanel post={post} votes={votes} />
-
-        <PoweredByFider slot="show-post" className="mt-3" />
-      </div>
-
       <div className="p-show-post__main-col">
         {/* Post Card */}
         <div
@@ -506,11 +498,6 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
           )}
         </div>
 
-        {/* Mobile Sidebar - shown after post card on mobile */}
-        <div className="p-show-post__action-col p-show-post__action-col--mobile">
-          <VotesPanel post={post} votes={votes} />
-        </div>
-
         {/* Discussion Section */}
         <div className="p-show-post__discussion-section">
           {/* Discussion Header */}
@@ -540,7 +527,7 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
         </div>
 
         {/* Powered by Fider - bottom of page on mobile only */}
-        <div className="p-show-post__powered-by-mobile">
+        <div className="p-show-post__powered-by">
           <PoweredByFider slot="show-post" />
         </div>
       </div>
