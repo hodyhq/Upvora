@@ -185,12 +185,18 @@ export const ShowComment = (props: ShowCommentProps) => {
   return (
     <div id={`comment-${comment.id}`} className="c-comment">
       {modal()}
-      <div ref={node} className={`c-comment__card ${classList}`}>
+      <div ref={node} className={`c-comment__card ${classList}${comment.isInternal ? " c-comment__card--internal" : ""}`}>
         <div className="mb-1">
           <HStack justify="between">
             <HStack align="center">
               <Avatar user={comment.user} size="small" />
-              <UserName user={comment.user} /> <span className="text-sm text-gray-400">•</span>
+              <UserName user={comment.user} />
+              {comment.isInternal && (
+                <span className="c-internal-badge">
+                  <Trans id="showpost.comment.internal">Internal</Trans>
+                </span>
+              )}
+              <span className="text-sm text-gray-400">•</span>
               <div className="text-xs">
                 <Moment locale={fider.currentLocale} date={comment.createdAt} /> {editedMetadata}
               </div>

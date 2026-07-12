@@ -365,8 +365,9 @@ func PostComment() web.HandlerFunc {
 		}
 
 		addNewComment := &cmd.AddNewComment{
-			Post:    getPost.Result,
-			Content: action.Content,
+			Post:       getPost.Result,
+			Content:    action.Content,
+			IsInternal: action.IsInternal,
 		}
 		if err := bus.Dispatch(c, addNewComment); err != nil {
 			return c.Failure(err)
@@ -383,7 +384,11 @@ func PostComment() web.HandlerFunc {
 			return c.Failure(err)
 		}
 
-		c.Enqueue(tasks.NotifyAboutNewComment(addNewComment.Result, getPost.Result))
+		// Internal comments never notify - subscribers include visitors, and
+		// team-only content must not leak through email/webhook payloads.
+		if !action.IsInternal {
+			c.Enqueue(tasks.NotifyAboutNewComment(addNewComment.Result, getPost.Result))
+		}
 
 		metrics.TotalComments.Inc()
 		return c.Ok(web.Map{

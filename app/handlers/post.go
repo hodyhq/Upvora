@@ -110,18 +110,26 @@ func PostDetails() web.HandlerFunc {
 			return c.Failure(err)
 		}
 
+		data := web.Map{
+			"comments":    getComments.Result,
+			"subscribed":  isSubscribed.Result,
+			"post":        getPost.Result,
+			"tags":        getAllTags.Result,
+			"votes":       listVotes.Result,
+			"attachments": getAttachments.Result,
+		}
+		// Team-only: the shared internal note rides along for collaborators.
+		if c.User() != nil && c.User().IsCollaborator() {
+			note := &query.GetInternalNote{PostID: getPost.Result.ID}
+			if err := bus.Dispatch(c, note); err == nil {
+				data["internalNote"] = note.Result
+			}
+		}
 		return c.Page(http.StatusOK, web.Props{
 			Page:        "ShowPost/ShowPost.page",
 			Title:       getPost.Result.Title,
 			Description: markdown.PlainText(getPost.Result.Description),
-			Data: web.Map{
-				"comments":    getComments.Result,
-				"subscribed":  isSubscribed.Result,
-				"post":        getPost.Result,
-				"tags":        getAllTags.Result,
-				"votes":       listVotes.Result,
-				"attachments": getAttachments.Result,
-			},
+			Data:        data,
 		})
 	}
 }

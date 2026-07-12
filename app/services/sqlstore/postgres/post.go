@@ -42,8 +42,8 @@ var (
 													agg_comments AS (
 															SELECT
 																	post_id,
-																	COUNT(CASE WHEN comments.created_at > CURRENT_DATE - INTERVAL '30 days' AND comments.is_approved = true THEN 1 END) as recent,
-																	COUNT(CASE WHEN comments.is_approved = true THEN 1 END) as all
+																	COUNT(CASE WHEN comments.created_at > CURRENT_DATE - INTERVAL '30 days' AND comments.is_approved = true AND comments.is_internal = false THEN 1 END) as recent,
+																	COUNT(CASE WHEN comments.is_approved = true AND comments.is_internal = false THEN 1 END) as all
 															FROM comments
 															INNER JOIN posts
 															ON posts.id = comments.post_id

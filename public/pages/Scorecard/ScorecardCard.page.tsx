@@ -4,7 +4,8 @@ import IconTag from "@fider/assets/images/heroicons-tagsolid.svg"
 
 import React, { useEffect, useMemo, useRef, useState } from "react"
 import { Button, Header, Icon } from "@fider/components"
-import { ScorecardField, ScorecardFieldChoice, Post, User } from "@fider/models"
+import { InternalNotesPanel } from "@fider/components/PostDetails/InternalNotesPanel"
+import { ScorecardField, ScorecardFieldChoice, Post, User, InternalNote } from "@fider/models"
 import { actions, notify, Fider } from "@fider/services"
 import { computeWeightedScore, bandForScore } from "./ScoreBand"
 
@@ -21,6 +22,7 @@ interface Scorecard {
 interface ScorecardCardPageProps {
   scorecard: Scorecard
   assigneeNames?: string[]
+  internalNote?: InternalNote
 }
 
 const GROUP_ORDER = ["intake", "context", "workflow", "ownership", "classification", "scoring", "decision"] as const
@@ -375,6 +377,12 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
               </div>
             )}
           </div>
+
+          {post && (
+            <div className="mb-4">
+              <InternalNotesPanel postNumber={post.number} initialNote={props.internalNote} />
+            </div>
+          )}
 
           <div className="c-scorecard__gauge c-scorecard__gauge--ring">
             {(() => {

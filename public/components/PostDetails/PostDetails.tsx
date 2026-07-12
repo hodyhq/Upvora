@@ -2,7 +2,7 @@ import "./PostDetails.scss"
 
 import React, { useState, useEffect, useCallback } from "react"
 
-import { Comment, Post, Tag, Vote, CurrentUser, PostStatus, postStatusValue } from "@fider/models"
+import { Comment, Post, Tag, Vote, CurrentUser, PostStatus, postStatusValue, InternalNote } from "@fider/models"
 import { actions, cache, clearUrlHash, Failure, Fider, notify, timeAgo } from "@fider/services"
 import IconDuplicate from "@fider/assets/images/heroicons-duplicate.svg"
 import { i18n } from "@lingui/core"
@@ -25,6 +25,7 @@ import { DeletePostModal } from "@fider/pages/ShowPost/components/DeletePostModa
 import { ResponseModal } from "@fider/pages/ShowPost/components/ResponseModal"
 import { TagsPanel } from "@fider/pages/ShowPost/components/TagsPanel"
 import { ActionButton } from "@fider/pages/ShowPost/components/ActionButton"
+import { InternalNotesPanel } from "@fider/components/PostDetails/InternalNotesPanel"
 import { t } from "@lingui/macro"
 import { useFider } from "@fider/hooks"
 import { useAttachments } from "@fider/hooks/useAttachments"
@@ -40,6 +41,7 @@ interface PostDetailsProps {
   initialTags?: Tag[]
   initialVotes?: Vote[]
   initialAttachments?: string[]
+  initialInternalNote?: InternalNote
 }
 
 const oneHour = 3600
@@ -497,6 +499,11 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
             </div>
           )}
         </div>
+
+        {/* Team-only shared note - synced with the linked scorecard */}
+        {fider.session.isAuthenticated && fider.session.user.isCollaborator && (
+          <InternalNotesPanel postNumber={post.number} initialNote={props.initialInternalNote} />
+        )}
 
         {/* Discussion Section */}
         <div className="p-show-post__discussion-section">

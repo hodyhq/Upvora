@@ -40,6 +40,13 @@ export interface Post {
   commentsCount: number
   tags: string[]
   isApproved: boolean
+  isInternal: boolean
+}
+
+export interface InternalNote {
+  content: string
+  updatedAt: string
+  updatedByName: string
 }
 
 // Returns the effective status slug for a post. Kept as a small helper so

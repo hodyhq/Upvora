@@ -164,6 +164,8 @@ func routes(r *web.Engine) *web.Engine {
 		// From this step, only Collaborators and Administrators are allowed
 		ui.Use(middlewares.IsAuthorized(enum.RoleCollaborator, enum.RoleAdministrator))
 
+		ui.Get("/_api/posts/:number/internal-note", handlers.GetInternalNote())
+		ui.Put("/_api/posts/:number/internal-note", handlers.SetInternalNote())
 		ui.Get("/scorecard", handlers.ScorecardPage())
 		ui.Get("/scorecard/:id", handlers.ScorecardCardPage())
 		ui.Post("/_api/scorecards", handlers.CreateScorecard())

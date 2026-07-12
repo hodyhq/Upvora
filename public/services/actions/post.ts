@@ -1,5 +1,5 @@
 import { http, Result, querystring } from "@fider/services"
-import { Post, Vote, ImageUpload, UserNames, Comment } from "@fider/models"
+import { Post, Vote, ImageUpload, UserNames, Comment, InternalNote } from "@fider/models"
 
 export const getAllPosts = async (): Promise<Result<Post[]>> => {
   return await http.get<Post[]>("/api/v1/posts")
@@ -87,8 +87,8 @@ export const getTaggableUsers = async (userFilter: string): Promise<Result<UserN
   return http.get<UserNames[]>(`/api/v1/taggable-users${querystring.stringify({ query: userFilter })}`)
 }
 
-export const createComment = async (postNumber: number, content: string, attachments: ImageUpload[]): Promise<Result> => {
-  return http.post(`/api/v1/posts/${postNumber}/comments`, { content, attachments }).then(http.event("comment", "create"))
+export const createComment = async (postNumber: number, content: string, attachments: ImageUpload[], isInternal = false): Promise<Result> => {
+  return http.post(`/api/v1/posts/${postNumber}/comments`, { content, attachments, isInternal }).then(http.event("comment", "create"))
 }
 
 export const updateComment = async (postNumber: number, commentID: number, content: string, attachments: ImageUpload[]): Promise<Result> => {
@@ -168,4 +168,12 @@ export const approveCommentAndVerify = async (commentID: number): Promise<Result
 
 export const declineCommentAndBlock = async (commentID: number): Promise<Result> => {
   return http.post(`/api/v1/admin/moderation/comments/${commentID}/decline-and-block`).then(http.event("comment", "decline-and-block"))
+}
+
+export const getInternalNote = async (postNumber: number): Promise<Result<InternalNote>> => {
+  return http.get<InternalNote>(`/_api/posts/${postNumber}/internal-note`)
+}
+
+export const setInternalNote = async (postNumber: number, content: string): Promise<Result<InternalNote>> => {
+  return http.put<InternalNote>(`/_api/posts/${postNumber}/internal-note`, { content })
 }
