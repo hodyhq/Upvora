@@ -165,8 +165,8 @@
     }
 
     &[data-voted="true"] {
-      background-color: var(--colors-primary-base);
-      background-image: var(--brand-grad);
+      background-color: var(--accent-votes, var(--colors-primary-base));
+      background-image: var(--accent-votes-grad, var(--brand-grad));
       border-color: transparent;
       box-shadow: 0 8px 18px -10px var(--brand-glow);
 

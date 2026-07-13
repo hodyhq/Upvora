@@ -18,7 +18,8 @@ const GeneralSettingsPage = () => {
   const [railCtaHeading, setRailCtaHeading] = useState<string>(fider.session.tenant.railCtaHeading ?? "")
   const [railCtaText, setRailCtaText] = useState<string>(fider.session.tenant.railCtaText ?? "")
   const [railCtaButton, setRailCtaButton] = useState<string>(fider.session.tenant.railCtaButton ?? "")
-  const [defaultTheme, setDefaultTheme] = useState<string>(fider.session.tenant.defaultTheme || "light")
+  // Default appearance moved to Admin - Theme; the value still rides along on general saves
+  const defaultTheme = fider.session.tenant.defaultTheme || "light"
   const [logo, setLogo] = useState<ImageUpload | undefined>(undefined)
   const [cname, setCNAME] = useState<string>(fider.session.tenant.cname)
   const [locale, setLocale] = useState<string>(fider.session.tenant.locale)
@@ -146,20 +147,6 @@ const GeneralSettingsPage = () => {
         >
           <p className="text-muted">Text for the sidebar button. Leave empty to hide the button entirely.</p>
         </Input>
-
-        <Select
-          label="Default appearance"
-          field="defaultTheme"
-          defaultValue={defaultTheme}
-          options={[
-            { value: "light", label: "Light" },
-            { value: "dark", label: "Dark" },
-            { value: "system", label: "Match visitor's system" },
-          ]}
-          onChange={(o) => setDefaultTheme(o?.value || "light")}
-        >
-          <p className="text-muted">The theme first-time visitors see. Anyone can still switch with the theme toggle; their choice sticks.</p>
-        </Select>
 
         <Input
           field="invitation"

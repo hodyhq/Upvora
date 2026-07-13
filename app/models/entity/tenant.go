@@ -32,6 +32,8 @@ type Tenant struct {
 	RailCtaText         string            `json:"railCtaText"`
 	RailCtaButton       string            `json:"railCtaButton"`
 	DefaultTheme        string            `json:"defaultTheme"`
+	ThemePrimary        string            `json:"themePrimary"`
+	ThemeAccents        map[string]string `json:"themeAccents,omitempty"`
 	SiteBannerEnabled   bool              `json:"siteBannerEnabled"`
 	SiteBannerMessage   string            `json:"siteBannerMessage"`
 	SiteBannerVariant   string            `json:"siteBannerVariant"`

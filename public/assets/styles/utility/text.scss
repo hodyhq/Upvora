@@ -80,7 +80,7 @@ pre:last-child {
 }
 
 .text-link {
-  color: var(--colors-primary-base);
+  color: var(--accent-links, var(--colors-primary-base));
 }
 
 .nowrap {

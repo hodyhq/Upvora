@@ -165,6 +165,8 @@ func routes(r *web.Engine) *web.Engine {
 		// From this step, only Collaborators and Administrators are allowed
 		ui.Use(middlewares.IsAuthorized(enum.RoleCollaborator, enum.RoleAdministrator))
 
+		ui.Get("/admin/theme", handlers.ManageThemePage())
+		ui.Post("/_api/admin/settings/theme", handlers.UpdateTenantTheme())
 		ui.Get("/admin/products", handlers.ManageProductsPage())
 		ui.Get("/_api/admin/products", handlers.ListProducts())
 		ui.Post("/_api/admin/products", handlers.CreateProduct())

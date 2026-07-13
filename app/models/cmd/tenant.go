@@ -107,3 +107,11 @@ type CancelTenantDeletion struct {
 type DeleteTenant struct {
 	TenantID int
 }
+
+// SetTenantTheme stores the token-based theme: brand primary, per-function
+// accents, and the default appearance.
+type SetTenantTheme struct {
+	Primary      string
+	Accents      map[string]string
+	DefaultTheme string
+}

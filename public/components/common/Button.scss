@@ -52,9 +52,9 @@
     color: #fff; // literal: the white token flips dark in dark mode
     // Solid fill is the reliable base (always visible); the gradient rides on top
     // as background-image, so if it ever fails to resolve the button still shows.
-    background-color: var(--colors-primary-base);
-    background-image: var(--brand-grad);
-    border: 1px solid var(--colors-primary-base);
+    background-color: var(--accent-buttons, var(--colors-primary-base));
+    background-image: var(--accent-buttons-grad, var(--brand-grad));
+    border: 1px solid var(--accent-buttons, var(--colors-primary-base));
     box-shadow: 0 6px 16px -8px var(--brand-glow), 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 
     &:hover {

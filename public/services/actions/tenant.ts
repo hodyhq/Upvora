@@ -183,3 +183,13 @@ export const updateProduct = async (productId: number, input: ProductInput): Pro
 export const deleteProduct = async (productId: number): Promise<Result> => {
   return await http.delete(`/_api/admin/products/${productId}`)
 }
+
+export interface UpdateTenantThemeRequest {
+  primary: string
+  accents: { [key: string]: string }
+  defaultTheme: string
+}
+
+export const updateTenantTheme = async (request: UpdateTenantThemeRequest): Promise<Result> => {
+  return await http.post("/_api/admin/settings/theme", request)
+}

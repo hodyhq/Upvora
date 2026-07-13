@@ -87,6 +87,7 @@ func (s Service) Init() {
 	bus.AddHandler(getProductBySlug)
 	bus.AddHandler(countPostPerProduct)
 	bus.AddHandler(setPostProduct)
+	bus.AddHandler(setTenantTheme)
 	bus.AddHandler(createProduct)
 	bus.AddHandler(updateProduct)
 	bus.AddHandler(deleteProduct)
