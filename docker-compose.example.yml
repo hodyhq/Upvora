@@ -1,0 +1,86 @@
+# Upvora — production compose with one-click updates included.
+#
+#   curl -LO https://raw.githubusercontent.com/hodyhq/Upvora/main/docker-compose.example.yml
+#   mv docker-compose.example.yml docker-compose.yml
+#   edit the environment below (BASE_URL, secrets, SMTP), then: docker compose up -d
+#
+# The `updater` sidecar powers the admin System panel's "Update now" button:
+# the app writes an empty trigger file to a shared volume, the sidecar pulls
+# the new image and recreates the app. The app container itself never touches
+# the Docker socket. Delete the updater service (and the two updater lines on
+# the app service) if you'd rather update by hand.
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: upvora
+      POSTGRES_PASSWORD: change-me
+      POSTGRES_DB: upvora
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U upvora"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    image: ghcr.io/hodyhq/upvora:latest # or pin a release tag
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    volumes:
+      - updater-shared:/var/upvora-updater
+    environment:
+      BASE_URL: https://feedback.yourdomain.com
+      DATABASE_URL: postgres://upvora:change-me@db:5432/upvora?sslmode=disable
+      JWT_SECRET: generate-a-long-random-secret
+      EMAIL_NOREPLY: noreply@yourdomain.com
+      EMAIL_SMTP_HOST: smtp.yourprovider.com
+      EMAIL_SMTP_PORT: "587"
+      EMAIL_SMTP_USERNAME: your-smtp-user
+      EMAIL_SMTP_PASSWORD: your-smtp-password
+      EMAIL_SMTP_ENABLE_STARTTLS: "true"
+      UPDATER_SHARED_DIR: /var/upvora-updater
+
+  # One-click updates. Self-configuring: it discovers its own compose project
+  # name through the Docker socket, so it works whatever your directory is
+  # called. The trigger file carries no content — it is a doorbell, and this
+  # sidecar only ever runs its two baked-in commands.
+  updater:
+    image: docker:cli
+    restart: unless-stopped
+    working_dir: /compose
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/compose
+      - updater-shared:/shared
+    entrypoint:
+      - sh
+      - -c
+      - |
+        PROJECT=$$(docker inspect "$$(hostname)" --format '{{ index .Config.Labels "com.docker.compose.project" }}')
+        echo "[updater] project '$$PROJECT' — watching /shared for update requests"
+        while true; do
+          if [ -f /shared/update-requested ]; then
+            rm -f /shared/update-requested
+            echo running > /shared/status
+            {
+              echo "[updater] update requested — pulling app image"
+              docker compose -p "$$PROJECT" pull app &&
+                echo "[updater] recreating app container" &&
+                docker compose -p "$$PROJECT" up -d app &&
+                echo "[updater] done"
+            } > /shared/log 2>&1 && echo done > /shared/status || echo error > /shared/status
+          fi
+          sleep 5
+        done
+
+volumes:
+  db-data:
+  updater-shared:

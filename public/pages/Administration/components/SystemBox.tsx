@@ -105,6 +105,20 @@ export const SystemBox = () => {
               {armed ? "Click again to confirm" : "Update now"}
             </button>
           )}
+          {status && !status.updaterConfigured && (
+            <details className="c-system-box__recovery">
+              <summary>Enable one-click updates</summary>
+              <p>
+                Add the <code>updater</code> sidecar from the repo&apos;s{" "}
+                <a href="https://github.com/hodyhq/Upvora/blob/main/docker-compose.example.yml" target="_blank" rel="noopener noreferrer">
+                  docker-compose.example.yml
+                </a>{" "}
+                to your compose file — copy the <code>updater</code> service, the <code>updater-shared</code> volume, and the two <code>updater</code> lines on
+                the <code>app</code> service — then <code>docker compose up -d</code>. An <b>Update now</b> button appears here. The web app never gets the
+                Docker socket; only the sidecar does.
+              </p>
+            </details>
+          )}
         </div>
       )}
 
