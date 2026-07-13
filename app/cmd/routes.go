@@ -139,6 +139,7 @@ func routes(r *web.Engine) *web.Engine {
 	r.Use(middlewares.CheckTenantPrivacy())
 
 	r.Get("/", handlers.Index())
+	r.Get("/p/:productSlug", handlers.ProductBoard())
 	r.Get("/roadmap", handlers.RoadmapPage())
 	r.Get("/posts/:number", handlers.PostDetails())
 	r.Get("/posts/:number/:slug", handlers.PostDetails())
@@ -164,7 +165,6 @@ func routes(r *web.Engine) *web.Engine {
 		// From this step, only Collaborators and Administrators are allowed
 		ui.Use(middlewares.IsAuthorized(enum.RoleCollaborator, enum.RoleAdministrator))
 
-		ui.Get("/p/:productSlug", handlers.ProductBoard())
 		ui.Get("/admin/products", handlers.ManageProductsPage())
 		ui.Get("/_api/admin/products", handlers.ListProducts())
 		ui.Post("/_api/admin/products", handlers.CreateProduct())
