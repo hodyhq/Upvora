@@ -297,6 +297,11 @@
     gap: 18px;
     flex-wrap: wrap;
     margin: 2px 0 6px;
+    // Same card treatment as the idea box below it.
+    background: var(--colors-gray-100);
+    border: 1px solid var(--colors-gray-200);
+    border-radius: 10px;
+    padding: 10px 14px;
   }
 
   &__ring {

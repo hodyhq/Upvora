@@ -1,5 +1,5 @@
 -- Catch-up migration: replays the two v0.36.0 upstream migrations whose
--- filenames sort BEFORE our hcm-beta migrations and therefore got skipped
+-- filenames sort BEFORE our early-fork migrations and therefore got skipped
 -- on installs that ran ours first.
 --
 -- The two upstream files are:
@@ -8,7 +8,7 @@
 --
 -- Both are pure ADD COLUMN. The IF NOT EXISTS guards make this safe on
 -- clean installs where upstream migrations ran first (the columns will
--- already exist and the statements are no-ops) and on hcm-beta installs
+-- already exist and the statements are no-ops) and on early-fork installs
 -- where they were skipped (we add them now).
 
 ALTER TABLE tenants ADD COLUMN IF NOT EXISTS scheduled_deletion_at TIMESTAMPTZ NULL;

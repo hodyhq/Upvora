@@ -4,8 +4,8 @@
 .c-internal-notes {
   background-color: color-mix(in srgb, #f59e0b 7%, var(--colors-white));
   border: 1px solid color-mix(in srgb, #f59e0b 28%, transparent);
-  border-radius: 14px;
-  padding: spacing(4);
+  border-radius: 10px;
+  padding: spacing(2) spacing(3);
 
   @include dark-mode {
     background-color: color-mix(in srgb, #f59e0b 9%, var(--colors-white));
@@ -16,7 +16,7 @@
     align-items: baseline;
     justify-content: space-between;
     gap: 10px;
-    margin-bottom: spacing(2);
+    margin-bottom: spacing(1);
   }
 
   &__title {
@@ -42,16 +42,16 @@
 
   &__textarea {
     width: 100%;
-    min-height: 88px;
+    min-height: 44px;
     resize: vertical;
     border: 1px solid var(--colors-gray-200);
     border-radius: 10px;
     background-color: var(--colors-white);
     color: var(--colors-gray-900);
     font: inherit;
-    font-size: 14px;
-    line-height: 1.55;
-    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 6px 10px;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 
     @include dark-mode {
