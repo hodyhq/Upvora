@@ -209,11 +209,13 @@ const RoadmapBoard = (props: RoadmapPageProps) => {
   const [columns, setColumns] = useState<ColumnState[]>((props.columns || []).map((c) => ({ status: c.status, posts: c.posts, limit: ROADMAP_DEFAULT_LIMIT })))
   const tags = props.tags || []
   const [query, setQuery] = useState("")
+  const [productFilter, setProductFilter] = useState(0)
   const [tagFilter, setTagFilter] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState<{ [slug: string]: boolean }>({})
   const canDrag = Fider.session.isAuthenticated && Fider.session.user.isCollaborator
 
   const matchesFilters = (p: Post): boolean => {
+    if (productFilter > 0 && p.product?.id !== productFilter) return false
     if (tagFilter && p.tags.indexOf(tagFilter) < 0) return false
     if (query) {
       const q = query.toLowerCase()
@@ -312,6 +314,16 @@ const RoadmapBoard = (props: RoadmapPageProps) => {
         </div>
         <VStack spacing={4}>
           <div className="c-roadmap-toolbar">
+            {(Fider.session.tenant.products?.length ?? 0) > 0 && (
+              <select className="c-roadmap-toolbar__product" value={productFilter} onChange={(e) => setProductFilter(parseInt(e.target.value, 10) || 0)}>
+                <option value={0}>All products</option>
+                {(Fider.session.tenant.products ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            )}
             <input className="c-roadmap-toolbar__search" placeholder="Search the roadmap" value={query} onChange={(e) => setQuery(e.target.value)} />
             <div className="c-roadmap-toolbar__tags">
               {tags.map((t) => (

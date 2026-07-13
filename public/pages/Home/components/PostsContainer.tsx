@@ -2,7 +2,7 @@ import "./PostsContainer.scss"
 
 import React from "react"
 
-import { Post, Tag, CurrentUser } from "@fider/models"
+import { Post, Tag, CurrentUser, Product } from "@fider/models"
 import { Loader, Input } from "@fider/components"
 import { actions, navigator, notify, querystring } from "@fider/services"
 import IconSearch from "@fider/assets/images/heroicons-search.svg"
@@ -19,6 +19,7 @@ interface PostsContainerProps {
   tags: Tag[]
   countPerStatus: { [key: string]: number }
   onPostClick?: (postNumber: number, slug: string) => void
+  product?: Product
 }
 
 interface PostsContainerState {
@@ -115,11 +116,13 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
         moderation = "pending"
       }
 
-      actions.searchPosts({ query, view: view, limit, tags, statuses: actualStatuses, myVotes, myPosts, noTags, moderation }).then((response) => {
-        if (response.ok && this.state.loading) {
-          this.setState({ loading: false, posts: response.data })
-        }
-      })
+      actions
+        .searchPosts({ query, view: view, limit, tags, statuses: actualStatuses, myVotes, myPosts, noTags, moderation, product: this.props.product?.id })
+        .then((response) => {
+          if (response.ok && this.state.loading) {
+            this.setState({ loading: false, posts: response.data })
+          }
+        })
     }, 500)
   }
 
@@ -208,6 +211,7 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
             emptyText={i18n._({ id: "home.postscontainer.label.noresults", message: "No results matched your search, try something different." })}
             onPostClick={this.props.onPostClick}
             onVote={this.handleVote}
+            hideProductChip={!!this.props.product}
           />
           {this.state.loading && <Loader />}
           {showMoreLink && (

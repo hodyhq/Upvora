@@ -163,3 +163,23 @@ export const requestTenantDeletion = async (subdomain: string): Promise<Result<R
 export const cancelTenantDeletion = async (): Promise<Result> => {
   return await http.post("/_api/admin/tenant/cancel-deletion")
 }
+
+export interface ProductInput {
+  name: string
+  description: string
+  color: string
+  sortOrder: number
+  isActive?: boolean
+}
+
+export const createProduct = async (input: ProductInput & { slug: string }): Promise<Result<unknown>> => {
+  return await http.post("/_api/admin/products", input)
+}
+
+export const updateProduct = async (productId: number, input: ProductInput): Promise<Result> => {
+  return await http.put(`/_api/admin/products/${productId}`, input)
+}
+
+export const deleteProduct = async (productId: number): Promise<Result> => {
+  return await http.delete(`/_api/admin/products/${productId}`)
+}

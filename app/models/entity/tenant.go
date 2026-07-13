@@ -48,6 +48,7 @@ type Tenant struct {
 	ScorecardTriggerStatusSlug string `json:"scorecardTriggerStatusSlug"`
 	Statuses            []*Status         `json:"statuses,omitempty"`
 	ScorecardFields     []*ScorecardField `json:"scorecardFields,omitempty"`
+	Products            []*Product        `json:"products,omitempty"`
 	// ScheduledDeletionAt is set when the account owner has requested deletion of the whole
 	// site. The tenant stays active during the grace window; a background job performs the
 	// hard delete once this time passes. Not exposed to clients.

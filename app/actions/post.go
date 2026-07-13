@@ -25,6 +25,7 @@ type CreateNewPost struct {
 	Description string             `json:"description"`
 	TagSlugs    []string           `json:"tags"`
 	Attachments []*dto.ImageUpload `json:"attachments"`
+	ProductID   int                `json:"productId"`
 
 	Tags []*entity.Tag
 }
@@ -64,6 +65,22 @@ func (action *CreateNewPost) IsAuthorized(ctx context.Context, user *entity.User
 // Validate if current model is valid
 func (action *CreateNewPost) Validate(ctx context.Context, user *entity.User) *validate.Result {
 	result := validate.Success()
+
+	if action.ProductID > 0 {
+		products := &query.ListActiveProducts{}
+		valid := false
+		if err := bus.Dispatch(ctx, products); err == nil {
+			for _, p := range products.Result {
+				if p.ID == action.ProductID {
+					valid = true
+					break
+				}
+			}
+		}
+		if !valid {
+			result.AddFieldFailure("productId", "Pick a valid product.")
+		}
+	}
 
 	re := regexp.MustCompile(`\s+`)
 	normalizedTitle := strings.TrimSpace(re.ReplaceAllString(action.Title, " "))

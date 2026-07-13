@@ -5,6 +5,7 @@ import (
 )
 
 type AddNewPost struct {
+	ProductID int // 0 = General (unassigned)
 	Title       string
 	Description string
 

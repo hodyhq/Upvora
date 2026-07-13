@@ -2,14 +2,14 @@ import "./ShareFeedback.scss"
 
 import React, { useEffect, useRef, useState } from "react"
 import { SignInControl } from "@fider/components/common/SignInControl"
-import { Modal, CloseIcon, Form, Button, Input, LegalFooter } from "@fider/components/common"
+import { Modal, CloseIcon, Form, Button, Input, Select, LegalFooter } from "@fider/components/common"
 import { Markdown } from "@fider/components/common/Markdown"
 import { useFider } from "@fider/hooks"
 import { Trans } from "@lingui/react/macro"
 import { actions, Failure, querystring, classSet, cache } from "@fider/services"
 import { plainText } from "@fider/services/markdown"
 import { i18n } from "@lingui/core"
-import { Tag } from "@fider/models"
+import { Tag, Product } from "@fider/models"
 import { SimilarPosts } from "../components/SimilarPosts"
 import { TagsSelect } from "@fider/components/common/TagsSelect"
 import CommentEditor from "@fider/components/common/form/CommentEditor"
@@ -31,11 +31,14 @@ interface ShareFeedbackProps {
   placeholder: string
   onClose: () => void
   tags: Tag[]
+  product?: Product
 }
 
 export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
   const fider = useFider()
   const { isOpen, onClose } = props
+  const tenantProducts = fider.session.tenant.products ?? []
+  const [productId, setProductId] = useState<number>(props.product?.id ?? tenantProducts[0]?.id ?? 0)
 
   const getTagsCachedValue = (): Tag[] => {
     if (!canEditTags) {
@@ -182,7 +185,8 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
           title,
           description,
           attachments,
-          tags.map((tag) => tag.slug)
+          tags.map((tag) => tag.slug),
+          productId
         ),
         minDelay,
       ])
@@ -255,6 +259,15 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
                 />
               </div>
               <SimilarPosts title={title} tags={props.tags} />
+              {tenantProducts.length > 0 && (
+                <Select
+                  field="productId"
+                  label={i18n._({ id: "newpost.modal.product.label", message: "Product" })}
+                  defaultValue={String(productId)}
+                  options={tenantProducts.map((p) => ({ value: String(p.id), label: p.name }))}
+                  onChange={(o) => setProductId(parseInt(o?.value ?? "0", 10) || 0)}
+                />
+              )}
               <Input
                 field="title"
                 inputRef={titleRef}

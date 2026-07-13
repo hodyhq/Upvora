@@ -1,0 +1,94 @@
+@use "~@fider/assets/styles/variables.scss" as *;
+
+.c-prodsw {
+  position: relative;
+
+  &__btn {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+    color: var(--colors-gray-900);
+    background-color: color-mix(in srgb, var(--colors-gray-900) 4%, transparent);
+    border: 1px solid var(--colors-gray-300);
+    border-radius: 10px;
+    padding: 6px 11px;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+
+    &:hover {
+      border-color: var(--colors-primary-base);
+    }
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 3px;
+    flex: 0 0 auto;
+  }
+
+  &__all {
+    width: 8px;
+    height: 8px;
+    border-radius: 3px;
+    flex: 0 0 auto;
+    background: conic-gradient(#f97316 0 25%, #38bdf8 25% 50%, #a78bfa 50% 75%, #22c55e 75%);
+  }
+
+  &__caret {
+    width: 8px;
+    height: 8px;
+    border-right: 1.8px solid var(--colors-gray-500);
+    border-bottom: 1.8px solid var(--colors-gray-500);
+    transform: rotate(45deg) translateY(-2px);
+  }
+
+  &__menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 220px;
+    background-color: var(--colors-white);
+    border: 1px solid var(--colors-gray-300);
+    border-radius: 12px;
+    padding: 6px;
+    box-shadow: 0 24px 50px -18px rgba(0, 0, 0, 0.45);
+    z-index: 60;
+
+    a {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--colors-gray-700);
+      padding: 8px 10px;
+      border-radius: 8px;
+      text-decoration: none;
+
+      &:hover {
+        background-color: color-mix(in srgb, var(--colors-gray-900) 6%, transparent);
+        color: var(--colors-gray-900);
+      }
+
+      &[aria-current="true"] {
+        color: var(--colors-gray-900);
+        background-color: color-mix(in srgb, var(--colors-primary-base) 10%, transparent);
+      }
+    }
+
+    hr {
+      border: 0;
+      border-top: 1px solid var(--colors-gray-200);
+      margin: 6px 4px;
+    }
+  }
+
+  &__manage {
+    color: var(--colors-primary-base) !important;
+  }
+}

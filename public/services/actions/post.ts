@@ -23,6 +23,7 @@ export interface SearchPostsParams {
   myPosts?: boolean
   statuses?: string[]
   moderation?: string
+  product?: number
 }
 
 export const searchPosts = async (params: SearchPostsParams): Promise<Result<Post[]>> => {
@@ -33,6 +34,7 @@ export const searchPosts = async (params: SearchPostsParams): Promise<Result<Pos
     view: params.view,
     limit: params.limit,
     moderation: params.moderation,
+    product: params.product,
   })
   if (params.myVotes) {
     qsParams += `&myvotes=true`
@@ -130,8 +132,14 @@ interface CreatePostResponse {
   isApproved: boolean
 }
 
-export const createPost = async (title: string, description: string, attachments: ImageUpload[], tags: string[]): Promise<Result<CreatePostResponse>> => {
-  return http.post<CreatePostResponse>(`/api/v1/posts`, { title, description, attachments, tags }).then(http.event("post", "create"))
+export const createPost = async (
+  title: string,
+  description: string,
+  attachments: ImageUpload[],
+  tags: string[],
+  productId = 0
+): Promise<Result<CreatePostResponse>> => {
+  return http.post<CreatePostResponse>(`/api/v1/posts`, { title, description, attachments, tags, productId }).then(http.event("post", "create"))
 }
 
 export const updatePost = async (postNumber: number, title: string, description: string, attachments: ImageUpload[]): Promise<Result> => {

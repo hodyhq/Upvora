@@ -82,6 +82,13 @@ func (s Service) Init() {
 	bus.AddHandler(getCommentByID)
 	bus.AddHandler(getCommentsByPost)
 	bus.AddHandler(getInternalNote)
+	bus.AddHandler(listActiveProducts)
+	bus.AddHandler(listAllProducts)
+	bus.AddHandler(getProductBySlug)
+	bus.AddHandler(countPostPerProduct)
+	bus.AddHandler(createProduct)
+	bus.AddHandler(updateProduct)
+	bus.AddHandler(deleteProduct)
 	bus.AddHandler(setInternalNote)
 
 	bus.AddHandler(countUsers)

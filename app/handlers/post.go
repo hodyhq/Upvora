@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/getfider/fider/app/models/entity"
 	"github.com/getfider/fider/app/models/query"
 	"github.com/getfider/fider/app/pkg/bus"
 	"github.com/getfider/fider/app/pkg/csv"
@@ -15,6 +16,14 @@ import (
 // Index is the default home page
 func Index() web.HandlerFunc {
 	return func(c *web.Context) error {
+		return renderBoard(c, nil)
+	}
+}
+
+// renderBoard renders the home board, optionally scoped to one product
+// (the /p/:slug routes). Shared by Index and ProductBoard.
+func renderBoard(c *web.Context, product *entity.Product) error {
+	{
 		c.SetCanonicalURL("")
 
 		searchPosts := &query.SearchPosts{
@@ -56,6 +65,14 @@ func Index() web.HandlerFunc {
 		searchPosts.SetStatusesFromStrings(actualStatuses)
 		getAllTags := &query.GetAllTags{}
 		countPerStatus := &query.CountPostPerStatus{}
+		countPerProduct := &query.CountPostPerProduct{}
+		if len(c.Tenant().Products) > 0 {
+			_ = bus.Dispatch(c, countPerProduct)
+		}
+		if product != nil {
+			searchPosts.ProductID = product.ID
+			countPerStatus.ProductID = product.ID
+		}
 
 		if err := bus.Dispatch(c, searchPosts, getAllTags, countPerStatus); err != nil {
 			return c.Failure(err)
@@ -73,6 +90,12 @@ func Index() web.HandlerFunc {
 			"posts":            searchPosts.Result,
 			"tags":             getAllTags.Result,
 			"countPerStatus":   countPerStatus.Result,
+		}
+		if product != nil {
+			data["product"] = product
+		}
+		if countPerProduct.Result != nil {
+			data["countPerProduct"] = countPerProduct.Result
 		}
 
 		return c.Page(http.StatusOK, web.Props{

@@ -5,6 +5,7 @@ import { HStack } from "./layout"
 import { Trans } from "@lingui/react/macro"
 import { i18n } from "@lingui/core"
 import IconRss from "@fider/assets/images/heroicons-rss.svg"
+import { ProductSwitcher } from "./ProductSwitcher"
 import "./Header.scss"
 
 interface HeaderProps {
@@ -19,7 +20,7 @@ export const Header = (props: HeaderProps) => {
   const pathname = typeof window !== "undefined" && window.location && window.location.pathname ? window.location.pathname : "/"
   const isRoadmapActive = pathname === "/roadmap"
   const isScorecardActive = pathname === "/scorecard" || pathname.startsWith("/scorecard/")
-  const isFeedbackActive = !isRoadmapActive && !isScorecardActive
+  const isFeedbackActive = pathname === "/" || pathname.startsWith("/p/")
   const showScorecardLink =
     fider.session.tenant.isScorecardEnabled && fider.session.isAuthenticated && (fider.session.user.isCollaborator || fider.session.user.isAdministrator)
 
@@ -47,6 +48,7 @@ export const Header = (props: HeaderProps) => {
               <TenantLogo size={100} />
               <h1 className="text-header">{fider.session.tenant.name}</h1>
             </a>
+            <ProductSwitcher />
             <HStack spacing={4} className="c-header__nav flex-items-center">
               <a href="/" className={`c-header__nav-link ${isFeedbackActive ? "c-header__nav-link--active" : ""}`}>
                 <Trans id="header.nav.feedback">Board</Trans>

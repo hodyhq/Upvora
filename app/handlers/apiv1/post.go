@@ -61,6 +61,9 @@ func SearchPosts() web.HandlerFunc {
 			Tags:             c.QueryParamAsArray("tags"),
 			ModerationFilter: c.QueryParam("moderation"),
 		}
+		if productID, err := c.QueryParamAsInt("product"); err == nil {
+			searchPosts.ProductID = productID
+		}
 		if myVotesOnly, err := c.QueryParamAsBool("myvotes"); err == nil {
 			searchPosts.MyVotesOnly = myVotesOnly
 		}
@@ -108,6 +111,7 @@ func CreatePost() web.HandlerFunc {
 		newPost := &cmd.AddNewPost{
 			Title:       action.Title,
 			Description: appendUnreferencedAttachments(action.Description, action.Attachments),
+			ProductID:   action.ProductID,
 		}
 		err := bus.Dispatch(c, newPost)
 		if err != nil {

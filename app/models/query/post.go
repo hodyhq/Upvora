@@ -12,6 +12,7 @@ type PostIsReferenced struct {
 
 // CountPostPerStatus keyed by tenant status slug.
 type CountPostPerStatus struct {
+	ProductID int // 0 = all products
 	Result map[string]int
 }
 
@@ -43,6 +44,7 @@ type SearchPosts struct {
 	NoTagsOnly       bool
 	MyPostsOnly      bool
 	ModerationFilter string // "pending", "approved", or empty (all)
+	ProductID        int    // 0 = all products
 
 	Result []*entity.Post
 }

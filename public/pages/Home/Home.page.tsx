@@ -3,7 +3,7 @@ import NoDataIllustration from "@fider/assets/images/undraw-no-data.svg"
 import IconArrowLeft from "@fider/assets/images/heroicons-arrowleft.svg"
 
 import React, { useEffect, useState, useRef } from "react"
-import { Post, Tag, PostStatus } from "@fider/models"
+import { Post, Tag, PostStatus, Product } from "@fider/models"
 import { Markdown, Hint, PoweredByFider, Icon, Header, Button, ShowTag } from "@fider/components"
 import { PostsContainer } from "./components/PostsContainer"
 import { useFider, usePostOverlay } from "@fider/hooks"
@@ -19,6 +19,8 @@ export interface HomePageProps {
   tags: Tag[]
   searchNoiseWords: string[]
   countPerStatus: { [key: string]: number }
+  product?: Product
+  countPerProduct?: { [id: string]: number }
 }
 
 export interface HomePageState {
@@ -149,11 +151,11 @@ What can we do better? This is the place for you to vote, discuss and share idea
           {...(isShareFeedbackOpen && !fider.isReadOnly && { inert: "true" })}
         >
           <div className="p-home__head">
-            <span className="p-home__eyebrow">
-              <Trans id="home.head.eyebrow">Feedback</Trans>
-            </span>
+            <span className="p-home__eyebrow">{props.product ? props.product.name : <Trans id="home.head.eyebrow">Feedback</Trans>}</span>
             <h1 className="p-home__welcome-title mb-3">
-              {fider.session.tenant.welcomeHeader ? (
+              {props.product ? (
+                <>What should we build next for {props.product.name}?</>
+              ) : fider.session.tenant.welcomeHeader ? (
                 parseWelcomeHeader(fider.session.tenant.welcomeHeader)
               ) : (
                 <Trans id="home.head.title">What should we build next?</Trans>
@@ -171,6 +173,7 @@ What can we do better? This is the place for you to vote, discuss and share idea
                 tags={props.tags}
                 countPerStatus={props.countPerStatus}
                 onPostClick={handlePostClick}
+                product={props.product}
               />
             )}
           </div>
@@ -198,6 +201,34 @@ What can we do better? This is the place for you to vote, discuss and share idea
                       <span className="p-home__statusnum">{r.count}</span>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+            {!props.product && (fider.session.tenant.products?.length ?? 0) > 0 && props.countPerProduct && (
+              <div className="p-home__panel">
+                <h4 className="p-home__panel-title">By product</h4>
+                <div className="p-home__statusbrk">
+                  {(fider.session.tenant.products ?? []).map((pr) => {
+                    const count = props.countPerProduct?.[String(pr.id)] ?? 0
+                    const max = Math.max(1, ...Object.values(props.countPerProduct ?? {}))
+                    return (
+                      <a
+                        key={pr.id}
+                        href={`/p/${pr.slug}`}
+                        className="p-home__statusrow"
+                        style={{ "--st": pr.color || "var(--colors-primary-base)" } as React.CSSProperties}
+                      >
+                        <span className="p-home__statuschip">
+                          <span className="p-home__statusdot" />
+                          {pr.name}
+                        </span>
+                        <span className="p-home__statusbar">
+                          <i style={{ width: `${(count / max) * 100}%` }} />
+                        </span>
+                        <span className="p-home__statusnum">{count}</span>
+                      </a>
+                    )
+                  })}
                 </div>
               </div>
             )}

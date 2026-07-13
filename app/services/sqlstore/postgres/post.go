@@ -97,10 +97,17 @@ var (
 																d.title AS original_title,
 																d.slug AS original_slug,
 																d.status_slug AS original_status_slug,
-																COALESCE(agg_t.tags, ARRAY[]::text[]) AS tags,
+																p.product_id,
+																		pr.name AS product_name,
+																		pr.slug AS product_slug,
+																		pr.color AS product_color,
+																		COALESCE(agg_t.tags, ARRAY[]::text[]) AS tags,
 																COALESCE(%s, false) AS has_voted,
 																p.is_approved
 													FROM posts p
+													LEFT JOIN products pr
+													ON pr.id = p.product_id
+													AND pr.tenant_id = p.tenant_id
 													INNER JOIN users u
 													ON u.id = p.user_id
 													AND u.tenant_id = $1
@@ -239,7 +246,13 @@ func countPostPerStatus(ctx context.Context, q *query.CountPostPerStatus) error 
 
 		q.Result = make(map[string]int)
 		stats := []*dbStatusCount{}
-		err := trx.Select(&stats, "SELECT status_slug, COUNT(*) AS count FROM posts WHERE tenant_id = $1 GROUP BY status_slug", tenant.ID)
+		sql := "SELECT status_slug, COUNT(*) AS count FROM posts WHERE tenant_id = $1 GROUP BY status_slug"
+		args := []interface{}{tenant.ID}
+		if q.ProductID > 0 {
+			sql = "SELECT status_slug, COUNT(*) AS count FROM posts WHERE tenant_id = $1 AND product_id = $2 GROUP BY status_slug"
+			args = append(args, q.ProductID)
+		}
+		err := trx.Select(&stats, sql, args...)
 		if err != nil {
 			return errors.Wrap(err, "failed to count posts per status")
 		}
@@ -258,10 +271,14 @@ func addNewPost(ctx context.Context, c *cmd.AddNewPost) error {
 		// Detect language using lingua-go
 		lang := detectPostLanguage(c.Title, c.Description)
 
+		var productID interface{}
+		if c.ProductID > 0 {
+			productID = c.ProductID
+		}
 		err := trx.Get(&id,
-			`INSERT INTO posts (title, slug, number, description, tenant_id, user_id, created_at, status_slug, is_approved, language)
-			 VALUES ($1, $2, (SELECT COALESCE(MAX(number), 0) + 1 FROM posts p WHERE p.tenant_id = $4), $3, $4, $5, $6, 'open', $7, $8)
-			 RETURNING id`, c.Title, slug.Make(c.Title), c.Description, tenant.ID, user.ID, time.Now(), isApproved, lang)
+			`INSERT INTO posts (title, slug, number, description, tenant_id, user_id, created_at, status_slug, is_approved, language, product_id)
+			 VALUES ($1, $2, (SELECT COALESCE(MAX(number), 0) + 1 FROM posts p WHERE p.tenant_id = $4), $3, $4, $5, $6, 'open', $7, $8, $9)
+			 RETURNING id`, c.Title, slug.Make(c.Title), c.Description, tenant.ID, user.ID, time.Now(), isApproved, lang, productID)
 		if err != nil {
 			return errors.Wrap(err, "failed add new post")
 		}
@@ -476,6 +493,9 @@ func searchPosts(ctx context.Context, q *query.SearchPosts) error {
 			if q.MyPostsOnly && user != nil {
 				condition += " AND user_id = " + strconv.Itoa(user.ID)
 			}
+			if q.ProductID > 0 {
+				condition += " AND product_id = " + strconv.Itoa(q.ProductID)
+			}
 
 			sql := fmt.Sprintf(`
 				SELECT * FROM (%s) AS q
@@ -497,6 +517,9 @@ func searchPosts(ctx context.Context, q *query.SearchPosts) error {
 			condition := view.Condition
 			if q.MyPostsOnly && user != nil {
 				condition += " AND user_id = " + strconv.Itoa(user.ID)
+			}
+			if q.ProductID > 0 {
+				condition += " AND product_id = " + strconv.Itoa(q.ProductID)
 			}
 
 			sql := fmt.Sprintf(`

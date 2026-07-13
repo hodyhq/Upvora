@@ -164,6 +164,12 @@ func routes(r *web.Engine) *web.Engine {
 		// From this step, only Collaborators and Administrators are allowed
 		ui.Use(middlewares.IsAuthorized(enum.RoleCollaborator, enum.RoleAdministrator))
 
+		ui.Get("/p/:productSlug", handlers.ProductBoard())
+		ui.Get("/admin/products", handlers.ManageProductsPage())
+		ui.Get("/_api/admin/products", handlers.ListProducts())
+		ui.Post("/_api/admin/products", handlers.CreateProduct())
+		ui.Put("/_api/admin/products/:id", handlers.UpdateProduct())
+		ui.Delete("/_api/admin/products/:id", handlers.DeleteProduct())
 		ui.Get("/_api/posts/:number/internal-note", handlers.GetInternalNote())
 		ui.Put("/_api/posts/:number/internal-note", handlers.SetInternalNote())
 		ui.Get("/scorecard", handlers.ScorecardPage())

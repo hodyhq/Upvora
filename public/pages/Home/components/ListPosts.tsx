@@ -12,6 +12,7 @@ interface ListPostsProps {
   emptyText: string
   minimalView?: boolean
   showStatus?: boolean
+  hideProductChip?: boolean
   maxVisible?: number
   onPostClick?: (postNumber: number, slug: string) => void
   onVote?: (post: Post) => void
@@ -23,6 +24,7 @@ const ListPostItem = (props: {
   tags: Tag[]
   rank?: number
   showStatus?: boolean
+  hideProductChip?: boolean
   onPostClick?: (postNumber: number, slug: string) => void
   onVote?: (post: Post) => void
 }) => {
@@ -97,6 +99,17 @@ const ListPostItem = (props: {
         </div>
         <Markdown className="c-post__desc" maxLength={140} text={props.post.description} style="plainText" />
         <div className="c-post__meta">
+          {props.post.product && !props.hideProductChip && (
+            <a
+              href={`/p/${props.post.product.slug}`}
+              className="c-post__prodchip"
+              style={{ "--pc": props.post.product.color || "var(--colors-primary-base)" } as React.CSSProperties}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <i />
+              {props.post.product.name}
+            </a>
+          )}
           {props.showStatus !== false && status !== "open" && <ResponseLozenge status={status} response={props.post.response} size={"small"} />}
           {props.tags.map((tag) => (
             <ShowTag key={tag.id} tag={tag} />
@@ -186,6 +199,7 @@ export const ListPosts = (props: ListPostsProps) => {
               rank={idx + 1}
               tags={props.tags.filter((tag) => post.tags.indexOf(tag.slug) >= 0)}
               showStatus={props.showStatus}
+              hideProductChip={props.hideProductChip}
               onPostClick={props.onPostClick}
               onVote={props.onVote}
             />
