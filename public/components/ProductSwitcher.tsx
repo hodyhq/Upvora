@@ -12,8 +12,9 @@ export const ProductSwitcher = () => {
 
   const products = fider.session.tenant.products ?? []
 
-  const pathname = typeof window !== "undefined" && window.location ? window.location.pathname : "/"
-  const search = typeof window !== "undefined" && window.location ? window.location.search : ""
+  const loc = typeof window !== "undefined" ? window.location : undefined
+  const pathname = loc?.pathname ?? "/"
+  const search = loc?.search ?? ""
   const pathMatch = /^\/p\/([^/]+)/.exec(pathname)
   const queryMatch = /[?&]product=([^&]+)/.exec(search)
   const currentSlug = pathMatch ? pathMatch[1] : queryMatch ? decodeURIComponent(queryMatch[1]) : undefined
