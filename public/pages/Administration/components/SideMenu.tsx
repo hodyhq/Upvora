@@ -7,6 +7,7 @@ import { useFider } from "@fider/hooks"
 import IconX from "@fider/assets/images/heroicons-x.svg"
 import IconMenu from "@fider/assets/images/heroicons-menu.svg"
 import { VStack } from "@fider/components/layout"
+import { SystemBox } from "./SystemBox"
 
 interface SiteMenuProps {
   activeItem: string
@@ -68,6 +69,7 @@ export const SideMenu = (props: SiteMenuProps) => {
           </>
         )}
       </VStack>
+      {fider.session.user.isAdministrator && <SystemBox />}
     </div>
   )
 }

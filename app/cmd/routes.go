@@ -211,6 +211,8 @@ func routes(r *web.Engine) *web.Engine {
 		// From this step, only Administrators are allowed
 		ui.Use(middlewares.IsAuthorized(enum.RoleAdministrator))
 
+		ui.Get("/_api/admin/system/status", handlers.SystemStatus())
+		ui.Post("/_api/admin/system/update", handlers.SystemTriggerUpdate())
 		ui.Get("/admin/advanced", handlers.AdvancedSettingsPage())
 		ui.Get("/admin/privacy", handlers.Page("Privacy · Site Settings", "", "Administration/pages/PrivacySettings.page"))
 		ui.Get("/admin/users", handlers.ManageMembers())
