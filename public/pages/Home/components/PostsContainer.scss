@@ -319,11 +319,14 @@
   gap: 6px;
   font-size: 0.72rem;
   font-weight: 650;
-  padding: 3px 9px;
+  padding: 2px 8px;
   border-radius: 7px;
   white-space: nowrap;
   color: var(--pc);
   background: color-mix(in srgb, var(--pc) 13%, transparent);
+  // ink-colored border (near-black in light, near-white in dark) marks
+  // PRODUCT chips apart from status pills
+  border: 1px solid color-mix(in srgb, var(--colors-gray-900) 40%, transparent);
   text-decoration: none;
 
   i {
