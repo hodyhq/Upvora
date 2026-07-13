@@ -40,6 +40,7 @@ func SingleTenant() web.MiddlewareFunc {
 				c.SetTenant(firstTenant.Result)
 				attachTenantStatuses(c, firstTenant.Result)
 				attachTenantScorecardFields(c, firstTenant.Result)
+				attachTenantProducts(c, firstTenant.Result)
 			}
 
 			return next(c)
@@ -63,6 +64,7 @@ func MultiTenant() web.MiddlewareFunc {
 				c.SetTenant(byDomain.Result)
 				attachTenantStatuses(c, byDomain.Result)
 				attachTenantScorecardFields(c, byDomain.Result)
+				attachTenantProducts(c, byDomain.Result)
 
 				if byDomain.Result.CNAME != "" && !c.IsAjax() {
 					baseURL := web.TenantBaseURL(c, byDomain.Result)
@@ -89,6 +91,18 @@ func attachTenantStatuses(c *web.Context, tenant *entity.Tenant) {
 	q := &query.ListActiveStatusesForTenant{}
 	if err := bus.Dispatch(c, q); err == nil {
 		tenant.Statuses = q.Result
+	}
+}
+
+// attachTenantProducts puts the active product catalogue on the session so
+// the switcher renders everywhere with zero extra requests. Only attached
+// when at least one product exists - tenants without products keep today's
+// exact behavior (and the renderer golden files stay byte-identical).
+func attachTenantProducts(c *web.Context, tenant *entity.Tenant) {
+	defer func() { _ = recover() }()
+	q := &query.ListActiveProducts{}
+	if err := bus.Dispatch(c, q); err == nil && len(q.Result) > 0 {
+		tenant.Products = q.Result
 	}
 }
 

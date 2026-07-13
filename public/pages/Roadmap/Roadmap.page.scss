@@ -1,9 +1,92 @@
 @use "~@fider/assets/styles/variables.scss" as *;
 
 #p-roadmap {
-  background-color: var(--colors-gray-100);
+  .p-roadmap__head {
+    margin-bottom: spacing(6);
+  }
+
+  .p-roadmap__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: spacing(2);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--colors-primary-base);
+    margin-bottom: spacing(3);
+
+    &::before {
+      content: "";
+      width: 20px;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--brand-grad);
+    }
+  }
+
+  .p-roadmap__title {
+    font-size: 30px;
+    font-weight: get("font.weight.xbold");
+    line-height: 1.1;
+    color: var(--colors-gray-900);
+    letter-spacing: -0.9px;
+    margin-bottom: spacing(2);
+
+    @include media("lg") {
+      font-size: 40px;
+    }
+  }
+
+  .p-roadmap__subtitle {
+    color: var(--colors-gray-700);
+    max-width: 60ch;
+  }
+
   padding-top: spacing(8);
   padding-bottom: spacing(12);
+}
+
+// Roadmap v2 toolbar: search + tag filter chips
+.c-roadmap-toolbar {
+  display: flex;
+  align-items: center;
+  gap: spacing(3);
+  flex-wrap: wrap;
+  margin-bottom: spacing(4);
+
+  &__search {
+    flex: 0 1 260px;
+    background-color: var(--colors-white);
+    border: 1px solid var(--colors-gray-300);
+    border-radius: 10px;
+    color: var(--colors-gray-900);
+    font: inherit;
+    font-size: 14px;
+    padding: 8px 12px;
+    outline: none;
+
+    &:focus {
+      border-color: var(--colors-primary-base);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--colors-primary-base) 16%, transparent);
+    }
+  }
+
+  &__tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  &__tag {
+    cursor: pointer;
+    border: 1px solid transparent;
+
+    &--on {
+      border-color: var(--colors-primary-base);
+      color: var(--colors-primary-base);
+    }
+  }
 }
 
 // Horizontal scrolling lane strip. Tenants can publish N status lanes via
@@ -39,13 +122,35 @@
 // hairline borders instead of drop shadows, squared 4px radii, tighter
 // padding, small-caps lane headers with a mono count.
 .c-roadmap-column {
+  // Lane accent color, consumed by each card's left edge.
+  &--blue {
+    --lane-color: var(--colors-blue-500);
+  }
+  &--green {
+    --lane-color: var(--colors-green-600);
+  }
+  &--yellow {
+    --lane-color: var(--colors-yellow-600);
+  }
+  &--red {
+    --lane-color: var(--colors-red-600);
+  }
+  &--gray {
+    --lane-color: var(--colors-gray-500);
+  }
+
   &__header {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: spacing(2);
-    padding-bottom: spacing(2);
+    padding: 0 spacing(1);
     margin-bottom: spacing(3);
-    border-bottom: 2px solid var(--colors-gray-300);
+
+    &--clickable {
+      cursor: pointer;
+      user-select: none;
+    }
   }
 
   // Status chip in the scorecard design language: squared tag, dot, tinted
@@ -69,17 +174,44 @@
       background: currentColor;
     }
 
-    &--blue   { background: #e3ecf9; color: #1e3a8a; }
-    &--green  { background: #e5f4e9; color: #14532d; }
-    &--yellow { background: #fbf1d8; color: #78350f; }
-    &--red    { background: #fae3e3; color: #7f1d1d; }
-    &--gray   { background: var(--colors-gray-200); color: var(--colors-gray-700); }
+    &--blue {
+      background: #e3ecf9;
+      color: #1e3a8a;
+    }
+    &--green {
+      background: #e5f4e9;
+      color: #14532d;
+    }
+    &--yellow {
+      background: #fbf1d8;
+      color: #78350f;
+    }
+    &--red {
+      background: #fae3e3;
+      color: #7f1d1d;
+    }
+    &--gray {
+      background: var(--colors-gray-200);
+      color: var(--colors-gray-700);
+    }
 
     @include dark-mode {
-      &--blue   { background: #16223f; color: #9bb8f4; }
-      &--green  { background: #12301f; color: #7ee3a6; }
-      &--yellow { background: #32240b; color: #f0c878; }
-      &--red    { background: #331414; color: #f0a0a0; }
+      &--blue {
+        background: #16223f;
+        color: #9bb8f4;
+      }
+      &--green {
+        background: #12301f;
+        color: #7ee3a6;
+      }
+      &--yellow {
+        background: #32240b;
+        color: #f0c878;
+      }
+      &--red {
+        background: #331414;
+        color: #f0a0a0;
+      }
     }
   }
 
@@ -91,10 +223,27 @@
     font-variant-numeric: tabular-nums;
   }
 
+  // Recessed lane surface (prototype): the cards float inside a tinted well.
   &__body {
     display: flex;
     flex-direction: column;
     gap: spacing(2);
+    background-color: color-mix(in srgb, var(--colors-gray-900) 4%, transparent);
+    border: 1px solid var(--colors-gray-200);
+    border-radius: 14px;
+    padding: spacing(3);
+    min-height: 120px;
+
+    @include dark-mode {
+      // recessed well: slightly lighter than the near-black page, darker than cards
+      background-color: color-mix(in srgb, var(--colors-white) 38%, transparent);
+      border-color: var(--colors-gray-300);
+    }
+
+    &--over {
+      border-color: var(--colors-primary-base);
+      background-color: color-mix(in srgb, var(--colors-primary-base) 7%, transparent);
+    }
   }
 }
 
@@ -105,26 +254,41 @@
 }
 
 .c-roadmap-post {
+  position: relative;
+  overflow: hidden;
   background-color: var(--colors-white);
   @include dark-mode {
-    background-color: var(--colors-gray-200);
+    background-color: var(--colors-white);
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 45%);
   }
   border: 1px solid var(--colors-gray-200);
-  border-radius: 4px;
+  border-radius: 10px;
   padding: spacing(3) spacing(4);
-  transition: border-color 0.12s ease, background-color 0.12s ease;
+  transition: border-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+
+  // Status-colored left edge, inherited from the lane.
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--lane-color, var(--colors-primary-base));
+  }
 
   .c-roadmap-post-link:hover & {
-    border-color: var(--colors-primary-base);
-    background-color: var(--colors-gray-100);
+    border-color: color-mix(in srgb, var(--colors-primary-base) 40%, transparent);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 34px -22px rgba(0, 0, 0, 0.35);
   }
 
   &__title {
-    font-size: 13.5px;
-    font-weight: 600;
-    letter-spacing: -0.005em;
+    font-size: 14px;
+    font-weight: 650;
+    letter-spacing: -0.012em;
     color: var(--colors-gray-900);
-    line-height: 1.35;
+    line-height: 1.3;
   }
 
   &__votes {
@@ -134,7 +298,8 @@
     .text-semibold {
       font-family: $font-code;
       font-variant-numeric: tabular-nums;
-      color: var(--colors-gray-900);
+      font-weight: 700;
+      color: var(--colors-primary-base);
     }
   }
 
@@ -163,6 +328,51 @@
   &__completed {
     font-size: 12px;
     color: var(--colors-gray-600);
+  }
+
+  &__desc {
+    color: var(--colors-gray-700);
+    font-size: 12.5px;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  &__votebtn {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    padding: 2px 6px;
+    margin-left: -6px;
+    border-radius: 7px;
+    font: inherit;
+    font-size: 12px;
+    color: var(--colors-primary-base);
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+
+    .text-semibold {
+      font-family: $font-code;
+      font-variant-numeric: tabular-nums;
+    }
+
+    &:hover {
+      background-color: color-mix(in srgb, var(--colors-primary-base) 12%, transparent);
+    }
+
+    &--voted {
+      background-color: var(--colors-primary-base);
+      background-image: var(--brand-grad);
+      color: #fff;
+      box-shadow: 0 6px 14px -8px var(--brand-glow);
+
+      &:hover {
+        background-color: var(--colors-primary-dark);
+      }
+    }
   }
 }
 
@@ -229,5 +439,22 @@
       width: 65%;
       height: 16px;
     }
+  }
+}
+
+.c-roadmap-toolbar__product {
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--colors-gray-900);
+  background-color: color-mix(in srgb, var(--colors-gray-900) 4%, transparent);
+  border: 1px solid var(--colors-gray-300);
+  border-radius: 10px;
+  padding: 8px 11px;
+  outline: none;
+  cursor: pointer;
+
+  &:focus {
+    border-color: var(--colors-primary-base);
   }
 }

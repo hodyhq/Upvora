@@ -40,6 +40,30 @@ export interface Post {
   commentsCount: number
   tags: string[]
   isApproved: boolean
+  product?: ProductInfo
+}
+
+export interface Product {
+  id: number
+  name: string
+  slug: string
+  description: string
+  color: string // "" = default (brand color)
+  sortOrder: number
+  isActive: boolean
+}
+
+export interface ProductInfo {
+  id: number
+  name: string
+  slug: string
+  color: string
+}
+
+export interface InternalNote {
+  content: string
+  updatedAt: string
+  updatedByName: string
 }
 
 // Returns the effective status slug for a post. Kept as a small helper so
@@ -103,6 +127,7 @@ export interface Comment {
   editedAt?: string
   editedBy?: User
   isApproved: boolean
+  isInternal: boolean
 }
 
 export interface Tag {

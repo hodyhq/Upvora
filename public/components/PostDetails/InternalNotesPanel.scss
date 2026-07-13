@@ -1,0 +1,78 @@
+@use "~@fider/assets/styles/variables.scss" as *;
+
+/* Team-only note - amber-tinted card so it can't be mistaken for public UI */
+.c-internal-notes {
+  background-color: color-mix(in srgb, #f59e0b 7%, var(--colors-white));
+  border: 1px solid color-mix(in srgb, #f59e0b 28%, transparent);
+  border-radius: 14px;
+  padding: spacing(4);
+
+  @include dark-mode {
+    background-color: color-mix(in srgb, #f59e0b 9%, var(--colors-white));
+  }
+
+  &__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: spacing(2);
+  }
+
+  &__title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #d97706;
+
+    svg {
+      width: 12px;
+      height: 12px;
+    }
+  }
+
+  &__status {
+    font-size: 12px;
+    color: var(--colors-gray-600);
+  }
+
+  &__textarea {
+    width: 100%;
+    min-height: 88px;
+    resize: vertical;
+    border: 1px solid var(--colors-gray-200);
+    border-radius: 10px;
+    background-color: var(--colors-white);
+    color: var(--colors-gray-900);
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.55;
+    padding: 10px 12px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    @include dark-mode {
+      background-color: var(--colors-gray-100);
+      border-color: var(--colors-gray-300);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: #f59e0b;
+      box-shadow: 0 0 0 3px color-mix(in srgb, #f59e0b 16%, transparent);
+    }
+
+    &::placeholder {
+      color: var(--colors-gray-600);
+    }
+  }
+
+  &__hint {
+    margin-top: spacing(1);
+    font-size: 11.5px;
+    color: var(--colors-gray-600);
+  }
+}

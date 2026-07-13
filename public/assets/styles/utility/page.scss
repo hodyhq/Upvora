@@ -7,6 +7,11 @@
 .page {
   padding-top: spacing(6);
   padding-bottom: spacing(6);
+  padding-inline: spacing(4);
+
+  @include media("lg") {
+    padding-inline: spacing(7);
+  }
 }
 
 @include media("sm") {

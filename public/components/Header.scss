@@ -1,6 +1,29 @@
 @use "~@fider/assets/styles/variables.scss" as *;
 
 #c-header {
+  // Glassy sticky chrome (prototype): translucent theme surface + blur.
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  background-color: color-mix(in srgb, var(--colors-white) 78%, transparent);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  border-bottom: 1px solid var(--colors-gray-200);
+
+  @include dark-mode {
+    background-color: color-mix(in srgb, var(--colors-gray-100) 74%, transparent);
+    border-bottom-color: var(--colors-gray-300);
+  }
+
+  .c-header__brand img {
+    filter: drop-shadow(0 3px 9px var(--brand-glow));
+  }
+
+  .c-header__brand h1 {
+    font-weight: 800;
+    letter-spacing: -0.025em;
+  }
+
   .c-header__row {
     display: flex;
     flex-wrap: wrap;
@@ -69,19 +92,39 @@
   }
 
   .c-header__nav-link {
+    position: relative;
     font-size: 0.875rem;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--colors-gray-500);
     text-decoration: none;
-    transition: color 0.15s ease, box-shadow 0.15s ease;
+    padding: 4px 2px;
+    transition: color 0.15s ease;
 
     &:hover {
       color: var(--colors-gray-900);
     }
 
+    // Gradient underline with a soft glow (prototype nav treatment).
+    &::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -2px;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--accent-header-grad, var(--brand-grad));
+      box-shadow: 0 0 10px var(--brand-glow);
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
     &--active {
       color: var(--colors-gray-900);
-      box-shadow: 0 2px 0 0 var(--colors-primary-base);
+
+      &::after {
+        opacity: 1;
+      }
     }
   }
 }

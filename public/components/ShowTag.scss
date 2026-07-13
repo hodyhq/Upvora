@@ -1,29 +1,29 @@
 @use "~@fider/assets/styles/variables.scss" as *;
 
+// Neutral boxed chip (prototype): no per-tag color, quiet uppercase-free label.
 .c-tag {
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  font-size: 13px;
-  color: var(--colors-gray-900);
-  // background-color: var(--colors-gray-200);
-  font-weight: 500;
-  border-radius: 5px;
-  // line-height: 18px;
-  padding: 6px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--colors-gray-700);
+  background-color: color-mix(in srgb, var(--colors-gray-900) 7%, transparent);
+  border-radius: 6px;
+  padding: 3px 9px;
   border: 0;
 
   &[href] {
-    opacity: 0.9;
-    transition: opacity 0.1s;
+    transition: background-color 0.12s, color 0.12s;
 
     &:hover {
-      opacity: 1;
+      color: var(--colors-gray-900);
+      background-color: color-mix(in srgb, var(--colors-gray-900) 12%, transparent);
     }
   }
 
+  // circular variant (DesignSystem showcase) keeps the color swatch
   span {
-    margin-inline-end: 4px;
     width: 12px;
     height: 12px;
     border-radius: 50%;

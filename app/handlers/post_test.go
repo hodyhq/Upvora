@@ -69,6 +69,10 @@ func TestDetailsHandler(t *testing.T) {
 		return nil
 	})
 
+	bus.AddHandler(func(ctx context.Context, q *query.GetInternalNote) error {
+		return nil
+	})
+
 	server := mock.NewServer()
 
 	code, _ := server.

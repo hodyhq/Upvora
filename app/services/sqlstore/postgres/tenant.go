@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"encoding/json"
 	"context"
 	"time"
 
@@ -80,8 +81,8 @@ func updateTenantSettings(ctx context.Context, c *cmd.UpdateTenantSettings) erro
 			c.Logo.BlobKey = ""
 		}
 
-		query := "UPDATE tenants SET name = $1, invitation = $2, welcome_message = $3, welcome_header = $4, description_template = $5, share_idea_instructions = $6, cname = $7, logo_bkey = $8, locale = $9 WHERE id = $10"
-		_, err := trx.Execute(query, c.Title, c.Invitation, c.WelcomeMessage, c.WelcomeHeader, c.DescriptionTemplate, c.ShareIdeaInstructions, c.CNAME, c.Logo.BlobKey, c.Locale, tenant.ID)
+		query := "UPDATE tenants SET name = $1, invitation = $2, welcome_message = $3, welcome_header = $4, description_template = $5, share_idea_instructions = $6, rail_cta_heading = $7, rail_cta_text = $8, rail_cta_button = $9, default_theme = $10, cname = $11, logo_bkey = $12, locale = $13 WHERE id = $14"
+		_, err := trx.Execute(query, c.Title, c.Invitation, c.WelcomeMessage, c.WelcomeHeader, c.DescriptionTemplate, c.ShareIdeaInstructions, c.RailCtaHeading, c.RailCtaText, c.RailCtaButton, c.DefaultTheme, c.CNAME, c.Logo.BlobKey, c.Locale, tenant.ID)
 		if err != nil {
 			return errors.Wrap(err, "failed update tenant settings")
 		}
@@ -93,6 +94,10 @@ func updateTenantSettings(ctx context.Context, c *cmd.UpdateTenantSettings) erro
 		tenant.WelcomeHeader = c.WelcomeHeader
 		tenant.DescriptionTemplate = c.DescriptionTemplate
 		tenant.ShareIdeaInstructions = c.ShareIdeaInstructions
+		tenant.RailCtaHeading = c.RailCtaHeading
+		tenant.RailCtaText = c.RailCtaText
+		tenant.RailCtaButton = c.RailCtaButton
+		tenant.DefaultTheme = c.DefaultTheme
 
 		return nil
 	})
@@ -277,7 +282,7 @@ func getFirstTenant(ctx context.Context, q *query.GetFirstTenant) error {
 
 	err := trx.Get(&tenant, `
 		SELECT t.id, t.name, t.subdomain, t.cname, t.invitation, t.locale, t.welcome_message, t.welcome_header, t.description_template, t.status, t.is_private, t.logo_bkey, t.custom_css, t.allowed_schemes, t.is_email_auth_allowed, t.is_feed_enabled, t.is_moderation_enabled, t.prevent_indexing, t.is_pro, t.scheduled_deletion_at,
-			t.share_idea_instructions, t.site_banner_enabled, t.site_banner_message, t.site_banner_variant,
+			t.share_idea_instructions, t.rail_cta_heading, t.rail_cta_text, t.rail_cta_button, t.default_theme, t.theme_primary, t.theme_accents::text AS theme_accents, t.site_banner_enabled, t.site_banner_message, t.site_banner_variant,
 			t.is_scorecard_enabled, t.scorecard_band_strong, t.scorecard_band_good, t.scorecard_band_refine, t.scorecard_band_low, t.scorecard_trigger_status_slug,
 			t.scorecard_band_strong_label, t.scorecard_band_good_label, t.scorecard_band_refine_label, t.scorecard_band_low_label, t.scorecard_band_none_label,
 			(b.paddle_subscription_id IS NOT NULL AND b.stripe_subscription_id IS NULL) AS has_paddle_subscription
@@ -300,7 +305,7 @@ func getTenantByDomain(ctx context.Context, q *query.GetTenantByDomain) error {
 
 	err := trx.Get(&tenant, `
 		SELECT t.id, t.name, t.subdomain, t.cname, t.invitation, t.locale, t.welcome_message, t.welcome_header, t.description_template, t.status, t.is_private, t.logo_bkey, t.custom_css, t.allowed_schemes, t.is_email_auth_allowed, t.is_feed_enabled, t.is_moderation_enabled, t.prevent_indexing, t.is_pro, t.scheduled_deletion_at,
-			t.share_idea_instructions, t.site_banner_enabled, t.site_banner_message, t.site_banner_variant,
+			t.share_idea_instructions, t.rail_cta_heading, t.rail_cta_text, t.rail_cta_button, t.default_theme, t.theme_primary, t.theme_accents::text AS theme_accents, t.site_banner_enabled, t.site_banner_message, t.site_banner_variant,
 			t.is_scorecard_enabled, t.scorecard_band_strong, t.scorecard_band_good, t.scorecard_band_refine, t.scorecard_band_low, t.scorecard_trigger_status_slug,
 			t.scorecard_band_strong_label, t.scorecard_band_good_label, t.scorecard_band_refine_label, t.scorecard_band_low_label, t.scorecard_band_none_label,
 			(b.paddle_subscription_id IS NOT NULL AND b.stripe_subscription_id IS NULL) AS has_paddle_subscription
@@ -345,6 +350,22 @@ func invalidatePreviousSignUpKeys(ctx context.Context, c *cmd.InvalidatePrevious
 		_, err := trx.Execute(query, time.Now(), tenant.ID, enum.EmailVerificationKindSignUp)
 		if err != nil {
 			return errors.Wrap(err, "failed to invalidate previous signup keys for tenant '%d'", tenant.ID)
+		}
+		return nil
+	})
+}
+
+func setTenantTheme(ctx context.Context, c *cmd.SetTenantTheme) error {
+	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
+		accents, err := json.Marshal(c.Accents)
+		if err != nil {
+			return errors.Wrap(err, "failed to marshal theme accents")
+		}
+		_, err = trx.Execute(`
+			UPDATE tenants SET theme_primary = $1, theme_accents = $2::jsonb, default_theme = $3 WHERE id = $4
+		`, c.Primary, string(accents), c.DefaultTheme, tenant.ID)
+		if err != nil {
+			return errors.Wrap(err, "failed to update tenant theme")
 		}
 		return nil
 	})

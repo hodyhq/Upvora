@@ -15,6 +15,11 @@ const GeneralSettingsPage = () => {
   const [descriptionTemplate, setDescriptionTemplate] = useState<string>(fider.session.tenant.descriptionTemplate)
   const [invitation, setInvitation] = useState<string>(fider.session.tenant.invitation)
   const [shareIdeaInstructions, setShareIdeaInstructions] = useState<string>(fider.session.tenant.shareIdeaInstructions ?? "")
+  const [railCtaHeading, setRailCtaHeading] = useState<string>(fider.session.tenant.railCtaHeading ?? "")
+  const [railCtaText, setRailCtaText] = useState<string>(fider.session.tenant.railCtaText ?? "")
+  const [railCtaButton, setRailCtaButton] = useState<string>(fider.session.tenant.railCtaButton ?? "")
+  // Default appearance moved to Admin - Theme; the value still rides along on general saves
+  const defaultTheme = fider.session.tenant.defaultTheme || "light"
   const [logo, setLogo] = useState<ImageUpload | undefined>(undefined)
   const [cname, setCNAME] = useState<string>(fider.session.tenant.cname)
   const [locale, setLocale] = useState<string>(fider.session.tenant.locale)
@@ -28,6 +33,10 @@ const GeneralSettingsPage = () => {
       welcomeHeader,
       descriptionTemplate,
       shareIdeaInstructions,
+      railCtaHeading,
+      railCtaText,
+      railCtaButton,
+      defaultTheme,
       invitation,
       logo,
       locale,
@@ -57,7 +66,7 @@ const GeneralSettingsPage = () => {
   return (
     <AdminPageContainer id="p-admin-general" name="general" title="General" subtitle="Manage your site settings">
       <Form error={error}>
-        <Input field="title" label="Your Fider board's title" maxLength={60} value={title} disabled={!fider.session.user.isAdministrator} onChange={setTitle}>
+        <Input field="title" label="Your board's title" maxLength={60} value={title} disabled={!fider.session.user.isAdministrator} onChange={setTitle}>
           <p className="text-muted">Keep it short and snappy. Your product / service name is usually best.</p>
         </Input>
 
@@ -110,6 +119,34 @@ const GeneralSettingsPage = () => {
             screenshots, expected outcome, etc.).
           </p>
         </TextArea>
+
+        <Input
+          field="railCtaHeading"
+          label="Sidebar heading"
+          maxLength={60}
+          value={railCtaHeading}
+          disabled={!fider.session.user.isAdministrator}
+          placeholder="Have an idea?"
+          onChange={setRailCtaHeading}
+        >
+          <p className="text-muted">Heading of the call-to-action box in the board sidebar. Leave empty to use the default.</p>
+        </Input>
+
+        <TextArea field="railCtaText" label="Sidebar text" value={railCtaText} disabled={!fider.session.user.isAdministrator} onChange={setRailCtaText}>
+          <p className="text-muted">Short description under the sidebar heading. Leave empty to use the default.</p>
+        </TextArea>
+
+        <Input
+          field="railCtaButton"
+          label="Sidebar button"
+          maxLength={60}
+          value={railCtaButton}
+          disabled={!fider.session.user.isAdministrator}
+          placeholder="Submit Your Idea"
+          onChange={setRailCtaButton}
+        >
+          <p className="text-muted">Text for the sidebar button. Leave empty to hide the button entirely.</p>
+        </Input>
 
         <Input
           field="invitation"

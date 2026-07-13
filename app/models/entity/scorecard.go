@@ -49,4 +49,5 @@ type Scorecard struct {
 	PostSlug    string `json:"postSlug,omitempty"`
 	PostVotes   int    `json:"postVotes,omitempty"`
 	SubmittedBy string `json:"submittedBy,omitempty"`
+	ProductID   *int   `json:"productId,omitempty"`
 }

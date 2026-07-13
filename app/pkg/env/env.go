@@ -54,7 +54,7 @@ type config struct {
 	BaseURL                     string `env:"BASE_URL"`
 	Locale                      string `env:"LOCALE,default=en"`
 	JWTSecret                   string `env:"JWT_SECRET,required"`
-	PostCreationWithTagsEnabled bool   `env:"POST_CREATION_WITH_TAGS_ENABLED,default=false"`
+	PostCreationWithTagsEnabled bool   `env:"POST_CREATION_WITH_TAGS_ENABLED,default=true"`
 	AllowAllowedSchemes         bool   `env:"ALLOW_ALLOWED_SCHEMES,default=true"`
 	AllowPrivateNetworkTargets  bool   `env:"ALLOW_PRIVATE_NETWORK_TARGETS,default=false"`
 	Stripe                      struct {
@@ -65,7 +65,7 @@ type config struct {
 		UKVATTaxRateID string `env:"STRIPE_UK_VAT_TAX_RATE_ID"`
 	}
 	Metrics struct {
-		Enabled bool   `env:"METRICS_ENABLED,default=false"`
+		Enabled bool   `env:"METRICS_ENABLED,default=true"`
 		Port    string `env:"METRICS_PORT,default=4000"`
 		Host    string `env:"METRICS_HOST,default="`
 	}

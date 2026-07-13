@@ -1,5 +1,47 @@
 @use "~@fider/assets/styles/variables.scss" as *;
 
+.c-admin-head {
+  margin-top: spacing(4);
+
+  &__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: spacing(2);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--colors-primary-base);
+    margin-bottom: spacing(2);
+
+    &::before {
+      content: "";
+      width: 20px;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--brand-grad);
+    }
+  }
+
+  .text-display2 {
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+}
+
+.c-side-menu {
+  background-color: var(--colors-white);
+  border: 1px solid var(--colors-gray-200);
+  border-radius: 14px;
+  padding: spacing(2);
+  align-self: start;
+
+  @include dark-mode {
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 40%);
+    border-color: var(--colors-gray-300);
+  }
+}
+
 .c-admin-basepage {
   display: grid;
   grid-template-columns: 1fr;
@@ -7,5 +49,278 @@
 
   @include media("lg") {
     grid-template-columns: 1fr 4fr 1fr;
+  }
+}
+
+/* Shared admin content card - every settings tab renders inside this panel.
+   Pages that ship their own panel (statuses, scorecard) opt out via `bare`. */
+.c-admin-content {
+  background-color: var(--colors-white);
+  border: 1px solid var(--colors-gray-200);
+  border-radius: 16px;
+  padding: spacing(6) spacing(7);
+  box-shadow: 0 14px 34px -26px rgba(0, 0, 0, 0.3);
+  min-width: 0;
+
+  @include dark-mode {
+    background-color: var(--colors-white);
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 40%);
+    border-color: var(--colors-gray-300);
+  }
+
+  // statuses-style header row at the top of every card
+  &__head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-bottom: 10px;
+    margin-bottom: spacing(5);
+    border-bottom: 1px solid var(--colors-gray-200);
+
+    @include dark-mode {
+      border-bottom-color: var(--colors-gray-300);
+    }
+  }
+
+  &__eyebrow {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--colors-primary-base);
+    white-space: nowrap;
+  }
+
+  &__hint {
+    font-size: 13px;
+    color: var(--colors-gray-600);
+  }
+
+  &--bare {
+    background: none;
+    background-image: none;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+}
+
+/* Statuses admin table — compact so it fits the panel without scrolling */
+.c-status-table {
+  th,
+  td {
+    padding: 8px 8px !important;
+    white-space: nowrap;
+  }
+
+  code {
+    font-size: 11.5px;
+  }
+
+  td {
+    font-size: 12.5px;
+  }
+
+  &__labelcell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__sys {
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--colors-gray-500);
+    border: 1px solid var(--colors-gray-300);
+    border-radius: 5px;
+    padding: 1px 4px;
+  }
+
+  &__flag {
+    text-align: center;
+    color: var(--colors-gray-600);
+  }
+
+  &__pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.74rem;
+    font-weight: 650;
+    padding: 3px 9px;
+    border-radius: 7px;
+    white-space: nowrap;
+    color: var(--st);
+    background: color-mix(in srgb, var(--st) 15%, transparent);
+  }
+
+  &__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--st);
+    box-shadow: 0 0 7px var(--st);
+  }
+
+  &__swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 4px;
+    background: var(--st);
+    vertical-align: -1px;
+  }
+
+  &__pill,
+  &__swatch {
+    // prototype status hues (design contract)
+    &[data-color="blue"] {
+      --st: #3b82f6;
+    }
+    &[data-color="yellow"] {
+      --st: #f59e0b;
+    }
+    &[data-color="green"] {
+      --st: #22c55e;
+    }
+    &[data-color="red"] {
+      --st: #ef4444;
+    }
+    &[data-color="gray"] {
+      --st: #7c8490;
+    }
+  }
+}
+
+/* Condensed rhythm for every settings tab */
+.c-admin-content {
+  .c-form-field {
+    margin-bottom: spacing(4);
+  }
+
+  // generic tables (tags, members, webhooks...) pick up the compact language
+  table:not(.c-scorecard__table):not(.c-status-table) {
+    width: 100%;
+    border-collapse: collapse;
+
+    th {
+      text-align: left;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--colors-gray-600);
+      padding: 8px 8px;
+    }
+
+    td {
+      font-size: 13px;
+      padding: 8px 8px;
+      border-top: 1px solid var(--colors-gray-200);
+
+      @include dark-mode {
+        border-top-color: var(--colors-gray-300);
+      }
+    }
+
+    tbody tr {
+      transition: background-color 0.12s ease;
+
+      &:hover {
+        background-color: color-mix(in srgb, var(--colors-gray-900) 3%, transparent);
+      }
+    }
+  }
+}
+
+/* Full visual conformance for every settings tab - the statuses/scorecard
+   language everywhere: eyebrow section heads, compact type scale, tight fit */
+.c-admin-content {
+  // legacy section headings become eyebrow group labels
+  h2 {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--colors-primary-base);
+    margin: spacing(6) 0 spacing(2);
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  p {
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--colors-gray-700);
+  }
+
+  .c-form-field > label {
+    font-size: 13px;
+    font-weight: 650;
+    color: var(--colors-gray-800);
+    margin-bottom: 6px;
+  }
+
+  input.c-input,
+  textarea.c-input,
+  textarea.c-textarea {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+
+  select.c-select {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+
+  // full-bleed 1100px inputs read airy no matter the font - cap single-line
+  // controls at a settings-panel width; textareas stay wide but shorter
+  .c-form-field input.c-input {
+    max-width: 620px;
+  }
+
+  .c-form-field select.c-select {
+    max-width: 620px;
+  }
+
+  textarea.c-textarea,
+  textarea.c-input {
+    min-height: 84px;
+  }
+
+  // toggle rows and checkbox captions sit on the same 13px scale
+  .c-toggle,
+  .c-checkbox,
+  span.text-sm {
+    font-size: 13px;
+  }
+
+  // list-style rows (oauth providers, webhooks) read like table rows
+  .c-form-field .row > * {
+    font-size: 13px;
+  }
+}
+
+// Theme tab rows: segmented buttons + color input + hint must wrap on narrow screens
+// instead of pushing past the content card.
+.c-theme-row {
+  flex-wrap: wrap;
+  row-gap: spacing(2);
+  min-width: 0;
+
+  &__hint {
+    flex-basis: 100%;
+  }
+
+  @media (min-width: 768px) {
+    &__hint {
+      flex-basis: auto;
+    }
   }
 }

@@ -34,6 +34,10 @@ type UpdateTenantSettings struct {
 	WelcomeHeader         string
 	DescriptionTemplate   string
 	ShareIdeaInstructions string
+	RailCtaHeading        string
+	RailCtaText           string
+	RailCtaButton         string
+	DefaultTheme          string
 	CNAME                 string
 	Locale                string
 }
@@ -102,4 +106,12 @@ type CancelTenantDeletion struct {
 // DeleteTenant permanently removes a tenant and all of its data. Irreversible.
 type DeleteTenant struct {
 	TenantID int
+}
+
+// SetTenantTheme stores the token-based theme: brand primary, per-function
+// accents, and the default appearance.
+type SetTenantTheme struct {
+	Primary      string
+	Accents      map[string]string
+	DefaultTheme string
 }

@@ -7,7 +7,7 @@
   width: 100%;
   padding: sizing(2) sizing(3);
   border: 1px solid var(--colors-gray-300);
-  border-radius: get("border.radius.medium");
+  border-radius: 10px;
   -webkit-appearance: none;
   appearance: none;
   transition: all 0.15s ease;
@@ -20,7 +20,7 @@
   &:focus {
     outline: none;
     border-color: var(--colors-primary-base);
-    box-shadow: 0 0 0 3px rgba(45, 87, 237, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--colors-primary-base) 16%, transparent), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
   }
 
   &:disabled {

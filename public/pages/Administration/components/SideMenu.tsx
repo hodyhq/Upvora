@@ -7,6 +7,7 @@ import { useFider } from "@fider/hooks"
 import IconX from "@fider/assets/images/heroicons-x.svg"
 import IconMenu from "@fider/assets/images/heroicons-menu.svg"
 import { VStack } from "@fider/components/layout"
+import { SystemBox } from "./SystemBox"
 
 interface SiteMenuProps {
   activeItem: string
@@ -49,9 +50,10 @@ export const SideMenu = (props: SiteMenuProps) => {
           </>
         )}
         <SideMenuItem name="tags" title="Tags" href="/admin/tags" isActive={activeItem === "tags"} />
+        {fider.session.user.isAdministrator && <SideMenuItem name="theme" title="Theme" href="/admin/theme" isActive={activeItem === "theme"} />}
+        {fider.session.user.isAdministrator && <SideMenuItem name="products" title="Products" href="/admin/products" isActive={activeItem === "products"} />}
         {fider.session.user.isAdministrator && <SideMenuItem name="statuses" title="Statuses" href="/admin/statuses" isActive={activeItem === "statuses"} />}
         <SideMenuItem name="scorecard-settings" title="Scorecard" href="/admin/scorecard-settings" isActive={activeItem === "scorecard-settings"} />
-        <SideMenuItem name="scorecard-fields" title="Scorecard Fields" href="/admin/scorecard-fields" isActive={activeItem === "scorecard-fields"} />
         {fider.session.user.isAdministrator && <SideMenuItem name="banner" title="Banner" href="/admin/banner" isActive={activeItem === "banner"} />}
         <SideMenuItem name="invitations" title="Invitations" href="/admin/invitations" isActive={activeItem === "invitations"} />
         {fider.session.user.isAdministrator && (
@@ -67,6 +69,7 @@ export const SideMenu = (props: SiteMenuProps) => {
           </>
         )}
       </VStack>
+      {fider.session.user.isAdministrator && <SystemBox />}
     </div>
   )
 }

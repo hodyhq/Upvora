@@ -5,10 +5,10 @@ import IconTag from "@fider/assets/images/heroicons-tagsolid.svg"
 
 import React, { useState, useCallback } from "react"
 import { Post, Status, Tag } from "@fider/models"
-import { Header, Button, Icon, Moment } from "@fider/components"
+import { Header, Button, Icon, Markdown, Moment } from "@fider/components"
 import { VStack, HStack } from "@fider/components/layout"
 import { useFider, usePostOverlay } from "@fider/hooks"
-import { actions } from "@fider/services"
+import { actions, notify, Fider } from "@fider/services"
 import { PostDetails } from "@fider/components/PostDetails"
 import { Trans } from "@lingui/react/macro"
 
@@ -30,6 +30,11 @@ interface RoadmapColumnProps {
   posts: Post[]
   tags: Tag[]
   currentLimit: number
+  collapsed?: boolean
+  canDrag?: boolean
+  onToggleCollapse?: () => void
+  onVote?: (post: Post) => void
+  onDropPost?: (postNumber: number, targetStatus: string) => void
   onShowMore: () => void
   onPostClick?: (postNumber: number, slug: string) => void
 }
@@ -40,7 +45,15 @@ interface RoadmapColumnProps {
 const ROADMAP_DEFAULT_LIMIT = 10
 const ROADMAP_LIMIT_STEP = 10
 
-const RoadmapPost = (props: { post: Post; tags: Tag[]; status: string; kind?: string; onPostClick?: (postNumber: number, slug: string) => void }) => {
+const RoadmapPost = (props: {
+  post: Post
+  tags: Tag[]
+  status: string
+  kind?: string
+  draggable?: boolean
+  onVote?: (post: Post) => void
+  onPostClick?: (postNumber: number, slug: string) => void
+}) => {
   const fider = useFider()
   const isModerationEnabled = fider.session.tenant.isModerationEnabled
   const isPending = isModerationEnabled && !props.post.isApproved
@@ -54,8 +67,27 @@ const RoadmapPost = (props: { post: Post; tags: Tag[]; status: string; kind?: st
     }
   }
 
+  const handleVote = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (props.onVote) {
+      props.onVote(props.post)
+    }
+  }
+
+  const handleDragStart = (e: React.DragEvent<HTMLAnchorElement>) => {
+    e.dataTransfer.setData("text/plain", String(props.post.number))
+    e.dataTransfer.effectAllowed = "move"
+  }
+
   return (
-    <a href={`/posts/${props.post.number}/${props.post.slug}`} className="c-roadmap-post-link" onClick={handleClick}>
+    <a
+      href={`/posts/${props.post.number}/${props.post.slug}`}
+      className="c-roadmap-post-link"
+      onClick={handleClick}
+      draggable={props.draggable}
+      onDragStart={props.draggable ? handleDragStart : undefined}
+    >
       <VStack className="c-roadmap-post w-full" spacing={2}>
         <HStack spacing={2} align="start" className="w-full">
           <h3 className="c-roadmap-post__title text-break">{props.post.title}</h3>
@@ -65,6 +97,13 @@ const RoadmapPost = (props: { post: Post; tags: Tag[]; status: string; kind?: st
             </span>
           )}
         </HStack>
+        {props.post.description && <Markdown className="c-roadmap-post__desc" maxLength={110} text={props.post.description} style="plainText" />}
+        {props.post.product && (
+          <span className="c-prodchip" style={{ "--pc": props.post.product.color || "var(--colors-primary-base)" } as React.CSSProperties}>
+            <i />
+            {props.post.product.name}
+          </span>
+        )}
         {props.tags.length >= 1 && (
           <HStack spacing={1} className="flex-wrap">
             {props.tags.map((tag) => (
@@ -81,10 +120,15 @@ const RoadmapPost = (props: { post: Post; tags: Tag[]; status: string; kind?: st
             <Moment locale={fider.currentLocale} date={props.post.response.respondedAt} />
           </HStack>
         ) : (
-          <span className="c-roadmap-post__votes">
-            <span className="text-semibold">{props.post.votesCount}</span>{" "}
+          <button
+            type="button"
+            className={`c-roadmap-post__votebtn ${props.post.hasVoted ? "c-roadmap-post__votebtn--voted" : ""}`}
+            onClick={handleVote}
+            title="Vote"
+          >
+            ▲ <span className="text-semibold">{props.post.votesCount}</span>{" "}
             {props.post.votesCount === 1 ? <Trans id="label.vote">Vote</Trans> : <Trans id="label.votes">Votes</Trans>}
-          </span>
+          </button>
         )}
       </VStack>
     </a>
@@ -92,17 +136,44 @@ const RoadmapPost = (props: { post: Post; tags: Tag[]; status: string; kind?: st
 }
 
 const RoadmapColumn = (props: RoadmapColumnProps) => {
+  const [isOver, setIsOver] = useState(false)
   // If we received at least as many posts as we asked for there may be more on
   // the server — same heuristic the Home feed uses (PostsContainer.getShowMoreLink).
   const hasMore = props.posts.length >= props.currentLimit
 
+  const handleDragOver = (e: React.DragEvent) => {
+    if (!props.canDrag) return
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+    setIsOver(true)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    if (!props.canDrag) return
+    e.preventDefault()
+    setIsOver(false)
+    const number = parseInt(e.dataTransfer.getData("text/plain"), 10)
+    if (number && props.onDropPost) {
+      props.onDropPost(number, props.status)
+    }
+  }
+
   return (
-    <div className="c-roadmap-column">
-      <div className="c-roadmap-column__header">
+    <div className={`c-roadmap-column c-roadmap-column--${props.statusColor || "blue"}`}>
+      <div className="c-roadmap-column__header c-roadmap-column__header--clickable" onClick={props.onToggleCollapse} title="Collapse lane">
         <span className={`c-roadmap-column__chip c-roadmap-column__chip--${props.statusColor || "blue"}`}>{props.statusLabel}</span>
-        <span className="c-roadmap-column__count">{props.posts.length}</span>
+        <span className="c-roadmap-column__count">
+          {props.posts.length}
+          {props.collapsed ? " ▸" : ""}
+        </span>
       </div>
-      <div className="c-roadmap-column__body">
+      <div
+        className={`c-roadmap-column__body ${isOver ? "c-roadmap-column__body--over" : ""}`}
+        style={props.collapsed ? { display: "none" } : undefined}
+        onDragOver={handleDragOver}
+        onDragLeave={() => setIsOver(false)}
+        onDrop={handleDrop}
+      >
         {props.posts.map((post) => (
           <RoadmapPost
             key={post.id}
@@ -110,6 +181,8 @@ const RoadmapColumn = (props: RoadmapColumnProps) => {
             tags={props.tags.filter((tag) => post.tags.indexOf(tag.slug) >= 0)}
             status={props.status}
             kind={props.kind}
+            draggable={props.canDrag}
+            onVote={props.onVote}
             onPostClick={props.onPostClick}
           />
         ))}
@@ -141,6 +214,80 @@ interface ColumnState {
 const RoadmapBoard = (props: RoadmapPageProps) => {
   const [columns, setColumns] = useState<ColumnState[]>((props.columns || []).map((c) => ({ status: c.status, posts: c.posts, limit: ROADMAP_DEFAULT_LIMIT })))
   const tags = props.tags || []
+  const [query, setQuery] = useState("")
+  const initialProductFilter = (() => {
+    if (typeof window === "undefined") return [] as number[]
+    const all = Fider.session.tenant.products ?? []
+    const single = /[?&]product=([^&]+)/.exec(window.location.search)
+    const multi = /[?&]products=([^&]+)/.exec(window.location.search)
+    const slugs = multi ? decodeURIComponent(multi[1]).split(",") : single ? [decodeURIComponent(single[1])] : []
+    return slugs.map((slug) => all.find((p) => p.slug === slug)?.id ?? 0).filter((id) => id > 0)
+  })()
+  const [productFilter, setProductFilter] = useState<number[]>(initialProductFilter)
+
+  const toggleProductFilter = (id: number) => {
+    const next = productFilter.includes(id) ? productFilter.filter((x) => x !== id) : [...productFilter, id]
+    setProductFilter(next)
+    if (typeof window !== "undefined" && window.history) {
+      const all = Fider.session.tenant.products ?? []
+      const slugs = next.map((x) => all.find((p) => p.id === x)?.slug).filter(Boolean)
+      window.history.replaceState(null, "", slugs.length ? `/roadmap?products=${slugs.join(",")}` : "/roadmap")
+    }
+  }
+  const [tagFilter, setTagFilter] = useState<string | null>(null)
+  const [collapsed, setCollapsed] = useState<{ [slug: string]: boolean }>({})
+  const canDrag = Fider.session.isAuthenticated && Fider.session.user.isCollaborator
+
+  const matchesFilters = (p: Post): boolean => {
+    if (productFilter.length > 0 && !productFilter.includes(p.product?.id ?? -1)) return false
+    if (tagFilter && p.tags.indexOf(tagFilter) < 0) return false
+    if (query) {
+      const q = query.toLowerCase()
+      if (p.title.toLowerCase().indexOf(q) < 0 && (p.description || "").toLowerCase().indexOf(q) < 0) return false
+    }
+    return true
+  }
+
+  const handleVote = async (post: Post) => {
+    if (!Fider.session.isAuthenticated) {
+      return
+    }
+    // optimistic flip; revert on failure
+    const apply = (delta: number, voted: boolean) =>
+      setColumns((cols) =>
+        cols.map((c) => ({ ...c, posts: c.posts.map((p) => (p.number === post.number ? { ...p, votesCount: p.votesCount + delta, hasVoted: voted } : p)) }))
+      )
+    const wasVoted = post.hasVoted
+    apply(wasVoted ? -1 : 1, !wasVoted)
+    const result = await actions.toggleVote(post.number)
+    if (!result.ok) {
+      apply(wasVoted ? 1 : -1, wasVoted)
+      notify.error("Could not register your vote. Please try again.")
+    }
+  }
+
+  const handleDropPost = async (postNumber: number, targetStatus: string) => {
+    const source = columns.find((c) => c.posts.some((p) => p.number === postNumber))
+    if (!source || source.status.slug === targetStatus) return
+    const post = source.posts.find((p) => p.number === postNumber) as Post
+    // optimistic move; revert on failure
+    const move = (from: string, to: string) =>
+      setColumns((cols) =>
+        cols.map((c) => {
+          if (c.status.slug === from) return { ...c, posts: c.posts.filter((p) => p.number !== postNumber) }
+          if (c.status.slug === to) return { ...c, posts: [post, ...c.posts] }
+          return c
+        })
+      )
+    move(source.status.slug, targetStatus)
+    const result = await actions.respond(postNumber, { status: targetStatus, text: post.response?.text || "", originalNumber: 0 })
+    if (!result.ok) {
+      move(targetStatus, source.status.slug)
+      notify.error("Could not change the status. Please try again.")
+    } else {
+      reloadPosts()
+    }
+  }
 
   const reloadPosts = useCallback(async () => {
     const next = await Promise.all(
@@ -178,7 +325,50 @@ const RoadmapBoard = (props: RoadmapPageProps) => {
   return (
     <div id="p-roadmap" className="page container">
       <div style={selectedPostId !== null ? { display: "none" } : undefined}>
+        <div className="p-roadmap__head">
+          <span className="p-roadmap__eyebrow">
+            <Trans id="roadmap.head.eyebrow">Roadmap</Trans>
+          </span>
+          <h1 className="p-roadmap__title">
+            <Trans id="roadmap.head.title">Where things stand</Trans>
+          </h1>
+          <p className="p-roadmap__subtitle">
+            <Trans id="roadmap.head.subtitle">From triage to shipped. Every card started as a vote on the board.</Trans>
+          </p>
+        </div>
         <VStack spacing={4}>
+          <div className="c-roadmap-toolbar">
+            {(Fider.session.tenant.products?.length ?? 0) > 0 && (
+              <div className="c-prodfilter">
+                {(Fider.session.tenant.products ?? []).map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className="c-prodchip c-prodchip--toggle"
+                    aria-pressed={productFilter.includes(p.id)}
+                    style={{ "--pc": p.color || "var(--colors-primary-base)" } as React.CSSProperties}
+                    onClick={() => toggleProductFilter(p.id)}
+                  >
+                    <i />
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            )}
+            <input className="c-roadmap-toolbar__search" placeholder="Search the roadmap" value={query} onChange={(e) => setQuery(e.target.value)} />
+            <div className="c-roadmap-toolbar__tags">
+              {tags.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  className={`c-tag c-roadmap-toolbar__tag ${tagFilter === t.slug ? "c-roadmap-toolbar__tag--on" : ""}`}
+                  onClick={() => setTagFilter((f) => (f === t.slug ? null : t.slug))}
+                >
+                  {t.name}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="c-roadmap-board">
             {columns.map((col) => (
               <RoadmapColumn
@@ -187,9 +377,14 @@ const RoadmapBoard = (props: RoadmapPageProps) => {
                 statusLabel={col.status.label}
                 statusColor={col.status.color}
                 kind={col.status.kind}
-                posts={col.posts}
+                posts={col.posts.filter(matchesFilters)}
                 tags={tags}
                 currentLimit={col.limit}
+                collapsed={collapsed[col.status.slug]}
+                canDrag={canDrag}
+                onToggleCollapse={() => setCollapsed((c) => ({ ...c, [col.status.slug]: !c[col.status.slug] }))}
+                onVote={handleVote}
+                onDropPost={handleDropPost}
                 onShowMore={() => showMore(col.status.slug)}
                 onPostClick={handlePostClick}
               />

@@ -4,7 +4,8 @@ import IconTag from "@fider/assets/images/heroicons-tagsolid.svg"
 
 import React, { useEffect, useMemo, useRef, useState } from "react"
 import { Button, Header, Icon } from "@fider/components"
-import { ScorecardField, ScorecardFieldChoice, Post, User } from "@fider/models"
+import { InternalNotesPanel } from "@fider/components/PostDetails/InternalNotesPanel"
+import { ScorecardField, ScorecardFieldChoice, Post, User, InternalNote } from "@fider/models"
 import { actions, notify, Fider } from "@fider/services"
 import { computeWeightedScore, bandForScore } from "./ScoreBand"
 
@@ -21,6 +22,7 @@ interface Scorecard {
 interface ScorecardCardPageProps {
   scorecard: Scorecard
   assigneeNames?: string[]
+  internalNote?: InternalNote
 }
 
 const GROUP_ORDER = ["intake", "context", "workflow", "ownership", "classification", "scoring", "decision"] as const
@@ -42,7 +44,6 @@ const GROUP_HINTS: Record<string, string> = {
   scoring: "1–5 each · 0 = not scored · weights sum to 100",
   decision: "Committee recommendation and outcome",
 }
-const BAND_SEGMENTS = ["reject", "low", "refine", "good", "strong"] as const
 
 const parseChoices = (raw: unknown): ScorecardFieldChoice[] => {
   if (!raw || !Array.isArray(raw)) return []
@@ -377,53 +378,119 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
             )}
           </div>
 
-          <div className="c-scorecard__gauge">
-            <div>
-              <span className="c-scorecard__gauge-label">Weighted score</span>
-              <span>
-                <span className="c-scorecard__gauge-num">{weightedScore}</span>
-                <span className="c-scorecard__gauge-of"> / 100</span>
-              </span>
+          {post && (
+            <div className="mb-4">
+              <InternalNotesPanel postNumber={post.number} initialNote={props.internalNote} />
             </div>
-            <div className="c-scorecard__gauge-track">
-              <div className="c-scorecard__gauge-bar">
-                {BAND_SEGMENTS.map((seg) => (
-                  <div
-                    key={seg}
-                    className={`c-scorecard__gauge-seg c-scorecard__gauge-seg--${seg} ${
-                      weightedScore > 0 && band.key === seg ? "c-scorecard__gauge-seg--lit" : ""
-                    }`}
-                  />
-                ))}
-              </div>
-              <div className="c-scorecard__gauge-marker" style={{ left: `${Math.min(100, Math.max(0, weightedScore))}%` }}>
-                <span className="c-scorecard__gauge-bubble">{weightedScore}</span>
-                <span className="c-scorecard__gauge-pin"></span>
-              </div>
-              <div className="c-scorecard__gauge-ticks">
-                {[0, 20, 40, 60, 80, 100].map((t) => (
-                  <span key={t} style={{ left: `${t}%` }}>
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className="c-scorecard__gauge-band">
-              {weightedScore === 0 ? (
-                // A card with nothing scored is "Not scored", not the bottom
-                // band — stage 5 starts at 1.
-                <>
-                  <span className="c-scorecard__chip c-scorecard__chip--neutral c-scorecard__chip--plain">Not scored</span>
-                  <div className="c-scorecard__gauge-hint">score any dimension to place this card</div>
-                </>
-              ) : (
-                <>
-                  <span className={`c-scorecard__chip c-scorecard__chip--${band.key}`}>{band.label}</span>
-                  <div className="c-scorecard__gauge-hint">
-                    {band.threshold > 0 ? `band threshold ≥ ${band.threshold}` : `below ${Fider.session.tenant.scorecardBandLow}`}
+          )}
+
+          <div className="c-scorecard__gauge c-scorecard__gauge--ring">
+            {(() => {
+              const p = Math.min(100, Math.max(0, weightedScore))
+              // SVG progress ring: rounded caps, a light->dark gradient of the
+              // CURRENT band color along the arc, soft glow, and colored dots
+              // on the track exactly at the band thresholds.
+              const R = 64
+              const CIRC = 2 * Math.PI * R
+              const bandGradients: { [key: string]: [string, string] } = {
+                strong: ["#4ADE80", "#16A34A"],
+                good: ["#60A5FA", "#2563EB"],
+                refine: ["#FCD34D", "#F59E0B"],
+                low: ["#FB923C", "#EA580C"],
+                reject: ["#F87171", "#DC2626"],
+              }
+              const [gradA, gradB] = bandGradients[band.key] || bandGradients.reject
+              const thresholdDots = [
+                { th: Fider.session.tenant.scorecardBandLow, c: "#FB923C" },
+                { th: Fider.session.tenant.scorecardBandRefine, c: "#FBBF24" },
+                { th: Fider.session.tenant.scorecardBandGood, c: "#60A5FA" },
+                { th: Fider.session.tenant.scorecardBandStrong, c: "#4ADE80" },
+              ].filter((d) => d.th > 0 && d.th < 100)
+              return (
+                <div
+                  className="c-scorecard__ring"
+                  style={
+                    {
+                      "--bc": weightedScore === 0 ? "var(--colors-gray-500)" : band.border,
+                    } as React.CSSProperties
+                  }
+                >
+                  <svg className="c-scorecard__ring-svg" viewBox="0 0 160 160" aria-hidden="true">
+                    <defs>
+                      <linearGradient id="scorecard-ring-grad" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor={gradA} />
+                        <stop offset="100%" stopColor={gradB} />
+                      </linearGradient>
+                    </defs>
+                    <circle className="c-scorecard__ring-svg-track" cx="80" cy="80" r={R} fill="none" strokeWidth="10" />
+                    {thresholdDots.map((d) => {
+                      const a = ((d.th * 3.6 - 90) * Math.PI) / 180
+                      return <circle key={d.th} cx={80 + R * Math.cos(a)} cy={80 + R * Math.sin(a)} r="3" fill={d.c} />
+                    })}
+                    {p > 0 && (
+                      <circle
+                        className="c-scorecard__ring-svg-arc"
+                        cx="80"
+                        cy="80"
+                        r={R}
+                        fill="none"
+                        stroke="url(#scorecard-ring-grad)"
+                        strokeWidth="10"
+                        strokeLinecap="round"
+                        strokeDasharray={`${(CIRC * p) / 100} ${CIRC}`}
+                        transform="rotate(-90 80 80)"
+                      />
+                    )}
+                  </svg>
+                  <div className="c-scorecard__ring-center">
+                    <span className="c-scorecard__ring-num">{weightedScore}</span>
+                    <span className="c-scorecard__ring-bandlabel" style={weightedScore === 0 ? undefined : { color: band.border }}>
+                      {/* A card with nothing scored is "Not scored", not the bottom band — stage 5 starts at 1. */}
+                      {weightedScore === 0 ? "Not scored" : band.label}
+                    </span>
                   </div>
-                </>
-              )}
+                </div>
+              )
+            })()}
+            <div className="c-scorecard__ring-side">
+              <span className="c-scorecard__gauge-label">Weighted score</span>
+              <div className="c-scorecard__bands">
+                {[
+                  {
+                    key: "strong",
+                    label: Fider.session.tenant.scorecardBandStrongLabel || "Strong Candidate",
+                    th: Fider.session.tenant.scorecardBandStrong,
+                    c: "#16A34A",
+                  },
+                  {
+                    key: "good",
+                    label: Fider.session.tenant.scorecardBandGoodLabel || "Good Candidate",
+                    th: Fider.session.tenant.scorecardBandGood,
+                    c: "#2563EB",
+                  },
+                  {
+                    key: "refine",
+                    label: Fider.session.tenant.scorecardBandRefineLabel || "Needs Refinement",
+                    th: Fider.session.tenant.scorecardBandRefine,
+                    c: "#F59E0B",
+                  },
+                  { key: "low", label: Fider.session.tenant.scorecardBandLowLabel || "Low Priority", th: Fider.session.tenant.scorecardBandLow, c: "#F97316" },
+                  { key: "reject", label: Fider.session.tenant.scorecardBandNoneLabel || "Not Recommended", th: 1, c: "#DC2626" },
+                ].map((b) => (
+                  <div key={b.key} className={`c-scorecard__bandrow ${weightedScore > 0 && band.key === b.key ? "c-scorecard__bandrow--cur" : ""}`}>
+                    <span className="c-scorecard__banddot" style={{ background: b.c, boxShadow: `0 0 7px ${b.c}` }} />
+                    <b>{b.label}</b>
+                    <span className="c-scorecard__bandpts">{b.th}+ pts</span>
+                  </div>
+                ))}
+              </div>
+              <div className="c-scorecard__gauge-hint">
+                {weightedScore === 0
+                  ? "score any dimension to place this card"
+                  : band.threshold > 0
+                  ? `band threshold ≥ ${band.threshold}`
+                  : `below ${Fider.session.tenant.scorecardBandLow}`}
+              </div>
             </div>
           </div>
 

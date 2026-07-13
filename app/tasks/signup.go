@@ -23,7 +23,7 @@ func SendSignUpEmail(data SignUpEmailData, baseURL string) worker.Task {
 		})
 
 		bus.Publish(c, &cmd.SendMail{
-			From:         dto.Recipient{Name: "Fider"},
+			From:         dto.Recipient{Name: "Upvora"},
 			To:           []dto.Recipient{to},
 			TemplateName: "signup_email",
 			Props: dto.Props{

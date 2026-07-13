@@ -11,6 +11,7 @@ import (
 
 	"github.com/getfider/fider/app/models/dto"
 
+	"github.com/getfider/fider/app/models/entity"
 	"github.com/getfider/fider/app/models/query"
 	"github.com/getfider/fider/app/pkg/bus"
 	"github.com/getfider/fider/app/pkg/i18n"
@@ -146,9 +147,13 @@ func (r *Renderer) Render(w io.Writer, statusCode int, props Props, ctx *Context
 	}
 
 	tenant := ctx.Tenant()
-	tenantName := "Fider"
+	tenantName := "Upvora"
+	defaultTheme := "light"
 	if tenant != nil {
 		tenantName = tenant.Name
+		if tenant.DefaultTheme != "" {
+			defaultTheme = tenant.DefaultTheme
+		}
 	}
 
 	title := tenantName
@@ -165,6 +170,12 @@ func (r *Renderer) Render(w io.Writer, statusCode int, props Props, ctx *Context
 
 	private["assets"] = r.assets
 	private["logo"] = LogoURL(ctx)
+	private["defaultTheme"] = defaultTheme
+	if tenant != nil {
+		if css := buildThemeCSS(tenant); css != "" {
+			private["themeCSS"] = template.CSS(css)
+		}
+	}
 
 	locale := i18n.GetLocale(ctx)
 	localeDirection := i18n.GetLocaleDirection(ctx)
@@ -260,4 +271,34 @@ func (r *Renderer) Render(w io.Writer, statusCode int, props Props, ctx *Context
 	if err != nil {
 		panic(errors.Wrap(err, "failed to execute template %s", templateName))
 	}
+}
+
+// buildThemeCSS turns the tenant's Theme settings into CSS TOKEN overrides.
+// Values are hex-validated at write time. `html body[...]` outranks the
+// stylesheet's body[data-theme] token definitions in both themes, so admin
+// colors win without touching any selector the design system owns.
+func buildThemeCSS(tenant *entity.Tenant) string {
+	var b strings.Builder
+	writeTokens := func(prefix, hex string) {
+		fmt.Fprintf(&b, "%s-base:%s;", prefix, hex)
+		fmt.Fprintf(&b, "%s-light:color-mix(in srgb,%s 72%%,#fff);", prefix, hex)
+		fmt.Fprintf(&b, "%s-dark:color-mix(in srgb,%s 78%%,#000);", prefix, hex)
+	}
+	var body strings.Builder
+	if tenant.ThemePrimary != "" {
+		writeTokens("--colors-primary", tenant.ThemePrimary)
+	}
+	for key, hex := range tenant.ThemeAccents {
+		if hex == "" {
+			continue
+		}
+		fmt.Fprintf(&b, "--accent-%s:%s;", key, hex)
+		fmt.Fprintf(&b, "--accent-%s-grad:linear-gradient(135deg,color-mix(in srgb,%s 75%%,#fff),%s 55%%,color-mix(in srgb,%s 80%%,#000));", key, hex, hex, hex)
+	}
+	tokens := b.String()
+	if tokens == "" {
+		return ""
+	}
+	fmt.Fprintf(&body, "html body{%s}html body[data-theme=\"light\"]{%s}html body[data-theme=\"dark\"]{%s}", tokens, tokens, tokens)
+	return body.String()
 }

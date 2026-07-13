@@ -25,6 +25,9 @@
     grid-column: 1 / -1;
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
+    gap: spacing(2);
+    max-width: 100%;
     & > * + * {
       margin-inline-start: 0;
     }
@@ -52,59 +55,7 @@
   &__list {
     display: flex;
     flex-direction: column;
-    gap: spacing(4);
-  }
-
-  &__post-link {
-    display: block;
-    text-decoration: none;
-    color: inherit;
-  }
-
-  &__post {
-    background-color: var(--colors-white);
-    @include dark-mode {
-      background-color: var(--colors-gray-200);
-    }
-    border-radius: get("border.radius.xlarge");
-    padding: spacing(6) spacing(7);
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-    transition: box-shadow 0.2s ease-in-out;
-
-    .c-posts-container__post-link:hover & {
-      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    }
-  }
-
-  &__post-title {
-    font-size: get("font.size.lg");
-    font-weight: get("font.weight.bold");
-    color: var(--colors-gray-900);
-    line-height: 1.4;
-    transition: color 0.2s ease-in-out;
-
-    .c-posts-container__post-link:hover & {
-      color: var(--colors-primary-base);
-    }
-  }
-
-  &__post-comments {
-    color: var(--colors-gray-500);
-    font-size: get("font.size.sm");
-    align-items: center;
-    margin-left: spacing(4);
-  }
-
-  &__postdescription {
-    color: var(--colors-gray-800);
-    font-size: get("font.size.base");
-    line-height: 1.6;
-  }
-
-  &__post-votes {
-    display: flex;
-    align-items: baseline;
-    gap: spacing(2);
+    gap: 10px;
   }
 
   &__post-minimal {
@@ -115,5 +66,277 @@
     &:last-child {
       border-bottom: none;
     }
+  }
+}
+
+/* Segmented sort control (prototype tabs) */
+.c-posts-sort {
+  display: inline-flex;
+  gap: 2px;
+  max-width: 100%;
+  overflow-x: auto;
+  background-color: color-mix(in srgb, var(--colors-gray-900) 5%, transparent);
+  border: 1px solid var(--colors-gray-200);
+  border-radius: 11px;
+  padding: 3px;
+
+  &__tab {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--colors-gray-600);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 13px;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.12s ease, background-color 0.12s ease;
+
+    &:hover {
+      color: var(--colors-gray-900);
+    }
+
+    &--active {
+      background-color: var(--colors-white);
+      color: var(--colors-gray-900);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    }
+  }
+}
+
+/* Dense feedback row — the board's flagship element */
+.c-post {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: spacing(4);
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  background-color: var(--colors-white);
+  border: 1px solid var(--colors-gray-200);
+  border-radius: get("border.radius.large");
+  padding: 14px 18px;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+
+  @include dark-mode {
+    // Raised card above the near-black page + the prototype's top sheen.
+    background-color: var(--colors-white);
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 45%);
+    border-color: var(--colors-gray-300);
+
+    &:hover {
+      box-shadow: 0 14px 40px -20px var(--brand-glow);
+    }
+  }
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--colors-primary-base) 40%, transparent);
+    box-shadow: 0 14px 34px -22px rgba(0, 0, 0, 0.35);
+    transform: translateY(-1px);
+  }
+
+  // colorful status edge
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: spacing(3);
+    bottom: spacing(3);
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: transparent;
+    transition: background 0.16s ease;
+  }
+  // prototype status hues (design contract)
+  &[data-color="blue"]::after {
+    background: #3b82f6;
+  }
+  &[data-color="yellow"]::after {
+    background: #f59e0b;
+  }
+  &[data-color="green"]::after {
+    background: #22c55e;
+  }
+  &[data-color="red"]::after {
+    background: #ef4444;
+  }
+  &[data-color="gray"]::after {
+    background: #7c8490;
+  }
+
+  &__vote {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    width: 68px;
+    padding: 13px 6px;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    appearance: none;
+    border: 1px solid var(--colors-gray-400);
+    border-radius: 13px;
+    background-color: var(--colors-gray-100);
+    transition: border-color 0.16s ease, background 0.16s ease;
+
+    @include dark-mode {
+      // darker inset well against the raised card (prototype surface-2)
+      background-color: var(--colors-gray-50);
+    }
+
+    &[data-voted="true"] {
+      background-color: var(--accent-votes, var(--colors-primary-base));
+      background-image: var(--accent-votes-grad, var(--brand-grad));
+      border-color: transparent;
+      box-shadow: 0 8px 18px -10px var(--brand-glow);
+
+      .c-post__chev,
+      .c-post__votes,
+      .c-post__voteslabel {
+        color: #fff;
+        // the CSS stroke property on the base class beats the svg's
+        // stroke="currentColor" attribute - override it explicitly
+        stroke: #fff;
+      }
+    }
+  }
+  &:hover &__vote {
+    border-color: var(--colors-primary-base);
+  }
+
+  &__chev {
+    width: 17px;
+    height: 17px;
+    color: var(--colors-primary-base);
+    stroke: var(--colors-primary-base);
+  }
+  &__votes {
+    font-size: 1.28rem;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--colors-gray-900);
+    font-variant-numeric: tabular-nums;
+  }
+  &__voteslabel {
+    font-size: 0.63rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    color: var(--colors-gray-500);
+  }
+
+  &__body {
+    min-width: 0;
+  }
+  &__titlerow {
+    display: flex;
+    align-items: center;
+    gap: spacing(2);
+  }
+  &__title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: -0.017em;
+    line-height: 1.25;
+    color: var(--colors-gray-900);
+    margin-bottom: spacing(1);
+    transition: color 0.14s ease;
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+  }
+  &:hover &__title {
+    color: var(--colors-primary-base);
+  }
+  &__pending {
+    font-size: get("font.size.sm");
+    background-color: var(--colors-yellow-100);
+    color: var(--colors-yellow-800);
+    padding: 1px spacing(2);
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+  &__desc {
+    color: var(--colors-gray-700);
+    font-size: get("font.size.sm");
+    line-height: 1.45;
+    margin-bottom: spacing(2);
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: spacing(2);
+    flex-wrap: wrap;
+  }
+
+  &__side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: spacing(1);
+    color: var(--colors-gray-500);
+    font-size: get("font.size.sm");
+  }
+  &__cmts {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+  }
+
+  &__rank {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--colors-gray-500);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @include media("sm") {
+    grid-template-columns: auto 1fr;
+    &__side {
+      display: none;
+    }
+  }
+}
+
+/* product chip on rows - only in the all-products view */
+.c-post__prodchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 650;
+  padding: 2px 8px;
+  border-radius: 7px;
+  white-space: nowrap;
+  color: var(--pc);
+  background: color-mix(in srgb, var(--pc) 13%, transparent);
+  // ink-colored border (near-black in light, near-white in dark) marks
+  // PRODUCT chips apart from status pills
+  border: 1px solid color-mix(in srgb, var(--colors-gray-900) 40%, transparent);
+  text-decoration: none;
+
+  i {
+    width: 7px;
+    height: 7px;
+    border-radius: 2.5px;
+    background: var(--pc);
+  }
+
+  &:hover {
+    background: color-mix(in srgb, var(--pc) 22%, transparent);
   }
 }

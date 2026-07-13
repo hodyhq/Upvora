@@ -2,7 +2,7 @@ import "./PostDetails.scss"
 
 import React, { useState, useEffect, useCallback } from "react"
 
-import { Comment, Post, Tag, Vote, CurrentUser, PostStatus, postStatusValue } from "@fider/models"
+import { Comment, Post, Tag, Vote, CurrentUser, PostStatus, postStatusValue, InternalNote } from "@fider/models"
 import { actions, cache, clearUrlHash, Failure, Fider, notify, timeAgo } from "@fider/services"
 import IconDuplicate from "@fider/assets/images/heroicons-duplicate.svg"
 import { i18n } from "@lingui/core"
@@ -23,9 +23,9 @@ import { HStack, VStack } from "@fider/components/layout"
 import { Trans } from "@lingui/react/macro"
 import { DeletePostModal } from "@fider/pages/ShowPost/components/DeletePostModal"
 import { ResponseModal } from "@fider/pages/ShowPost/components/ResponseModal"
-import { VotesPanel } from "@fider/pages/ShowPost/components/VotesPanel"
 import { TagsPanel } from "@fider/pages/ShowPost/components/TagsPanel"
 import { ActionButton } from "@fider/pages/ShowPost/components/ActionButton"
+import { InternalNotesPanel } from "@fider/components/PostDetails/InternalNotesPanel"
 import { t } from "@lingui/macro"
 import { useFider } from "@fider/hooks"
 import { useAttachments } from "@fider/hooks/useAttachments"
@@ -41,6 +41,7 @@ interface PostDetailsProps {
   initialTags?: Tag[]
   initialVotes?: Vote[]
   initialAttachments?: string[]
+  initialInternalNote?: InternalNote
 }
 
 const oneHour = 3600
@@ -60,10 +61,17 @@ const PostMetaInfo = ({ post, locale }: { post: Post; locale: string }) => (
     </span>
     <span className="text-sm text-gray-400">•</span>
     <Moment className="text-sm text-gray-600" locale={locale} date={post.createdAt} />
-    <span className="text-sm text-gray-400">•</span>
-    <ResponseLozenge status={postStatusValue(post)} response={post.response} size="xsmall" />
   </HStack>
 )
+
+const builtInStatusColors: { [key: string]: string } = {
+  open: "blue",
+  planned: "blue",
+  started: "yellow",
+  completed: "green",
+  declined: "red",
+  duplicate: "gray",
+}
 
 export const PostDetails: React.FC<PostDetailsProps> = (props) => {
   // If we have initial data, use it; otherwise we'll fetch
@@ -302,18 +310,22 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
 
   return (
     <div className="p-show-post">
-      {/* Left Sidebar - hidden on mobile, shown on desktop */}
-      <div className="p-show-post__action-col p-show-post__action-col--desktop">
-        <VotesPanel post={post} votes={votes} />
-
-        <PoweredByFider slot="show-post" className="mt-3" />
-      </div>
-
       <div className="p-show-post__main-col">
         {/* Post Card */}
-        <div className="p-show-post__post-card">
+        <div
+          className="p-show-post__post-card"
+          data-color={
+            fider.session.tenant.statuses?.find((s) => s.slug === postStatusValue(post))?.color || builtInStatusColors[postStatusValue(post)] || "gray"
+          }
+        >
           {/* Title and Meta */}
-          <VStack spacing={4}>
+          <VStack spacing={2}>
+            {/* Status pill above the title (prototype) */}
+            {!editMode && postStatusValue(post) !== "open" && (
+              <div className="align-self-start">
+                <ResponseLozenge status={postStatusValue(post)} response={post.response} size="small" />
+              </div>
+            )}
             {/* Title */}
             {editMode ? (
               <Form error={error}>
@@ -327,6 +339,43 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
             {!editMode && (
               <div className="p-show-post__meta">
                 <PostMetaInfo post={post} locale={fider.currentLocale} />
+                {(fider.session.tenant.products?.length ?? 0) > 0 &&
+                  (fider.session.isAuthenticated && fider.session.user.isCollaborator ? (
+                    <select
+                      className="p-show-post__productsel"
+                      value={post.product?.id ?? 0}
+                      onChange={async (e) => {
+                        const productId = parseInt(e.target.value, 10) || 0
+                        const result = await actions.setPostProduct(post.number, productId)
+                        if (result.ok) {
+                          const pr = (fider.session.tenant.products ?? []).find((p) => p.id === productId)
+                          setPost({ ...post, product: pr ? { id: pr.id, name: pr.name, slug: pr.slug, color: pr.color } : undefined })
+                          // board/roadmap behind the overlay refetch this row - no stale chip on close
+                          props.onDataChanged?.()
+                        } else {
+                          notify.error("Could not change the product. Please try again.")
+                        }
+                      }}
+                    >
+                      <option value={0}>General</option>
+                      {(fider.session.tenant.products ?? []).map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    post.product && (
+                      <a
+                        href={`/p/${post.product.slug}`}
+                        className="c-post__prodchip p-show-post__prodchip"
+                        style={{ "--pc": post.product.color || "var(--colors-primary-base)" } as React.CSSProperties}
+                      >
+                        <i />
+                        {post.product.name}
+                      </a>
+                    )
+                  ))}
               </div>
             )}
           </VStack>
@@ -394,7 +443,7 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
           )}
 
           {tags.length >= 1 && (
-            <div className="pt-7">
+            <div className="pt-4">
               <TagsPanel post={post} tags={tags} onDataChanged={props.onDataChanged} />
             </div>
           )}
@@ -403,6 +452,14 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
           {!editMode && (
             <div className="p-show-post__vote-section">
               <VoteSection post={post} votes={post.votesCount} onDataChanged={props.onDataChanged} />
+              {votes.length > 0 && (
+                <div className="p-show-post__vote-avatars">
+                  {votes.slice(0, 5).map((v) => (
+                    <Avatar key={v.user.id} user={v.user} size="small" />
+                  ))}
+                  {votes.length > 5 && <span className="p-show-post__vote-more">+{votes.length - 5}</span>}
+                </div>
+              )}
             </div>
           )}
 
@@ -480,10 +537,10 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
           )}
         </div>
 
-        {/* Mobile Sidebar - shown after post card on mobile */}
-        <div className="p-show-post__action-col p-show-post__action-col--mobile">
-          <VotesPanel post={post} votes={votes} />
-        </div>
+        {/* Team-only shared note - synced with the linked scorecard */}
+        {fider.session.isAuthenticated && fider.session.user.isCollaborator && (
+          <InternalNotesPanel postNumber={post.number} initialNote={props.initialInternalNote} />
+        )}
 
         {/* Discussion Section */}
         <div className="p-show-post__discussion-section">
@@ -514,7 +571,7 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
         </div>
 
         {/* Powered by Fider - bottom of page on mobile only */}
-        <div className="p-show-post__powered-by-mobile">
+        <div className="p-show-post__powered-by">
           <PoweredByFider slot="show-post" />
         </div>
       </div>

@@ -198,6 +198,10 @@ type UpdateTenantSettings struct {
 	WelcomeHeader       string           `json:"welcomeHeader"`
 	DescriptionTemplate string           `json:"descriptionTemplate"`
 	ShareIdeaInstructions string         `json:"shareIdeaInstructions"`
+	RailCtaHeading      string           `json:"railCtaHeading"`
+	RailCtaText         string           `json:"railCtaText"`
+	RailCtaButton       string           `json:"railCtaButton"`
+	DefaultTheme        string           `json:"defaultTheme"`
 	Locale              string           `json:"locale"`
 	CNAME               string           `json:"cname" format:"lower"`
 }
@@ -248,6 +252,25 @@ func (action *UpdateTenantSettings) Validate(ctx context.Context, user *entity.U
 
 	if len(action.WelcomeHeader) > 100 {
 		result.AddFieldFailure("welcomeHeader", "Welcome Header must have less than 100 characters.")
+	}
+
+	if len(action.RailCtaHeading) > 60 {
+		result.AddFieldFailure("railCtaHeading", "Sidebar heading must have less than 60 characters.")
+	}
+
+	if len(action.RailCtaText) > 240 {
+		result.AddFieldFailure("railCtaText", "Sidebar text must have less than 240 characters.")
+	}
+
+	if len(action.RailCtaButton) > 60 {
+		result.AddFieldFailure("railCtaButton", "Sidebar button must have less than 60 characters.")
+	}
+
+	if action.DefaultTheme == "" {
+		action.DefaultTheme = "light"
+	}
+	if action.DefaultTheme != "light" && action.DefaultTheme != "dark" && action.DefaultTheme != "system" {
+		result.AddFieldFailure("defaultTheme", "Default appearance must be light, dark or system.")
 	}
 
 	if len(action.DescriptionTemplate) > 2000 {

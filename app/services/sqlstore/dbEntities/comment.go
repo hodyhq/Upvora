@@ -19,6 +19,7 @@ type Comment struct {
 	EditedBy       *User          `db:"edited_by"`
 	ReactionCounts dbx.NullString `db:"reaction_counts"`
 	IsApproved     bool           `db:"is_approved"`
+	IsInternal     bool           `db:"is_internal"`
 }
 
 func (c *Comment) ToModel(ctx context.Context) *entity.Comment {
@@ -29,6 +30,7 @@ func (c *Comment) ToModel(ctx context.Context) *entity.Comment {
 		User:        c.User.ToModel(ctx),
 		Attachments: c.Attachments,
 		IsApproved:  c.IsApproved,
+		IsInternal:  c.IsInternal,
 	}
 	if c.EditedAt.Valid {
 		comment.EditedBy = c.EditedBy.ToModel(ctx)

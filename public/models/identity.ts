@@ -1,4 +1,4 @@
-import { Status } from "./post"
+import { Status, Product } from "./post"
 
 export interface Tenant {
   id: number
@@ -11,6 +11,12 @@ export interface Tenant {
   welcomeHeader: string
   descriptionTemplate: string
   shareIdeaInstructions: string
+  railCtaHeading: string
+  railCtaText: string
+  railCtaButton: string
+  defaultTheme: string
+  themePrimary?: string
+  themeAccents?: { [key: string]: string }
   status: TenantStatus
   isPrivate: boolean
   logoBlobKey: string
@@ -37,6 +43,7 @@ export interface Tenant {
   scorecardBandNoneLabel: string
   scorecardTriggerStatusSlug: string
   scorecardFields?: ScorecardField[]
+  products?: Product[]
 }
 
 // One entry in a choice-typed field's list. bucket maps the choice onto a

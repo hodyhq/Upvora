@@ -68,6 +68,7 @@ type ScorecardListItem struct {
 	PostSlug    sql.NullString `db:"post_slug"`
 	SubmittedBy sql.NullString `db:"submitted_by"`
 	PostVotes   int            `db:"post_votes"`
+	ProductID   sql.NullInt64  `db:"product_id"`
 }
 
 func (s *ScorecardListItem) ToModel() *entity.Scorecard {
@@ -95,6 +96,10 @@ func (s *ScorecardListItem) ToModel() *entity.Scorecard {
 	}
 	if s.SubmittedBy.Valid {
 		m.SubmittedBy = s.SubmittedBy.String
+	}
+	if s.ProductID.Valid {
+		pid := int(s.ProductID.Int64)
+		m.ProductID = &pid
 	}
 	return m
 }

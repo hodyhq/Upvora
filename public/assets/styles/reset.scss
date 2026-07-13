@@ -18,9 +18,17 @@ body {
 
   color: var(--colors-gray-800);
   background-color: var(--colors-gray-100);
-  font-size: get("font.size.base");
+  background-image: radial-gradient(1100px 560px at 92% -6%, var(--brand-glow), transparent 58%),
+    radial-gradient(760px 460px at 4% -4%, rgba(59, 130, 246, 0.09), transparent 55%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  // condensed global base (was 16px) - the single biggest lever for the
+  // dense, modern read; component px sizes are unaffected
+  font-size: 15px;
   font-family: $font-base;
   line-height: 1.6;
+  letter-spacing: -0.006em;
+  font-feature-settings: "cv02", "cv03", "cv04";
 }
 
 body.dark-theme {

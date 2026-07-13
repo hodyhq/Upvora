@@ -1,6 +1,7 @@
 package apiv1
 
 import (
+	"strconv"
 	"fmt"
 	"strings"
 
@@ -61,6 +62,14 @@ func SearchPosts() web.HandlerFunc {
 			Tags:             c.QueryParamAsArray("tags"),
 			ModerationFilter: c.QueryParam("moderation"),
 		}
+		if productID, err := c.QueryParamAsInt("product"); err == nil && productID > 0 {
+			searchPosts.ProductIDs = append(searchPosts.ProductIDs, productID)
+		}
+		for _, raw := range c.QueryParamAsArray("products") {
+			if id, err := strconv.Atoi(raw); err == nil && id > 0 {
+				searchPosts.ProductIDs = append(searchPosts.ProductIDs, id)
+			}
+		}
 		if myVotesOnly, err := c.QueryParamAsBool("myvotes"); err == nil {
 			searchPosts.MyVotesOnly = myVotesOnly
 		}
@@ -108,6 +117,7 @@ func CreatePost() web.HandlerFunc {
 		newPost := &cmd.AddNewPost{
 			Title:       action.Title,
 			Description: appendUnreferencedAttachments(action.Description, action.Attachments),
+			ProductID:   action.ProductID,
 		}
 		err := bus.Dispatch(c, newPost)
 		if err != nil {
@@ -365,8 +375,9 @@ func PostComment() web.HandlerFunc {
 		}
 
 		addNewComment := &cmd.AddNewComment{
-			Post:    getPost.Result,
-			Content: action.Content,
+			Post:       getPost.Result,
+			Content:    action.Content,
+			IsInternal: action.IsInternal,
 		}
 		if err := bus.Dispatch(c, addNewComment); err != nil {
 			return c.Failure(err)
@@ -383,7 +394,11 @@ func PostComment() web.HandlerFunc {
 			return c.Failure(err)
 		}
 
-		c.Enqueue(tasks.NotifyAboutNewComment(addNewComment.Result, getPost.Result))
+		// Internal comments never notify - subscribers include visitors, and
+		// team-only content must not leak through email/webhook payloads.
+		if !action.IsInternal {
+			c.Enqueue(tasks.NotifyAboutNewComment(addNewComment.Result, getPost.Result))
+		}
 
 		metrics.TotalComments.Inc()
 		return c.Ok(web.Map{

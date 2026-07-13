@@ -18,10 +18,19 @@
 }
 
 .c-editor-toolbar {
-  border-bottom: 1px solid var(--colors-gray-300);
-  padding: spacing(1);
-  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--colors-gray-200);
+  background-color: color-mix(in srgb, var(--colors-gray-900) 3%, transparent);
+  padding: 4px 6px;
+  min-height: 36px;
   width: 100%;
+
+  @include dark-mode {
+    border-bottom-color: var(--colors-gray-300);
+  }
 }
 
 .c-comment-editor-counter {
@@ -46,49 +55,67 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: spacing(1.5);
-  border-radius: get("border.radius.small");
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 7px;
   background: transparent;
   border: none;
-  color: var(--colors-gray-700);
+  color: var(--colors-gray-600);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.12s ease, color 0.12s ease;
 
   &:hover {
-    background-color: var(--colors-gray-100);
+    background-color: color-mix(in srgb, var(--colors-gray-900) 7%, transparent);
     color: var(--colors-gray-900);
   }
 
   &.is-disabled {
-    // background-color: var(--colors-gray-300);
     color: var(--colors-gray-500);
   }
 
   svg {
-    width: spacing(4.5);
-    height: spacing(4.5);
+    width: 15px;
+    height: 15px;
   }
 }
 
 .c-editor-button {
   &.is-active {
-    background-color: var(--colors-gray-300);
-    color: var(--colors-gray-900);
+    background-color: color-mix(in srgb, var(--colors-primary-base) 14%, transparent);
+    color: var(--colors-primary-base);
   }
 }
 
 .c-markdown-toggle {
-  height: 28px;
+  width: auto;
+  height: 26px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--colors-gray-500);
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--colors-gray-800);
+  }
 }
 
 .fider-tiptap-editor {
-  border: 1px solid var(--colors-gray-400);
-  border-radius: 6px;
+  border: 1px solid var(--colors-gray-200);
+  border-radius: 10px;
   overflow: hidden;
   background-color: var(--colors-white);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 
   @include dark-mode {
     background-color: var(--colors-gray-100);
+    border-color: var(--colors-gray-300);
+  }
+
+  &:focus-within {
+    border-color: var(--colors-primary-base);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--colors-primary-base) 14%, transparent);
   }
 
   &.m-error {
@@ -97,15 +124,16 @@
 
   .c-markdown-textarea {
     width: 100%;
-    min-height: 120px;
-    padding: 12px;
+    min-height: 96px;
+    padding: 12px 14px;
     border: none;
     outline: none;
     resize: vertical;
-    font-family: monospace;
-    font-size: 14px;
-    line-height: 1.5;
-    background-color: var(--colors-white);
+    font-family: $font-code;
+    font-size: 13px;
+    line-height: 1.55;
+    background-color: transparent;
+    color: var(--colors-gray-900);
 
     &:focus {
       outline: none;
@@ -121,8 +149,10 @@
       margin-top: 0;
     }
 
-    padding: 12px;
-    min-height: 120px;
+    padding: 12px 14px;
+    min-height: 96px;
+    font-size: 14px;
+    line-height: 1.6;
     outline: none;
 
     &:focus {
@@ -164,7 +194,8 @@
 
     // Placeholder
     p.tiptap-is-empty:first-child::before {
-      color: var(--colors-gray-700);
+      color: var(--colors-gray-600);
+      font-size: 14px;
       content: attr(data-placeholder);
       float: left;
       height: 0;

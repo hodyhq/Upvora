@@ -18,10 +18,10 @@ func addNewComment(ctx context.Context, c *cmd.AddNewComment) error {
 		isApproved := !tenant.IsModerationEnabled || !user.RequiresModeration()
 		var id int
 		if err := trx.Get(&id, `
-			INSERT INTO comments (tenant_id, post_id, content, user_id, created_at, is_approved) 
-			VALUES ($1, $2, $3, $4, $5, $6) 
+			INSERT INTO comments (tenant_id, post_id, content, user_id, created_at, is_approved, is_internal) 
+			VALUES ($1, $2, $3, $4, $5, $6, $7) 
 			RETURNING id
-		`, tenant.ID, c.Post.ID, c.Content, user.ID, time.Now(), isApproved); err != nil {
+		`, tenant.ID, c.Post.ID, c.Content, user.ID, time.Now(), isApproved, c.IsInternal); err != nil {
 			return errors.Wrap(err, "failed add new comment")
 		}
 
@@ -100,6 +100,7 @@ func getCommentByID(ctx context.Context, q *query.GetCommentByID) error {
 							c.created_at, 
 							c.edited_at, 
 							c.is_approved,
+							c.is_internal,
 							u.id AS user_id, 
 							u.name AS user_name,
 							u.email AS user_email,
@@ -149,6 +150,15 @@ func buildApprovalFilter(user *entity.User) string {
 		// Anonymous users can only see approved comments
 		return " AND c.is_approved = true"
 	}
+}
+
+// internalFilter hides internal (team-only) comments from everyone below
+// collaborator. Filtered in SQL so internal content never leaves the server.
+func internalFilter(user *entity.User) string {
+	if user != nil && user.IsCollaborator() {
+		return ""
+	}
+	return " AND c.is_internal = false"
 }
 
 func getCommentsByPost(ctx context.Context, q *query.GetCommentsByPost) error {
@@ -204,6 +214,7 @@ func getCommentsByPost(ctx context.Context, q *query.GetCommentsByPost) error {
 					c.created_at, 
 					c.edited_at, 
 					c.is_approved,
+					c.is_internal,
 					u.id AS user_id, 
 					u.name AS user_name,
 					u.email AS user_email,
@@ -236,8 +247,8 @@ func getCommentsByPost(ctx context.Context, q *query.GetCommentsByPost) error {
 			ON ar.comment_id = c.id
 			WHERE p.id = $1
 			AND p.tenant_id = $2
-			AND c.deleted_at IS NULL%s
-			ORDER BY c.created_at DESC`, approvalFilter)
+			AND c.deleted_at IS NULL%s%s
+			ORDER BY c.created_at DESC`, approvalFilter, internalFilter(user))
 
 		err := trx.Select(&comments, query, q.Post.ID, tenant.ID, userId)
 		if err != nil {
