@@ -31,7 +31,13 @@ func Version() string {
 		return v
 	}
 
-	return fmt.Sprintf("%s-%s", v, commithash)
+	// Builders sometimes pass the full 40-char sha; keep the display short.
+	hash := commithash
+	if len(hash) > 8 {
+		hash = hash[:8]
+	}
+
+	return fmt.Sprintf("%s-%s", v, hash)
 }
 
 type config struct {
