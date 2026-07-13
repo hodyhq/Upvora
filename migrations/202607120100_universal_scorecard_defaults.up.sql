@@ -49,5 +49,5 @@ SELECT id, 'effort_estimate', 'Effort estimate', 'classification', 'choice', '[
   {"value": "Large",       "color": "salmon"},
   {"value": "Extra Large", "color": "coral"}
 ]'::jsonb, 0, 'How big is this likely to be?', 510, FALSE
-FROM tenants
+FROM tenants WHERE NOT EXISTS (SELECT 1 FROM scorecard_fields f WHERE f.tenant_id = tenants.id AND NOT f.is_system)
 ON CONFLICT (tenant_id, key) DO NOTHING;
