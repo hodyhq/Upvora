@@ -381,8 +381,17 @@
       color: var(--colors-gray-800);
     }
 
+    // The current band is unmistakable: filled with its own color's tint,
+    // colored border and glow; the others recede.
+    &:not(&--cur) {
+      opacity: 0.7;
+    }
+
     &--cur {
-      background: color-mix(in srgb, var(--colors-gray-900) 6%, transparent);
+      background: color-mix(in srgb, var(--bc) 18%, transparent);
+      border-color: var(--bc);
+      box-shadow: 0 0 10px color-mix(in srgb, var(--bc) 35%, transparent);
+      opacity: 1;
 
       b {
         color: var(--colors-gray-900);

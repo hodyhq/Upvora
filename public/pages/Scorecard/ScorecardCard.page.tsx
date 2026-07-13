@@ -402,10 +402,9 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
                     </svg>
                     <div className="c-scorecard__ring-center">
                       <span className="c-scorecard__ring-num">{weightedScore}</span>
-                      <span className="c-scorecard__ring-bandlabel" style={weightedScore === 0 ? undefined : { color: band.border }}>
-                        {/* A card with nothing scored is "Not scored", not the bottom band — stage 5 starts at 1. */}
-                        {weightedScore === 0 ? "Not scored" : band.label}
-                      </span>
+                      {/* The band name lives in the highlighted pill beside the ring — long
+                          labels don't fit the compact ring. Only the unscored state labels itself. */}
+                      {weightedScore === 0 && <span className="c-scorecard__ring-bandlabel">Not scored</span>}
                     </div>
                   </div>
                 )
@@ -440,7 +439,11 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
                     },
                     { key: "reject", label: Fider.session.tenant.scorecardBandNoneLabel || "Not Recommended", th: 1, c: "#DC2626" },
                   ].map((b) => (
-                    <div key={b.key} className={`c-scorecard__bandrow ${weightedScore > 0 && band.key === b.key ? "c-scorecard__bandrow--cur" : ""}`}>
+                    <div
+                      key={b.key}
+                      className={`c-scorecard__bandrow ${weightedScore > 0 && band.key === b.key ? "c-scorecard__bandrow--cur" : ""}`}
+                      style={{ "--bc": b.c } as React.CSSProperties}
+                    >
                       <span className="c-scorecard__banddot" style={{ background: b.c, boxShadow: `0 0 7px ${b.c}` }} />
                       <b>{b.label}</b>
                       <span className="c-scorecard__bandpts">{b.th}+ pts</span>
