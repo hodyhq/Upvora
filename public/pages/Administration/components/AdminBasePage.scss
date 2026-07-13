@@ -306,3 +306,21 @@
     font-size: 13px;
   }
 }
+
+// Theme tab rows: segmented buttons + color input + hint must wrap on narrow screens
+// instead of pushing past the content card.
+.c-theme-row {
+  flex-wrap: wrap;
+  row-gap: spacing(2);
+  min-width: 0;
+
+  &__hint {
+    flex-basis: 100%;
+  }
+
+  @media (min-width: 768px) {
+    &__hint {
+      flex-basis: auto;
+    }
+  }
+}
