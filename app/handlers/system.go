@@ -130,7 +130,9 @@ func readUpdaterFile(name string, max int64) string {
 	if err != nil {
 		return ""
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 	buf := make([]byte, max)
 	n, _ := f.Read(buf)
 	return strings.TrimSpace(string(buf[:n]))
