@@ -211,7 +211,6 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
             emptyText={i18n._({ id: "home.postscontainer.label.noresults", message: "No results matched your search, try something different." })}
             onPostClick={this.props.onPostClick}
             onVote={this.handleVote}
-            hideProductChip={!!this.props.product}
           />
           {this.state.loading && <Loader />}
           {showMoreLink && (
