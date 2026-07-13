@@ -94,9 +94,9 @@
     &__welcome-body {
       line-height: 1.6;
       color: var(--colors-gray-700);
-      // Long, structured welcome messages (lists, sections) need room —
-      // 60ch squeezed them into a narrow column with dead space beside it.
-      max-width: 90ch;
+      // No width cap: the welcome block is admin-authored — the admin decides
+      // its shape. Capping it (60ch, then 90ch) just left dead space beside
+      // long structured messages.
     }
 
     &__add-idea-btn {

@@ -294,14 +294,15 @@
   &__gauge--ring {
     display: flex;
     align-items: center;
-    gap: 28px;
+    gap: 18px;
     flex-wrap: wrap;
+    margin: 2px 0 6px;
   }
 
   &__ring {
     --bc: var(--colors-gray-500);
-    width: 150px;
-    height: 150px;
+    width: 92px;
+    height: 92px;
     flex: 0 0 auto;
     display: grid;
     place-items: center;
@@ -332,7 +333,7 @@
   &__ring-num {
     display: block;
     font-family: $font-code;
-    font-size: 2.3rem;
+    font-size: 1.5rem;
     font-weight: 700;
     letter-spacing: -0.04em;
     line-height: 1;
@@ -342,8 +343,8 @@
 
   &__ring-bandlabel {
     display: block;
-    margin-top: 3px;
-    font-size: 10px;
+    margin-top: 1px;
+    font-size: 8.5px;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -358,20 +359,21 @@
 
   &__bands {
     display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-top: 8px;
-    margin-bottom: 8px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px 6px;
+    margin-top: 6px;
+    margin-bottom: 4px;
   }
 
   &__bandrow {
     display: flex;
     align-items: center;
-    gap: 9px;
-    font-size: 12.5px;
-    padding: 3px 8px;
-    margin: 0 -8px;
-    border-radius: 8px;
+    gap: 5px;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    border: 1px solid color-mix(in srgb, var(--colors-gray-900) 10%, transparent);
     color: var(--colors-gray-700);
 
     b {
@@ -379,8 +381,17 @@
       color: var(--colors-gray-800);
     }
 
+    // The current band is unmistakable: filled with its own color's tint,
+    // colored border and glow; the others recede.
+    &:not(&--cur) {
+      opacity: 0.7;
+    }
+
     &--cur {
-      background: color-mix(in srgb, var(--colors-gray-900) 6%, transparent);
+      background: color-mix(in srgb, var(--bc) 18%, transparent);
+      border-color: var(--bc);
+      box-shadow: 0 0 10px color-mix(in srgb, var(--bc) 35%, transparent);
+      opacity: 1;
 
       b {
         color: var(--colors-gray-900);
@@ -396,10 +407,10 @@
   }
 
   &__bandpts {
-    margin-left: auto;
+    margin-left: 2px;
     color: var(--colors-gray-500);
     font-variant-numeric: tabular-nums;
-    font-size: 11.5px;
+    font-size: 10px;
   }
 
   // ─────────── gauge ribbon ───────────
@@ -825,6 +836,15 @@
 
   &__table-wrap {
     overflow-x: auto;
+  }
+
+  // Actions never clip: the cell hugs its buttons on one line and the wide
+  // Question column absorbs the flexible space instead (was pushing the
+  // Delete/Deactivate buttons past the card edge on long catalogues).
+  &__table th:last-child,
+  &__table td:last-child {
+    white-space: nowrap;
+    width: 1%;
   }
 
   &__table {

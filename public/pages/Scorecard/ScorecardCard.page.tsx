@@ -342,6 +342,124 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
               <input className="c-scorecard__title-input" value={title} onChange={(e) => changeTitle(e.target.value)} aria-label="Scorecard title" />
               {headerFields.map(renderStatusControl)}
             </div>
+            <div className="c-scorecard__gauge c-scorecard__gauge--ring">
+              {(() => {
+                const p = Math.min(100, Math.max(0, weightedScore))
+                // SVG progress ring: rounded caps, a light->dark gradient of the
+                // CURRENT band color along the arc, soft glow, and colored dots
+                // on the track exactly at the band thresholds.
+                const R = 64
+                const CIRC = 2 * Math.PI * R
+                const bandGradients: { [key: string]: [string, string] } = {
+                  strong: ["#4ADE80", "#16A34A"],
+                  good: ["#60A5FA", "#2563EB"],
+                  refine: ["#FCD34D", "#F59E0B"],
+                  low: ["#FB923C", "#EA580C"],
+                  reject: ["#F87171", "#DC2626"],
+                }
+                const [gradA, gradB] = bandGradients[band.key] || bandGradients.reject
+                const thresholdDots = [
+                  { th: Fider.session.tenant.scorecardBandLow, c: "#FB923C" },
+                  { th: Fider.session.tenant.scorecardBandRefine, c: "#FBBF24" },
+                  { th: Fider.session.tenant.scorecardBandGood, c: "#60A5FA" },
+                  { th: Fider.session.tenant.scorecardBandStrong, c: "#4ADE80" },
+                ].filter((d) => d.th > 0 && d.th < 100)
+                return (
+                  <div
+                    className="c-scorecard__ring"
+                    style={
+                      {
+                        "--bc": weightedScore === 0 ? "var(--colors-gray-500)" : band.border,
+                      } as React.CSSProperties
+                    }
+                  >
+                    <svg className="c-scorecard__ring-svg" viewBox="0 0 160 160" aria-hidden="true">
+                      <defs>
+                        <linearGradient id="scorecard-ring-grad" x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stopColor={gradA} />
+                          <stop offset="100%" stopColor={gradB} />
+                        </linearGradient>
+                      </defs>
+                      <circle className="c-scorecard__ring-svg-track" cx="80" cy="80" r={R} fill="none" strokeWidth="10" />
+                      {thresholdDots.map((d) => {
+                        const a = ((d.th * 3.6 - 90) * Math.PI) / 180
+                        return <circle key={d.th} cx={80 + R * Math.cos(a)} cy={80 + R * Math.sin(a)} r="3" fill={d.c} />
+                      })}
+                      {p > 0 && (
+                        <circle
+                          className="c-scorecard__ring-svg-arc"
+                          cx="80"
+                          cy="80"
+                          r={R}
+                          fill="none"
+                          stroke="url(#scorecard-ring-grad)"
+                          strokeWidth="10"
+                          strokeLinecap="round"
+                          strokeDasharray={`${(CIRC * p) / 100} ${CIRC}`}
+                          transform="rotate(-90 80 80)"
+                        />
+                      )}
+                    </svg>
+                    <div className="c-scorecard__ring-center">
+                      <span className="c-scorecard__ring-num">{weightedScore}</span>
+                      {/* The band name lives in the highlighted pill beside the ring — long
+                          labels don't fit the compact ring. Only the unscored state labels itself. */}
+                      {weightedScore === 0 && <span className="c-scorecard__ring-bandlabel">Not scored</span>}
+                    </div>
+                  </div>
+                )
+              })()}
+              <div className="c-scorecard__ring-side">
+                <span className="c-scorecard__gauge-label">Weighted score</span>
+                <div className="c-scorecard__bands">
+                  {[
+                    {
+                      key: "strong",
+                      label: Fider.session.tenant.scorecardBandStrongLabel || "Strong Candidate",
+                      th: Fider.session.tenant.scorecardBandStrong,
+                      c: "#16A34A",
+                    },
+                    {
+                      key: "good",
+                      label: Fider.session.tenant.scorecardBandGoodLabel || "Good Candidate",
+                      th: Fider.session.tenant.scorecardBandGood,
+                      c: "#2563EB",
+                    },
+                    {
+                      key: "refine",
+                      label: Fider.session.tenant.scorecardBandRefineLabel || "Needs Refinement",
+                      th: Fider.session.tenant.scorecardBandRefine,
+                      c: "#F59E0B",
+                    },
+                    {
+                      key: "low",
+                      label: Fider.session.tenant.scorecardBandLowLabel || "Low Priority",
+                      th: Fider.session.tenant.scorecardBandLow,
+                      c: "#F97316",
+                    },
+                    { key: "reject", label: Fider.session.tenant.scorecardBandNoneLabel || "Not Recommended", th: 1, c: "#DC2626" },
+                  ].map((b) => (
+                    <div
+                      key={b.key}
+                      className={`c-scorecard__bandrow ${weightedScore > 0 && band.key === b.key ? "c-scorecard__bandrow--cur" : ""}`}
+                      style={{ "--bc": b.c } as React.CSSProperties}
+                    >
+                      <span className="c-scorecard__banddot" style={{ background: b.c, boxShadow: `0 0 7px ${b.c}` }} />
+                      <b>{b.label}</b>
+                      <span className="c-scorecard__bandpts">{b.th}+ pts</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="c-scorecard__gauge-hint">
+                  {weightedScore === 0
+                    ? "score any dimension to place this card"
+                    : band.threshold > 0
+                    ? `band threshold ≥ ${band.threshold}`
+                    : `below ${Fider.session.tenant.scorecardBandLow}`}
+                </div>
+              </div>
+            </div>
+
             {post ? (
               // Everything in this block renders live from the linked post —
               // edits on the idea page show here on the next load, never a copy.
@@ -383,116 +501,6 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
               <InternalNotesPanel postNumber={post.number} initialNote={props.internalNote} />
             </div>
           )}
-
-          <div className="c-scorecard__gauge c-scorecard__gauge--ring">
-            {(() => {
-              const p = Math.min(100, Math.max(0, weightedScore))
-              // SVG progress ring: rounded caps, a light->dark gradient of the
-              // CURRENT band color along the arc, soft glow, and colored dots
-              // on the track exactly at the band thresholds.
-              const R = 64
-              const CIRC = 2 * Math.PI * R
-              const bandGradients: { [key: string]: [string, string] } = {
-                strong: ["#4ADE80", "#16A34A"],
-                good: ["#60A5FA", "#2563EB"],
-                refine: ["#FCD34D", "#F59E0B"],
-                low: ["#FB923C", "#EA580C"],
-                reject: ["#F87171", "#DC2626"],
-              }
-              const [gradA, gradB] = bandGradients[band.key] || bandGradients.reject
-              const thresholdDots = [
-                { th: Fider.session.tenant.scorecardBandLow, c: "#FB923C" },
-                { th: Fider.session.tenant.scorecardBandRefine, c: "#FBBF24" },
-                { th: Fider.session.tenant.scorecardBandGood, c: "#60A5FA" },
-                { th: Fider.session.tenant.scorecardBandStrong, c: "#4ADE80" },
-              ].filter((d) => d.th > 0 && d.th < 100)
-              return (
-                <div
-                  className="c-scorecard__ring"
-                  style={
-                    {
-                      "--bc": weightedScore === 0 ? "var(--colors-gray-500)" : band.border,
-                    } as React.CSSProperties
-                  }
-                >
-                  <svg className="c-scorecard__ring-svg" viewBox="0 0 160 160" aria-hidden="true">
-                    <defs>
-                      <linearGradient id="scorecard-ring-grad" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stopColor={gradA} />
-                        <stop offset="100%" stopColor={gradB} />
-                      </linearGradient>
-                    </defs>
-                    <circle className="c-scorecard__ring-svg-track" cx="80" cy="80" r={R} fill="none" strokeWidth="10" />
-                    {thresholdDots.map((d) => {
-                      const a = ((d.th * 3.6 - 90) * Math.PI) / 180
-                      return <circle key={d.th} cx={80 + R * Math.cos(a)} cy={80 + R * Math.sin(a)} r="3" fill={d.c} />
-                    })}
-                    {p > 0 && (
-                      <circle
-                        className="c-scorecard__ring-svg-arc"
-                        cx="80"
-                        cy="80"
-                        r={R}
-                        fill="none"
-                        stroke="url(#scorecard-ring-grad)"
-                        strokeWidth="10"
-                        strokeLinecap="round"
-                        strokeDasharray={`${(CIRC * p) / 100} ${CIRC}`}
-                        transform="rotate(-90 80 80)"
-                      />
-                    )}
-                  </svg>
-                  <div className="c-scorecard__ring-center">
-                    <span className="c-scorecard__ring-num">{weightedScore}</span>
-                    <span className="c-scorecard__ring-bandlabel" style={weightedScore === 0 ? undefined : { color: band.border }}>
-                      {/* A card with nothing scored is "Not scored", not the bottom band — stage 5 starts at 1. */}
-                      {weightedScore === 0 ? "Not scored" : band.label}
-                    </span>
-                  </div>
-                </div>
-              )
-            })()}
-            <div className="c-scorecard__ring-side">
-              <span className="c-scorecard__gauge-label">Weighted score</span>
-              <div className="c-scorecard__bands">
-                {[
-                  {
-                    key: "strong",
-                    label: Fider.session.tenant.scorecardBandStrongLabel || "Strong Candidate",
-                    th: Fider.session.tenant.scorecardBandStrong,
-                    c: "#16A34A",
-                  },
-                  {
-                    key: "good",
-                    label: Fider.session.tenant.scorecardBandGoodLabel || "Good Candidate",
-                    th: Fider.session.tenant.scorecardBandGood,
-                    c: "#2563EB",
-                  },
-                  {
-                    key: "refine",
-                    label: Fider.session.tenant.scorecardBandRefineLabel || "Needs Refinement",
-                    th: Fider.session.tenant.scorecardBandRefine,
-                    c: "#F59E0B",
-                  },
-                  { key: "low", label: Fider.session.tenant.scorecardBandLowLabel || "Low Priority", th: Fider.session.tenant.scorecardBandLow, c: "#F97316" },
-                  { key: "reject", label: Fider.session.tenant.scorecardBandNoneLabel || "Not Recommended", th: 1, c: "#DC2626" },
-                ].map((b) => (
-                  <div key={b.key} className={`c-scorecard__bandrow ${weightedScore > 0 && band.key === b.key ? "c-scorecard__bandrow--cur" : ""}`}>
-                    <span className="c-scorecard__banddot" style={{ background: b.c, boxShadow: `0 0 7px ${b.c}` }} />
-                    <b>{b.label}</b>
-                    <span className="c-scorecard__bandpts">{b.th}+ pts</span>
-                  </div>
-                ))}
-              </div>
-              <div className="c-scorecard__gauge-hint">
-                {weightedScore === 0
-                  ? "score any dimension to place this card"
-                  : band.threshold > 0
-                  ? `band threshold ≥ ${band.threshold}`
-                  : `below ${Fider.session.tenant.scorecardBandLow}`}
-              </div>
-            </div>
-          </div>
 
           <div className="c-scorecard__groups">
             {GROUP_ORDER.map((g) => {
