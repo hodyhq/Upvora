@@ -1,27 +1,98 @@
 <p align="center">
-  <img src="etc/upvora-readme-header.png" width="640" alt="Upvora">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="etc/readme/header-dark.png">
+    <img src="etc/readme/header-light.png" width="520" alt="Upvora">
+  </picture>
+</p>
+
+<h3 align="center">Open-source customer feedback, feature voting &amp; product roadmap software</h3>
+
+<p align="center">
+  Your users post ideas and vote. Your team scores them in private and ships in the open.<br>
+  <b>Self-hosted · multi-product · one Docker image · your data</b>
 </p>
 
 <p align="center">
-  <a href="https://github.com/hodyhq/Upvora">GitHub</a> •
-  <a href="https://github.com/hodyhq/Upvora/blob/main/CONTRIBUTING.md">Contributing</a> •
-  <a href="https://github.com/hodyhq/Upvora/blob/main/LICENSE">License</a>
+  <img alt="License: AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316">
+  <img alt="Go" src="https://img.shields.io/badge/Go-1.25-00ADD8?logo=go&logoColor=white">
+  <img alt="React" src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black">
+  <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&logoColor=white">
+  <img alt="Fork of Fider" src="https://img.shields.io/badge/fork%20of-Fider-8B5CF6">
 </p>
 
-# Upvora — a feedback portal for feature requests and suggestions
+<p align="center">
+  <a href="#what-you-get">Features</a> •
+  <a href="#screenshots">Screenshots</a> •
+  <a href="#upvora-vs-fider">Upvora vs Fider</a> •
+  <a href="#getting-started-self-hosted">Getting started</a> •
+  <a href="#development">Development</a> •
+  <a href="#license--attribution">License</a>
+</p>
 
-**Give your customers a voice and let them tell you what they need.** Upvora is a
-self-hosted feedback and roadmap tool: collect ideas, let people vote and discuss,
-prioritize with a built-in scorecard, and share what you're building.
+<br>
 
-Upvora is a Go + React application. It is an independent product built on top of
-[Fider](https://fider.io) and extended with features Fider doesn't ship — custom
-statuses, an admin-configurable committee **Scorecard**, a site banner, themeable
-brand colors, and assorted UX refinements.
+![The Upvora feedback board — dark mode](etc/readme/board-dark.png)
 
-# Getting started (self-hosted)
+**Upvora** is the feedback portal you'd build for yourself if you had a spare month: a dark-first, dense, modern UI on top of a battle-tested Go + React engine ([Fider](https://github.com/getfider/fider)). Visitors post ideas, vote, and follow every decision through to a public roadmap. Your team triages with drag-and-drop, deliberates in a private layer no visitor ever sees, and scores candidates on a fully custom scorecard. It runs anywhere Docker runs, with a Postgres database as the only dependency — and once it's up, it updates itself from the admin panel.
 
-Upvora ships as a single Docker image with a Postgres database.
+If you're comparing Canny, UserVoice, Featurebase, Astuto, or Fider itself and want something **open-source, self-hosted, and genuinely pretty** — this is it.
+
+## What you get
+
+### 🗳️ A feedback board people actually use
+Dense, fast, dark-first board with one-click voting straight from the list, optimistic UI, powerful sort tabs (Trending / Most Wanted / Most Discussed / Recent), full-text search with similar-idea detection at post time, tag filters with counts, and rich-text *and* markdown commenting. Every status gets your color, your name, your rules — including which ones appear on the home page.
+
+### 📦 Multi-product, single portal
+Run every product you own from one place. Products are a lens, not a wall: one member list, one workflow, but every idea carries an ink-bordered product chip, every product gets its own public board at `/p/your-product`, and **every view — board, roadmap, scorecard — filters to any combination of products** with shareable `?products=` URLs. Unassigned ideas land in a General bucket, never lost.
+
+### 🗺️ A roadmap worth linking to
+Status lanes with per-lane counts, search, tag + product filters as toggle chips, inline voting on cards — and for your team, **drag a card between lanes to restatus it**. "What's planned?" becomes a URL you paste, not a meeting.
+
+### 🎯 Prioritization scorecard (team-only)
+A committee-style scoring workspace visitors never see: define your own scoring dimensions *and* your own form fields (nine field types), score candidate ideas against weighted criteria, and read the verdict off an SVG progress ring with your thresholds marked on it. Linked to board ideas, so scores follow the idea.
+
+### 🔒 Internal notes & comments
+The deliberation layer feedback tools forget: internal comments sit inline in the discussion but are visible only to collaborators — excluded from public counts, never emailed to voters. Plus one shared internal note per idea, live-synced between the idea page and the scorecard. Amber-flagged everywhere so nobody mistakes private for public.
+
+### 🎨 Theme studio
+Your brand color and four per-function accents (buttons, votes, links, header) applied as **design tokens** across light and dark mode — set once in the admin, survives every redesign. Default appearance per site (light / dark / follow system), per-product colors, and raw custom CSS still available for everything else.
+
+### 🔄 One-click updates
+A System panel under the admin menu shows your installed version against the latest GitHub release (checked daily, re-check on demand) and — with the bundled updater sidecar — **updates your instance from the browser**. No SSH, no runbook, and the recovery steps are printed right on the panel for the day something goes wrong.
+
+### 🔐 Sign-in your users already have
+Passwordless email magic links out of the box, plus Google, GitHub, and any OAuth2/OIDC provider (Microsoft, Authentik, Keycloak…) — visitors bring an account they already own.
+
+### ⚙️ And the whole engine underneath
+Web + email notifications, webhooks, a REST API with per-user API keys, CSV export, team invitations, post moderation, GDPR-friendly privacy controls, 30+ languages, single-binary Docker image, migrations on boot.
+
+## Screenshots
+
+*The public roadmap — lanes, product chips, toggle filters:*
+
+![The Upvora roadmap — dark mode](etc/readme/roadmap-dark.png)
+
+## Upvora vs Fider
+
+Upvora is a friendly fork of [Fider](https://fider.io) (AGPL-3.0). The engine — data model, API, auth, operational simplicity — is excellent, and Upvora stays close enough to keep merging upstream improvements. On top of it:
+
+| | Fider | Upvora |
+|---|---|---|
+| Feedback board, voting, discussion | ✅ | ✅ redesigned — dark-first, dense, inline voting |
+| Statuses | fixed set | ✅ fully custom (names, colors, home-page visibility) |
+| Multiple products per portal | — | ✅ chips, filters, `/p/slug` public boards |
+| Public roadmap | — | ✅ lanes, filters, drag-to-restatus |
+| Prioritization scorecard | — | ✅ custom dimensions, fields, weighted ring |
+| Internal notes & team-only comments | — | ✅ |
+| Theming | custom CSS | ✅ token-based color system + custom CSS |
+| In-app updates | — | ✅ System panel + updater sidecar |
+| Engine, API, SSO, i18n, webhooks | ✅ | ✅ inherited, kept current |
+
+Want the smallest tool with the largest community? Use Fider — it's great. Want everything above out of the box? Welcome.
+
+## Getting started (self-hosted)
+
+One image, one Postgres:
 
 ```yaml
 # docker-compose.yml
@@ -35,7 +106,7 @@ services:
     volumes: [db-data:/var/lib/postgresql/data]
 
   app:
-    image: registry.example.com/upvora:latest   # your registry
+    image: your-registry.example.com/upvora:latest   # build from this repo (below)
     depends_on: [db]
     ports: ["3000:3000"]
     environment:
@@ -54,15 +125,17 @@ volumes:
 ```
 
 ```bash
+docker build -t your-registry.example.com/upvora:latest .
 docker compose up -d
 ```
 
-The image runs database migrations on start and serves on port `3000`. Put it behind
-a TLS-terminating reverse proxy (Traefik, Caddy, nginx) and open `BASE_URL`.
+Migrations run on start; the app serves on port `3000`. Put a TLS-terminating proxy in front (Traefik, Caddy, nginx, or a Cloudflare tunnel) and open `BASE_URL`. Tag-on-post and Prometheus metrics (`:4000`, keep it internal) ship enabled; social sign-in is two env vars away (`OAUTH_GOOGLE_*`, `OAUTH_GITHUB_*`).
 
-# Development
+**One-click updates:** add the updater sidecar from [`etc/updater/updater.sh`](etc/updater/updater.sh) (instructions in the file header) and the admin System panel gains an **Update now** button. The sidecar holds the Docker socket so the app container never has to — the app only writes an empty trigger file.
 
-Requires Node 22, Go 1.25, and Docker (for Postgres).
+## Development
+
+Node 22, Go 1.25, Docker (for Postgres):
 
 ```bash
 make watch          # hot-reload server + UI
@@ -72,10 +145,8 @@ make test           # server + UI unit tests
 
 CI runs the same checks on every merge request into `main`.
 
-# License & attribution
+## License & attribution
 
-Upvora is licensed under the **GNU Affero General Public License v3.0** — see
-[`LICENSE`](LICENSE). It is a derivative work of
-[getfider/fider](https://github.com/getfider/fider) (also AGPL-3.0); the original
-Fider copyright notices are retained. If you run a modified copy as a network
-service, the AGPL requires you to make your source available to its users.
+Upvora is licensed under the **GNU Affero General Public License v3.0** — see [`LICENSE`](LICENSE). It is a derivative work of [getfider/fider](https://github.com/getfider/fider) (also AGPL-3.0); the original Fider copyright notices are retained. If you run a modified copy as a network service, the AGPL requires you to make your source available to its users.
+
+Upvora is an independent project and is not affiliated with or endorsed by the Fider team.

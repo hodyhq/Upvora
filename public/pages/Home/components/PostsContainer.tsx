@@ -2,9 +2,9 @@ import "./PostsContainer.scss"
 
 import React from "react"
 
-import { Post, Tag, CurrentUser } from "@fider/models"
+import { Post, Tag, CurrentUser, Product } from "@fider/models"
 import { Loader, Input } from "@fider/components"
-import { actions, navigator, querystring } from "@fider/services"
+import { actions, navigator, notify, querystring } from "@fider/services"
 import IconSearch from "@fider/assets/images/heroicons-search.svg"
 import IconX from "@fider/assets/images/heroicons-x.svg"
 import { PostFilter } from "./PostFilter"
@@ -18,7 +18,9 @@ interface PostsContainerProps {
   posts: Post[]
   tags: Tag[]
   countPerStatus: { [key: string]: number }
+  countPerProduct?: { [id: string]: number }
   onPostClick?: (postNumber: number, slug: string) => void
+  product?: Product
 }
 
 interface PostsContainerState {
@@ -33,6 +35,7 @@ interface PostsContainerState {
 export interface FilterState {
   tags: string[]
   statuses: string[]
+  products: number[]
   myVotes: boolean
   myPosts: boolean
   noTags: boolean
@@ -52,6 +55,10 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
       filterState: {
         tags: querystring.getArray("tags"),
         statuses: querystring.getArray("statuses"),
+        products: querystring
+          .getArray("products")
+          .map((v) => parseInt(v, 10))
+          .filter((n) => n > 0),
         myVotes: querystring.get("myvotes") === "true",
         myPosts: querystring.get("myposts") === "true",
         noTags: querystring.get("notags") === "true",
@@ -67,6 +74,7 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
         querystring.stringify({
           statuses: this.state.filterState.statuses,
           tags: this.state.filterState.tags,
+          products: this.state.filterState.products.map(String),
           myvotes: this.state.filterState.myVotes ? "true" : undefined,
           myposts: this.state.filterState.myPosts ? "true" : undefined,
           notags: this.state.filterState.noTags ? "true" : undefined,
@@ -85,6 +93,7 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
         this.state.filterState.myVotes,
         this.state.filterState.myPosts,
         this.state.filterState.noTags,
+        this.state.filterState.products,
         reset
       )
     })
@@ -100,6 +109,7 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
     myVotes: boolean,
     myPosts: boolean,
     noTags: boolean,
+    products: number[],
     reset: boolean
   ) {
     window.clearTimeout(this.timer)
@@ -115,11 +125,25 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
         moderation = "pending"
       }
 
-      actions.searchPosts({ query, view: view, limit, tags, statuses: actualStatuses, myVotes, myPosts, noTags, moderation }).then((response) => {
-        if (response.ok && this.state.loading) {
-          this.setState({ loading: false, posts: response.data })
-        }
-      })
+      actions
+        .searchPosts({
+          query,
+          view: view,
+          limit,
+          tags,
+          statuses: actualStatuses,
+          myVotes,
+          myPosts,
+          noTags,
+          moderation,
+          product: this.props.product?.id,
+          products,
+        })
+        .then((response) => {
+          if (response.ok && this.state.loading) {
+            this.setState({ loading: false, posts: response.data })
+          }
+        })
     }, 500)
   }
 
@@ -129,6 +153,21 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
     if (response.ok && this.state.posts) {
       const updatedPosts = this.state.posts.map((post) => (post.number === postNumber ? response.data : post))
       this.setState({ posts: updatedPosts })
+    }
+  }
+
+  private handleVote = async (post: Post) => {
+    // optimistic flip; revert on failure
+    const apply = (delta: number, voted: boolean) =>
+      this.setState((s) => ({
+        posts: s.posts?.map((p) => (p.number === post.number ? { ...p, votesCount: p.votesCount + delta, hasVoted: voted } : p)),
+      }))
+    const wasVoted = post.hasVoted
+    apply(wasVoted ? -1 : 1, !wasVoted)
+    const result = await actions.toggleVote(post.number)
+    if (!result.ok) {
+      apply(wasVoted ? 1 : -1, wasVoted)
+      notify.error("Could not register your vote. Please try again.")
     }
   }
 
@@ -172,6 +211,8 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
               activeFilter={this.state.filterState}
               filtersChanged={this.handleFilterChanged}
               countPerStatus={this.props.countPerStatus}
+              countPerProduct={this.props.countPerProduct}
+              hideProducts={!!this.props.product}
             />
             {!this.state.query && <PostsSort onChange={this.handleSortChanged} value={this.state.view} />}
           </div>
@@ -192,6 +233,7 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
             tags={this.props.tags}
             emptyText={i18n._({ id: "home.postscontainer.label.noresults", message: "No results matched your search, try something different." })}
             onPostClick={this.props.onPostClick}
+            onVote={this.handleVote}
           />
           {this.state.loading && <Loader />}
           {showMoreLink && (

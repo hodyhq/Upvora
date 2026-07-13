@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 import { Post, Tag, CurrentUser, postStatusValue } from "@fider/models"
-import { ShowTag, Markdown, Icon, ResponseLozenge } from "@fider/components"
+import { ShowTag, Markdown, Icon, ResponseLozenge, SignInModal } from "@fider/components"
 import IconChatAlt2 from "@fider/assets/images/heroicons-chat-alt-2.svg"
 import { HStack, VStack } from "@fider/components/layout"
 import { useFider } from "@fider/hooks"
@@ -12,8 +12,10 @@ interface ListPostsProps {
   emptyText: string
   minimalView?: boolean
   showStatus?: boolean
+  hideProductChip?: boolean
   maxVisible?: number
   onPostClick?: (postNumber: number, slug: string) => void
+  onVote?: (post: Post) => void
 }
 
 const ListPostItem = (props: {
@@ -22,16 +24,40 @@ const ListPostItem = (props: {
   tags: Tag[]
   rank?: number
   showStatus?: boolean
+  hideProductChip?: boolean
   onPostClick?: (postNumber: number, slug: string) => void
+  onVote?: (post: Post) => void
 }) => {
   const fider = useFider()
+  const [isSignInModalOpen, setIsSignInModalOpen] = useState(false)
   const isModerationEnabled = fider.session.tenant.isModerationEnabled
   const isPending = isModerationEnabled && !props.post.isApproved
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.stopPropagation()
     if (props.onPostClick) {
       e.preventDefault()
       props.onPostClick(props.post.number, props.post.slug)
+    }
+  }
+
+  const navigateToPost = () => {
+    if (props.onPostClick) {
+      props.onPostClick(props.post.number, props.post.slug)
+    } else {
+      window.location.href = `/posts/${props.post.number}/${props.post.slug}`
+    }
+  }
+
+  const handleVoteClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!fider.session.isAuthenticated) {
+      setIsSignInModalOpen(true)
+      return
+    }
+    if (props.onVote) {
+      props.onVote(props.post)
     }
   }
 
@@ -40,8 +66,9 @@ const ListPostItem = (props: {
   const statusColor = fider.session.tenant.statuses?.find((s) => s.slug === status)?.color || builtInColors[status] || "gray"
 
   return (
-    <a href={`/posts/${props.post.number}/${props.post.slug}`} className="c-post" data-status={status} data-color={statusColor} onClick={handleClick}>
-      <div className="c-post__vote" data-voted={props.post.hasVoted ? "true" : "false"}>
+    <div className="c-post" data-status={status} data-color={statusColor} onClick={navigateToPost}>
+      <SignInModal isOpen={isSignInModalOpen} onClose={() => setIsSignInModalOpen(false)} />
+      <button className="c-post__vote" data-voted={props.post.hasVoted ? "true" : "false"} onClick={handleVoteClick} aria-pressed={props.post.hasVoted}>
         <svg
           className="c-post__chev"
           viewBox="0 0 20 20"
@@ -56,10 +83,14 @@ const ListPostItem = (props: {
         </svg>
         <span className="c-post__votes">{props.post.votesCount}</span>
         <span className="c-post__voteslabel">{props.post.votesCount === 1 ? <Trans id="label.vote">Vote</Trans> : <Trans id="label.votes">Votes</Trans>}</span>
-      </div>
+      </button>
       <div className="c-post__body">
         <div className="c-post__titlerow">
-          <h3 className="c-post__title text-break">{props.post.title}</h3>
+          <h3 className="c-post__title text-break">
+            <a href={`/posts/${props.post.number}/${props.post.slug}`} onClick={handleClick}>
+              {props.post.title}
+            </a>
+          </h3>
           {isPending && (
             <span className="c-post__pending">
               <Trans id="post.pending">pending</Trans>
@@ -68,6 +99,17 @@ const ListPostItem = (props: {
         </div>
         <Markdown className="c-post__desc" maxLength={140} text={props.post.description} style="plainText" />
         <div className="c-post__meta">
+          {props.post.product && !props.hideProductChip && (
+            <a
+              href={`/p/${props.post.product.slug}`}
+              className="c-post__prodchip"
+              style={{ "--pc": props.post.product.color || "var(--colors-primary-base)" } as React.CSSProperties}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <i />
+              {props.post.product.name}
+            </a>
+          )}
           {props.showStatus !== false && status !== "open" && <ResponseLozenge status={status} response={props.post.response} size={"small"} />}
           {props.tags.map((tag) => (
             <ShowTag key={tag.id} tag={tag} />
@@ -76,14 +118,12 @@ const ListPostItem = (props: {
       </div>
       <div className="c-post__side">
         {props.rank !== undefined && <span className="c-post__rank">#{props.rank}</span>}
-        {props.post.commentsCount > 0 && (
-          <span className="c-post__cmts">
-            <Icon sprite={IconChatAlt2} className="h-4 w-4" />
-            {props.post.commentsCount}
-          </span>
-        )}
+        <span className="c-post__cmts">
+          <Icon sprite={IconChatAlt2} className="h-4 w-4" />
+          {props.post.commentsCount}
+        </span>
       </div>
-    </a>
+    </div>
   )
 }
 
@@ -159,7 +199,9 @@ export const ListPosts = (props: ListPostsProps) => {
               rank={idx + 1}
               tags={props.tags.filter((tag) => post.tags.indexOf(tag.slug) >= 0)}
               showStatus={props.showStatus}
+              hideProductChip={props.hideProductChip}
               onPostClick={props.onPostClick}
+              onVote={props.onVote}
             />
           ))}
         </>

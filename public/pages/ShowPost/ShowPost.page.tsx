@@ -2,8 +2,8 @@ import "./ShowPost.page.scss"
 
 import React from "react"
 
-import { Comment, Post, Tag, Vote } from "@fider/models"
-import { Header, PoweredByFider } from "@fider/components"
+import { Comment, InternalNote, Post, Tag, Vote } from "@fider/models"
+import { Header } from "@fider/components"
 import { PostDetails } from "@fider/components/PostDetails"
 
 interface ShowPostPageProps {
@@ -13,6 +13,7 @@ interface ShowPostPageProps {
   tags: Tag[]
   votes: Vote[]
   attachments: string[]
+  internalNote?: InternalNote
 }
 
 export default function ShowPostPage(props: ShowPostPageProps) {
@@ -28,8 +29,8 @@ export default function ShowPostPage(props: ShowPostPageProps) {
           initialTags={props.tags}
           initialVotes={props.votes}
           initialAttachments={props.attachments}
+          initialInternalNote={props.internalNote}
         />
-        <PoweredByFider slot="show-post" className="mt-3" />
       </div>
     </>
   )

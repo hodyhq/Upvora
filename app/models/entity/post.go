@@ -22,6 +22,7 @@ type Post struct {
 	Response      *PostResponse `json:"response,omitempty"`
 	Tags          []string      `json:"tags"`
 	IsApproved    bool          `json:"isApproved"`
+	Product       *ProductInfo  `json:"product,omitempty"`
 }
 
 // CanBeVoted returns true if this post can have its vote changed.

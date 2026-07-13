@@ -5,14 +5,13 @@ import { Button, Field, Form, Input, Select, SelectOption, TextArea, Toggle } fr
 import { HStack, VStack } from "@fider/components/layout"
 import { ScorecardField, ScorecardFieldChoice } from "@fider/models"
 import { actions, Failure, Fider } from "@fider/services"
-import { AdminBasePage } from "../components/AdminBasePage"
 
-interface ManageScorecardFieldsPageProps {
+interface ScorecardFieldsSectionProps {
   fields: ScorecardField[]
   usage: { [key: string]: number }
 }
 
-interface ManageScorecardFieldsPageState {
+interface ScorecardFieldsSectionState {
   fields: ScorecardField[]
   isAdding: boolean
   editingId: number | null
@@ -109,13 +108,8 @@ const groupLabel = (key: string): string => {
   return g ? String(g.label) : key === "scoring" ? "Scoring" : key
 }
 
-export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScorecardFieldsPageProps, ManageScorecardFieldsPageState> {
-  public id = "p-admin-scorecard-fields"
-  public name = "scorecard-fields"
-  public title = "Scorecard Fields"
-  public subtitle = "Customize the fields shown on every scorecard. Eight scoring dimensions are locked and drive the weighted score."
-
-  constructor(props: ManageScorecardFieldsPageProps) {
+export class ScorecardFieldsSection extends React.Component<ScorecardFieldsSectionProps, ScorecardFieldsSectionState> {
+  constructor(props: ScorecardFieldsSectionProps) {
     super(props)
     this.state = {
       fields: props.fields ?? [],
@@ -324,7 +318,7 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
     return this.state.fields.filter((f) => f.type === "score" && f.isActive).reduce((sum, f) => sum + (f.weight ?? 0), 0)
   }
 
-  public content() {
+  public render() {
     const canEdit = Fider.session.user.isCollaborator
     const rows = [...this.state.fields].sort(this.byGroupThenOrder)
     const weightSum = this.weightSum()
@@ -361,7 +355,7 @@ export default class ManageScorecardFieldsPage extends AdminBasePage<ManageScore
             </div>
           </div>
           <div className="c-scorecard__table-wrap">
-            <table className="c-scorecard__table c-scorecard__table--static">
+            <table className="c-scorecard__table c-scorecard__table--static c-status-table">
               <thead>
                 <tr>
                   <th>Order</th>

@@ -3,6 +3,7 @@
 @import "reset.scss";
 @import "utility.scss";
 @import "tooltip.scss";
+@import "lozenge.scss";
 @include theme($light-colors, '[data-theme="light"]');
 @include theme($dark-colors, '[data-theme="dark"]');
 
@@ -14,12 +15,7 @@
 // is DEFINED — on :root they don't exist yet, which computes the whole token
 // to guaranteed-invalid and silently blanks every gradient and glow.
 body {
-  --brand-grad: linear-gradient(
-    135deg,
-    var(--colors-primary-light),
-    var(--colors-primary-base) 55%,
-    var(--colors-primary-dark)
-  );
+  --brand-grad: linear-gradient(135deg, var(--colors-primary-light), var(--colors-primary-base) 55%, var(--colors-primary-dark));
   --brand-glow: color-mix(in srgb, var(--colors-primary-base) 32%, transparent);
 }
 

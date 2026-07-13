@@ -177,6 +177,17 @@
 
     &__cta-btn {
       width: 100%;
+      justify-content: center;
+      padding: 13px 16px;
+      font-size: 15.5px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      box-shadow: 0 10px 26px -10px var(--brand-glow), 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      animation: cta-pulse 3.2s ease-in-out infinite;
+
+      &:hover {
+        animation: none;
+      }
     }
 
     &__tags {
@@ -199,17 +210,27 @@
       gap: spacing(2);
       font-size: 12.5px;
 
+      // prototype status hues (design contract)
       &--blue {
-        --st: var(--colors-blue-500);
+        --st: #3b82f6;
       }
       &--green {
-        --st: var(--colors-green-600);
+        --st: #22c55e;
       }
       &--yellow {
-        --st: var(--colors-yellow-600);
+        --st: #f59e0b;
       }
       &--red {
-        --st: var(--colors-red-600);
+        --st: #ef4444;
+      }
+      &--gray {
+        --st: #7c8490;
+      }
+
+      @include dark-mode {
+        &--gray {
+          --st: #8b93a0;
+        }
       }
     }
 
@@ -217,9 +238,10 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      min-width: 104px;
+      min-width: 86px;
       font-weight: 650;
-      font-size: 12px;
+      font-size: 0.74rem;
+      letter-spacing: 0.005em;
       color: var(--st);
       background: color-mix(in srgb, var(--st) 14%, transparent);
       border-radius: 7px;
@@ -260,5 +282,21 @@
       text-align: right;
       font-variant-numeric: tabular-nums;
     }
+  }
+}
+
+@keyframes cta-pulse {
+  0%,
+  100% {
+    box-shadow: 0 10px 26px -10px var(--brand-glow), 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+  50% {
+    box-shadow: 0 10px 34px -8px color-mix(in srgb, var(--colors-primary-base) 55%, transparent), 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .p-home__cta-btn {
+    animation: none;
   }
 }

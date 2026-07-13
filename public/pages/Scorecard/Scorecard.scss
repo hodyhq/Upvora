@@ -59,13 +59,34 @@
       display: none;
     }
 
-    &--strong  { background: #e5f4e9; color: #14532d; }
-    &--good    { background: #e3ecf9; color: #1e3a8a; }
-    &--refine  { background: #fbf1d8; color: #78350f; }
-    &--low     { background: #fbe8d6; color: #7c2d12; }
-    &--reject  { background: #fae3e3; color: #7f1d1d; }
-    &--neutral { background: var(--colors-gray-200); color: var(--colors-gray-700); }
-    &--status  { background: var(--colors-gray-200); color: var(--colors-gray-900); }
+    &--strong {
+      background: #e5f4e9;
+      color: #14532d;
+    }
+    &--good {
+      background: #e3ecf9;
+      color: #1e3a8a;
+    }
+    &--refine {
+      background: #fbf1d8;
+      color: #78350f;
+    }
+    &--low {
+      background: #fbe8d6;
+      color: #7c2d12;
+    }
+    &--reject {
+      background: #fae3e3;
+      color: #7f1d1d;
+    }
+    &--neutral {
+      background: var(--colors-gray-200);
+      color: var(--colors-gray-700);
+    }
+    &--status {
+      background: var(--colors-gray-200);
+      color: var(--colors-gray-900);
+    }
   }
 
   // ─────────── card header ───────────
@@ -278,48 +299,40 @@
   }
 
   &__ring {
-    --p: 0;
     --bc: var(--colors-gray-500);
     width: 150px;
     height: 150px;
-    border-radius: 50%;
     flex: 0 0 auto;
     display: grid;
     place-items: center;
     position: relative;
-    background: conic-gradient(from -90deg, var(--bc) calc(var(--p) * 1%), color-mix(in srgb, var(--colors-gray-900) 9%, transparent) 0);
-    transition: --bc 0.2s ease;
-
-    &::before {
-      content: "";
-      position: absolute;
-      inset: 11px;
-      border-radius: 50%;
-      background: var(--colors-white);
-    }
   }
 
-  &__ring-tick {
+  &__ring-svg {
     position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 2px;
-    height: 11px;
-    margin-top: -75px;
-    background: var(--colors-gray-100);
-    transform-origin: 50% 75px;
-    opacity: 0.9;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  &__ring-svg-track {
+    stroke: color-mix(in srgb, var(--colors-gray-900) 10%, transparent);
+  }
+
+  &__ring-svg-arc {
+    filter: drop-shadow(0 0 9px color-mix(in srgb, var(--bc) 55%, transparent));
   }
 
   &__ring-center {
     position: relative;
     text-align: center;
+    z-index: 4;
   }
 
   &__ring-num {
     display: block;
     font-family: $font-code;
-    font-size: 2.1rem;
+    font-size: 2.3rem;
     font-weight: 700;
     letter-spacing: -0.04em;
     line-height: 1;
@@ -445,12 +458,24 @@
     border-radius: 4px;
     opacity: 0.32;
 
-    &--reject { background: #dc2626; }
-    &--low    { background: #ea7326; }
-    &--refine { background: #e9a208; }
-    &--good   { background: #2563eb; }
-    &--strong { background: #16a34a; }
-    &--lit    { opacity: 1; }
+    &--reject {
+      background: #dc2626;
+    }
+    &--low {
+      background: #ea7326;
+    }
+    &--refine {
+      background: #e9a208;
+    }
+    &--good {
+      background: #2563eb;
+    }
+    &--strong {
+      background: #16a34a;
+    }
+    &--lit {
+      opacity: 1;
+    }
   }
 
   &__gauge-marker {
@@ -989,11 +1014,21 @@
       height: 100%;
       border-radius: 2px;
 
-      &.is-strong { background: #16a34a; }
-      &.is-good   { background: #2563eb; }
-      &.is-refine { background: #e9a208; }
-      &.is-low    { background: #ea7326; }
-      &.is-reject { background: #dc2626; }
+      &.is-strong {
+        background: #16a34a;
+      }
+      &.is-good {
+        background: #2563eb;
+      }
+      &.is-refine {
+        background: #e9a208;
+      }
+      &.is-low {
+        background: #ea7326;
+      }
+      &.is-reject {
+        background: #dc2626;
+      }
     }
   }
 
@@ -1006,15 +1041,48 @@
   // ─────────── dark mode ───────────
   @include dark-mode {
     &__chip {
-      &--strong  { background: #12301f; color: #7ee3a6; }
-      &--good    { background: #16223f; color: #9bb8f4; }
-      &--refine  { background: #32240b; color: #f0c878; }
-      &--low     { background: #331d0d; color: #f0a878; }
-      &--reject  { background: #331414; color: #f0a0a0; }
+      &--strong {
+        background: #12301f;
+        color: #7ee3a6;
+      }
+      &--good {
+        background: #16223f;
+        color: #9bb8f4;
+      }
+      &--refine {
+        background: #32240b;
+        color: #f0c878;
+      }
+      &--low {
+        background: #331d0d;
+        color: #f0a878;
+      }
+      &--reject {
+        background: #331414;
+        color: #f0a0a0;
+      }
     }
 
     &__gauge-pin {
       box-shadow: 0 0 0 2.5px var(--colors-gray-100);
     }
+  }
+}
+
+/* product filter dropdown (shared look with the roadmap one) */
+.c-roadmap-toolbar__product {
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--colors-gray-900);
+  background-color: color-mix(in srgb, var(--colors-gray-900) 4%, transparent);
+  border: 1px solid var(--colors-gray-300);
+  border-radius: 10px;
+  padding: 8px 11px;
+  outline: none;
+  cursor: pointer;
+
+  &:focus {
+    border-color: var(--colors-primary-base);
   }
 }

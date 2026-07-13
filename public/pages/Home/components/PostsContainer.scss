@@ -25,6 +25,9 @@
     grid-column: 1 / -1;
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
+    gap: spacing(2);
+    max-width: 100%;
     & > * + * {
       margin-inline-start: 0;
     }
@@ -70,6 +73,8 @@
 .c-posts-sort {
   display: inline-flex;
   gap: 2px;
+  max-width: 100%;
+  overflow-x: auto;
   background-color: color-mix(in srgb, var(--colors-gray-900) 5%, transparent);
   border: 1px solid var(--colors-gray-200);
   border-radius: 11px;
@@ -110,6 +115,7 @@
   align-items: center;
   text-decoration: none;
   color: inherit;
+  cursor: pointer;
   background-color: var(--colors-white);
   border: 1px solid var(--colors-gray-200);
   border-radius: get("border.radius.large");
@@ -145,20 +151,21 @@
     background: transparent;
     transition: background 0.16s ease;
   }
+  // prototype status hues (design contract)
   &[data-color="blue"]::after {
-    background: var(--colors-blue-500);
+    background: #3b82f6;
   }
   &[data-color="yellow"]::after {
-    background: var(--colors-yellow-500);
+    background: #f59e0b;
   }
   &[data-color="green"]::after {
-    background: var(--colors-green-600);
+    background: #22c55e;
   }
   &[data-color="red"]::after {
-    background: var(--colors-red-600);
+    background: #ef4444;
   }
   &[data-color="gray"]::after {
-    background: var(--colors-gray-500);
+    background: #7c8490;
   }
 
   &__vote {
@@ -168,6 +175,10 @@
     gap: 3px;
     width: 68px;
     padding: 13px 6px;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    appearance: none;
     border: 1px solid var(--colors-gray-400);
     border-radius: 13px;
     background-color: var(--colors-gray-100);
@@ -179,8 +190,8 @@
     }
 
     &[data-voted="true"] {
-      background-color: var(--colors-primary-base);
-      background-image: var(--brand-grad);
+      background-color: var(--accent-votes, var(--colors-primary-base));
+      background-image: var(--accent-votes-grad, var(--brand-grad));
       border-color: transparent;
       box-shadow: 0 8px 18px -10px var(--brand-glow);
 
@@ -188,6 +199,9 @@
       .c-post__votes,
       .c-post__voteslabel {
         color: #fff;
+        // the CSS stroke property on the base class beats the svg's
+        // stroke="currentColor" attribute - override it explicitly
+        stroke: #fff;
       }
     }
   }
@@ -233,6 +247,11 @@
     color: var(--colors-gray-900);
     margin-bottom: spacing(1);
     transition: color 0.14s ease;
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
   }
   &:hover &__title {
     color: var(--colors-primary-base);
@@ -290,5 +309,34 @@
     &__side {
       display: none;
     }
+  }
+}
+
+/* product chip on rows - only in the all-products view */
+.c-post__prodchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 650;
+  padding: 2px 8px;
+  border-radius: 7px;
+  white-space: nowrap;
+  color: var(--pc);
+  background: color-mix(in srgb, var(--pc) 13%, transparent);
+  // ink-colored border (near-black in light, near-white in dark) marks
+  // PRODUCT chips apart from status pills
+  border: 1px solid color-mix(in srgb, var(--colors-gray-900) 40%, transparent);
+  text-decoration: none;
+
+  i {
+    width: 7px;
+    height: 7px;
+    border-radius: 2.5px;
+    background: var(--pc);
+  }
+
+  &:hover {
+    background: color-mix(in srgb, var(--pc) 22%, transparent);
   }
 }

@@ -1,12 +1,9 @@
 import React, { useState } from "react"
 import { Post, PostStatus, postStatusValue } from "@fider/models"
 import { actions } from "@fider/services"
-import { Button, Icon, SignInModal } from "@fider/components"
+import { SignInModal } from "@fider/components"
 import { useFider } from "@fider/hooks"
-import IconThumbsUp from "@fider/assets/images/heroicons-thumbsup.svg"
-import IconCheck from "@fider/assets/images/heroicons-check.svg"
 import { Trans } from "@lingui/react/macro"
-import { HStack, VStack } from "@fider/components/layout"
 
 interface VoteSectionProps {
   post: Post
@@ -40,27 +37,31 @@ export const VoteSection = (props: VoteSectionProps) => {
   const status = PostStatus.Get(postStatusValue(props.post))
   const isDisabled = status.closed || fider.isReadOnly
 
-  const buttonText = hasVoted ? <Trans id="action.voted">Voted!</Trans> : <Trans id="action.vote">Vote for this idea</Trans>
-  const icon = hasVoted ? IconCheck : IconThumbsUp
-
   return (
     <>
       <SignInModal isOpen={isSignInModalOpen} onClose={hideModal} />
-      <VStack spacing={4}>
-        <div className="align-self-start">
-          <Button variant="primary" onClick={voteOrUndo} disabled={isDisabled} style={{ minWidth: "180px" }}>
-            <HStack spacing={2} justify="center" className="w-full">
-              <Icon sprite={icon} /> <span>{buttonText}</span>
-            </HStack>
-          </Button>
-        </div>
-        <HStack align="center" spacing={2}>
-          <span className="text-semibold text-2xl" style={{ fontSize: "32px", minHeight: "48px" }}>
-            {votes}
-          </span>
-          <span className="text-semibold text-lg">{votes === 1 ? <Trans id="label.vote">Vote</Trans> : <Trans id="label.votes">Votes</Trans>}</span>
-        </HStack>
-      </VStack>
+      <button
+        className="c-post__vote p-show-post__voteblock"
+        data-voted={hasVoted ? "true" : "false"}
+        onClick={voteOrUndo}
+        disabled={isDisabled}
+        aria-pressed={hasVoted}
+      >
+        <svg
+          className="c-post__chev"
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M5 12l5-5 5 5" />
+        </svg>
+        <span className="c-post__votes">{votes}</span>
+        <span className="c-post__voteslabel">{votes === 1 ? <Trans id="label.vote">Vote</Trans> : <Trans id="label.votes">Votes</Trans>}</span>
+      </button>
     </>
   )
 }

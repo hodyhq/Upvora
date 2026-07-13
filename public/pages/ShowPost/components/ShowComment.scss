@@ -1,22 +1,18 @@
 @use "~@fider/assets/styles/variables.scss" as *;
 
 .c-comment {
-  // Hide avatar on mobile
-  @include media("sm") {
-    .c-avatar {
-      display: none;
-    }
-  }
-
   &__card {
     flex-grow: 1;
     background-color: var(--colors-white);
+    border: 1px solid var(--colors-gray-200);
     @include dark-mode {
-      background-color: var(--colors-gray-200);
+      background-color: var(--colors-white);
+      background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 45%);
+      border-color: var(--colors-gray-300);
     }
-    border-radius: get("border.radius.xlarge");
-    padding: spacing(6);
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    border-radius: 12px;
+    padding: spacing(4) spacing(4);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.08);
   }
 
   &__content {
@@ -28,4 +24,50 @@
       border-radius: get("border.radius.medium");
     }
   }
+}
+
+/* Condensed discussion type scale (prototype: body .92rem, meta .82rem) */
+.c-comment__card {
+  font-size: 14px;
+
+  .c-username {
+    font-size: 13.5px;
+    font-weight: 650;
+  }
+
+  .text-xs {
+    font-size: 12px;
+  }
+
+  .c-markdown {
+    font-size: 14px;
+    line-height: 1.6;
+
+    p {
+      margin-bottom: 0.5em;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
+/* Internal (team-only) comment treatment */
+.c-internal-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #d97706;
+  background: color-mix(in srgb, #f59e0b 16%, transparent);
+  border-radius: 5px;
+  padding: 2px 6px;
+}
+
+.c-comment__card--internal {
+  background-color: color-mix(in srgb, #f59e0b 7%, var(--colors-white)) !important;
+  border-color: color-mix(in srgb, #f59e0b 28%, transparent) !important;
 }

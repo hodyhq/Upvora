@@ -1,6 +1,7 @@
 package dbEntities
 
 import (
+	"encoding/json"
 	"database/sql"
 
 	"github.com/getfider/fider/app/models/entity"
@@ -36,6 +37,8 @@ type Tenant struct {
 	RailCtaText           string       `db:"rail_cta_text"`
 	RailCtaButton         string       `db:"rail_cta_button"`
 	DefaultTheme          string       `db:"default_theme"`
+	ThemePrimary          string       `db:"theme_primary"`
+	ThemeAccents          string       `db:"theme_accents"`
 	SiteBannerEnabled     bool         `db:"site_banner_enabled"`
 	SiteBannerMessage     string       `db:"site_banner_message"`
 	SiteBannerVariant     string       `db:"site_banner_variant"`
@@ -89,6 +92,7 @@ func (t *Tenant) ToModel() *entity.Tenant {
 		RailCtaText:         t.RailCtaText,
 		RailCtaButton:       t.RailCtaButton,
 		DefaultTheme:        t.DefaultTheme,
+		ThemePrimary:        t.ThemePrimary,
 		SiteBannerEnabled:   t.SiteBannerEnabled,
 		SiteBannerMessage:   t.SiteBannerMessage,
 		SiteBannerVariant:   t.SiteBannerVariant,
@@ -112,5 +116,11 @@ func (t *Tenant) ToModel() *entity.Tenant {
 		tenant.ScheduledDeletionAt = &t.ScheduledDeletionAt.Time
 	}
 
+	if t.ThemeAccents != "" && t.ThemeAccents != "{}" {
+		accents := map[string]string{}
+		if err := json.Unmarshal([]byte(t.ThemeAccents), &accents); err == nil && len(accents) > 0 {
+			tenant.ThemeAccents = accents
+		}
+	}
 	return tenant
 }

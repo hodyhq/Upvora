@@ -17,6 +17,7 @@ interface ScorecardRecord {
   postSlug?: string
   postVotes?: number
   submittedBy?: string
+  productId?: number
 }
 
 interface ScorecardPageProps {
@@ -43,6 +44,25 @@ const Scorecard: React.FC<ScorecardPageProps> = (props) => {
   const featureOff = !Fider.session.tenant.isScorecardEnabled
   const [tab, setTab] = useState<"all" | Bucket>("all")
   const [filter, setFilter] = useState("")
+  const initialProduct = (() => {
+    if (typeof window === "undefined") return [] as number[]
+    const all = Fider.session.tenant.products ?? []
+    const single = /[?&]product=([^&]+)/.exec(window.location.search)
+    const multi = /[?&]products=([^&]+)/.exec(window.location.search)
+    const slugs = multi ? decodeURIComponent(multi[1]).split(",") : single ? [decodeURIComponent(single[1])] : []
+    return slugs.map((slug) => all.find((p) => p.slug === slug)?.id ?? 0).filter((id) => id > 0)
+  })()
+  const [productFilter, setProductFilter] = useState<number[]>(initialProduct)
+
+  const toggleProductFilter = (id: number) => {
+    const next = productFilter.includes(id) ? productFilter.filter((x) => x !== id) : [...productFilter, id]
+    setProductFilter(next)
+    if (typeof window !== "undefined" && window.history) {
+      const all = Fider.session.tenant.products ?? []
+      const slugs = next.map((x) => all.find((p) => p.id === x)?.slug).filter(Boolean)
+      window.history.replaceState(null, "", slugs.length ? `/scorecard?products=${slugs.join(",")}` : "/scorecard")
+    }
+  }
 
   const fields = Fider.session.tenant.scorecardFields ?? []
   const statusField = fields.find((f) => f.groupKey === "header" && f.type === "choice" && f.isActive)
@@ -64,6 +84,7 @@ const Scorecard: React.FC<ScorecardPageProps> = (props) => {
   }
 
   const visible = cards.filter((c) => {
+    if (productFilter.length > 0 && !productFilter.includes(c.productId ?? -1)) return false
     if (tab !== "all" && bucketOf(c) !== tab) return false
     if (filter !== "") {
       const q = filter.toLowerCase()
@@ -113,6 +134,23 @@ const Scorecard: React.FC<ScorecardPageProps> = (props) => {
               ))}
             </div>
             <div className="c-scorecard__toolbar-right">
+              {(Fider.session.tenant.products?.length ?? 0) > 0 && (
+                <div className="c-prodfilter">
+                  {(Fider.session.tenant.products ?? []).map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className="c-prodchip c-prodchip--toggle"
+                      aria-pressed={productFilter.includes(p.id)}
+                      style={{ "--pc": p.color || "var(--colors-primary-base)" } as React.CSSProperties}
+                      onClick={() => toggleProductFilter(p.id)}
+                    >
+                      <i />
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
+              )}
               <input
                 type="search"
                 className="c-scorecard__search"
@@ -148,7 +186,18 @@ const Scorecard: React.FC<ScorecardPageProps> = (props) => {
                   return (
                     <tr key={c.id} onClick={() => (window.location.href = `/scorecard/${c.id}`)}>
                       <td>
-                        <div className="c-scorecard__row-title">{c.title || `Scorecard #${c.id}`}</div>
+                        <div className="c-scorecard__row-title">
+                          {c.title || `Scorecard #${c.id}`}
+                          {(() => {
+                            const pr = (Fider.session.tenant.products ?? []).find((p) => p.id === c.productId)
+                            return pr ? (
+                              <span className="c-prodchip ml-2" style={{ "--pc": pr.color || "var(--colors-primary-base)" } as React.CSSProperties}>
+                                <i />
+                                {pr.name}
+                              </span>
+                            ) : null
+                          })()}
+                        </div>
                         {c.postNumber != null && <div className="c-scorecard__row-sub">Idea #{c.postNumber}</div>}
                       </td>
                       <td>

@@ -34,6 +34,10 @@ type Post struct {
 	OriginalStatusSlug dbx.NullString `db:"original_status_slug"`
 	Tags               pq.StringArray `db:"tags"`
 	IsApproved         bool           `db:"is_approved"`
+	ProductID          dbx.NullInt    `db:"product_id"`
+	ProductName        dbx.NullString `db:"product_name"`
+	ProductSlug        dbx.NullString `db:"product_slug"`
+	ProductColor       dbx.NullString `db:"product_color"`
 }
 
 func (i *Post) ToModel(ctx context.Context) *entity.Post {
@@ -71,5 +75,13 @@ func (i *Post) ToModel(ctx context.Context) *entity.Post {
 		}
 	}
 
+	if i.ProductID.Valid {
+		post.Product = &entity.ProductInfo{
+			ID:    int(i.ProductID.Int64),
+			Name:  i.ProductName.String,
+			Slug:  i.ProductSlug.String,
+			Color: i.ProductColor.String,
+		}
+	}
 	return post
 }

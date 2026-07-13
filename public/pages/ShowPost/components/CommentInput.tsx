@@ -1,11 +1,10 @@
 import React, { useCallback, useState, useEffect } from "react"
 
 import { Post } from "@fider/models"
-import { Avatar, Button, Form } from "@fider/components"
+import { Button, Form } from "@fider/components"
 import { SignInModal } from "@fider/components"
 
 import { cache, actions, Failure, Fider } from "@fider/services"
-import { HStack } from "@fider/components/layout"
 import { i18n } from "@lingui/core"
 import { Trans } from "@lingui/react/macro"
 
@@ -31,6 +30,7 @@ export const CommentInput = (props: CommentInputProps) => {
 
   const fider = useFider()
   const [isSignInModalOpen, setIsSignInModalOpen] = useState(false)
+  const [isInternal, setIsInternal] = useState(false)
   const [error, setError] = useState<Failure | undefined>(undefined)
   const [isClient, setIsClient] = useState(false)
   const [contentLength, setContentLength] = useState((cache.session.get(`${CACHE_TITLE_KEY}${props.post.id}`) ?? "").length)
@@ -54,7 +54,7 @@ export const CommentInput = (props: CommentInputProps) => {
 
     const content = getContentFromCache()
 
-    const result = await actions.createComment(props.post.number, content || "", attachments)
+    const result = await actions.createComment(props.post.number, content || "", attachments, isInternal)
     if (result.ok) {
       clearAttachments()
       cache.session.remove(getCacheKey(CACHE_TITLE_KEY))
@@ -81,13 +81,13 @@ export const CommentInput = (props: CommentInputProps) => {
   }, [])
 
   const isOverLimit = contentLength > COMMENT_MAX_LENGTH
+  const canPostInternal = Fider.session.isAuthenticated && Fider.session.user.isCollaborator
 
   return (
     <>
       <SignInModal isOpen={isSignInModalOpen} onClose={hideModal} />
-      <HStack spacing={4} className="c-comment-input" align="start">
-        {Fider.session.isAuthenticated && <Avatar user={Fider.session.user} size="large" />}
-        <div className="c-comment-input-card">
+      <div className="c-comment-input">
+        <div className={isInternal ? "c-comment-input-card c-comment-input-card--internal" : "c-comment-input-card"}>
           <Form error={error}>
             {isClient ? (
               <>
@@ -105,12 +105,24 @@ export const CommentInput = (props: CommentInputProps) => {
                   onImageUploaded={handleImageUploaded}
                 />
 
-                {hasContent && (
-                  <>
-                    <Button disabled={!fider.session.isAuthenticated || isOverLimit} variant="primary" onClick={submit} className="mt-4">
+                {(hasContent || isInternal) && (
+                  <div className="c-comment-input__footer">
+                    <Button disabled={!fider.session.isAuthenticated || isOverLimit || !hasContent} variant="primary" onClick={submit}>
                       <Trans id="action.postcomment">Post</Trans>
                     </Button>
-                  </>
+                    {canPostInternal && (
+                      <button
+                        type="button"
+                        className="c-internal-toggle"
+                        data-on={isInternal}
+                        onClick={() => setIsInternal(!isInternal)}
+                        aria-pressed={isInternal}
+                      >
+                        <span className="c-internal-toggle__dot" />
+                        <Trans id="showpost.commentinput.internal">Internal — only your team sees this</Trans>
+                      </button>
+                    )}
+                  </div>
                 )}
               </>
             ) : (
@@ -118,7 +130,7 @@ export const CommentInput = (props: CommentInputProps) => {
             )}
           </Form>
         </div>
-      </HStack>
+      </div>
     </>
   )
 }

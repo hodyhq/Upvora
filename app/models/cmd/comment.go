@@ -5,6 +5,7 @@ import (
 )
 
 type AddNewComment struct {
+	IsInternal bool
 	Post    *entity.Post
 	Content string
 

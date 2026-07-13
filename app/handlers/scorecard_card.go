@@ -23,10 +23,16 @@ func ScorecardCardPage() web.HandlerFunc {
 		if err := bus.Dispatch(c, get); err != nil {
 			return c.Failure(err)
 		}
+		var internalNote interface{}
 		if get.Result.PostID != nil {
 			p := &query.GetPostByID{PostID: *get.Result.PostID}
 			if perr := bus.Dispatch(c, p); perr == nil {
 				get.Result.Post = p.Result
+				// the shared team note - same row the post page edits
+				note := &query.GetInternalNote{PostID: p.Result.ID}
+				if nerr := bus.Dispatch(c, note); nerr == nil {
+					internalNote = note.Result
+				}
 			}
 			// non-fatal: post may have been deleted; header just falls back
 		}
@@ -45,6 +51,7 @@ func ScorecardCardPage() web.HandlerFunc {
 			Data: web.Map{
 				"scorecard":     get.Result,
 				"assigneeNames": userNames,
+				"internalNote":  internalNote,
 			},
 		})
 	}

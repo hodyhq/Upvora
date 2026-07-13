@@ -1,5 +1,5 @@
 import { http, Result, querystring } from "@fider/services"
-import { Post, Vote, ImageUpload, UserNames, Comment } from "@fider/models"
+import { Post, Vote, ImageUpload, UserNames, Comment, InternalNote } from "@fider/models"
 
 export const getAllPosts = async (): Promise<Result<Post[]>> => {
   return await http.get<Post[]>("/api/v1/posts")
@@ -23,6 +23,8 @@ export interface SearchPostsParams {
   myPosts?: boolean
   statuses?: string[]
   moderation?: string
+  product?: number
+  products?: number[]
 }
 
 export const searchPosts = async (params: SearchPostsParams): Promise<Result<Post[]>> => {
@@ -33,6 +35,8 @@ export const searchPosts = async (params: SearchPostsParams): Promise<Result<Pos
     view: params.view,
     limit: params.limit,
     moderation: params.moderation,
+    product: params.product,
+    products: params.products?.map(String),
   })
   if (params.myVotes) {
     qsParams += `&myvotes=true`
@@ -87,8 +91,8 @@ export const getTaggableUsers = async (userFilter: string): Promise<Result<UserN
   return http.get<UserNames[]>(`/api/v1/taggable-users${querystring.stringify({ query: userFilter })}`)
 }
 
-export const createComment = async (postNumber: number, content: string, attachments: ImageUpload[]): Promise<Result> => {
-  return http.post(`/api/v1/posts/${postNumber}/comments`, { content, attachments }).then(http.event("comment", "create"))
+export const createComment = async (postNumber: number, content: string, attachments: ImageUpload[], isInternal = false): Promise<Result> => {
+  return http.post(`/api/v1/posts/${postNumber}/comments`, { content, attachments, isInternal }).then(http.event("comment", "create"))
 }
 
 export const updateComment = async (postNumber: number, commentID: number, content: string, attachments: ImageUpload[]): Promise<Result> => {
@@ -130,8 +134,14 @@ interface CreatePostResponse {
   isApproved: boolean
 }
 
-export const createPost = async (title: string, description: string, attachments: ImageUpload[], tags: string[]): Promise<Result<CreatePostResponse>> => {
-  return http.post<CreatePostResponse>(`/api/v1/posts`, { title, description, attachments, tags }).then(http.event("post", "create"))
+export const createPost = async (
+  title: string,
+  description: string,
+  attachments: ImageUpload[],
+  tags: string[],
+  productId = 0
+): Promise<Result<CreatePostResponse>> => {
+  return http.post<CreatePostResponse>(`/api/v1/posts`, { title, description, attachments, tags, productId }).then(http.event("post", "create"))
 }
 
 export const updatePost = async (postNumber: number, title: string, description: string, attachments: ImageUpload[]): Promise<Result> => {
@@ -168,4 +178,16 @@ export const approveCommentAndVerify = async (commentID: number): Promise<Result
 
 export const declineCommentAndBlock = async (commentID: number): Promise<Result> => {
   return http.post(`/api/v1/admin/moderation/comments/${commentID}/decline-and-block`).then(http.event("comment", "decline-and-block"))
+}
+
+export const getInternalNote = async (postNumber: number): Promise<Result<InternalNote>> => {
+  return http.get<InternalNote>(`/_api/posts/${postNumber}/internal-note`)
+}
+
+export const setInternalNote = async (postNumber: number, content: string): Promise<Result<InternalNote>> => {
+  return http.put<InternalNote>(`/_api/posts/${postNumber}/internal-note`, { content })
+}
+
+export const setPostProduct = async (postNumber: number, productId: number): Promise<Result> => {
+  return http.put(`/_api/posts/${postNumber}/product`, { productId })
 }

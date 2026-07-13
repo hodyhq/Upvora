@@ -98,6 +98,12 @@ const RoadmapPost = (props: {
           )}
         </HStack>
         {props.post.description && <Markdown className="c-roadmap-post__desc" maxLength={110} text={props.post.description} style="plainText" />}
+        {props.post.product && (
+          <span className="c-prodchip" style={{ "--pc": props.post.product.color || "var(--colors-primary-base)" } as React.CSSProperties}>
+            <i />
+            {props.post.product.name}
+          </span>
+        )}
         {props.tags.length >= 1 && (
           <HStack spacing={1} className="flex-wrap">
             {props.tags.map((tag) => (
@@ -209,11 +215,31 @@ const RoadmapBoard = (props: RoadmapPageProps) => {
   const [columns, setColumns] = useState<ColumnState[]>((props.columns || []).map((c) => ({ status: c.status, posts: c.posts, limit: ROADMAP_DEFAULT_LIMIT })))
   const tags = props.tags || []
   const [query, setQuery] = useState("")
+  const initialProductFilter = (() => {
+    if (typeof window === "undefined") return [] as number[]
+    const all = Fider.session.tenant.products ?? []
+    const single = /[?&]product=([^&]+)/.exec(window.location.search)
+    const multi = /[?&]products=([^&]+)/.exec(window.location.search)
+    const slugs = multi ? decodeURIComponent(multi[1]).split(",") : single ? [decodeURIComponent(single[1])] : []
+    return slugs.map((slug) => all.find((p) => p.slug === slug)?.id ?? 0).filter((id) => id > 0)
+  })()
+  const [productFilter, setProductFilter] = useState<number[]>(initialProductFilter)
+
+  const toggleProductFilter = (id: number) => {
+    const next = productFilter.includes(id) ? productFilter.filter((x) => x !== id) : [...productFilter, id]
+    setProductFilter(next)
+    if (typeof window !== "undefined" && window.history) {
+      const all = Fider.session.tenant.products ?? []
+      const slugs = next.map((x) => all.find((p) => p.id === x)?.slug).filter(Boolean)
+      window.history.replaceState(null, "", slugs.length ? `/roadmap?products=${slugs.join(",")}` : "/roadmap")
+    }
+  }
   const [tagFilter, setTagFilter] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState<{ [slug: string]: boolean }>({})
   const canDrag = Fider.session.isAuthenticated && Fider.session.user.isCollaborator
 
   const matchesFilters = (p: Post): boolean => {
+    if (productFilter.length > 0 && !productFilter.includes(p.product?.id ?? -1)) return false
     if (tagFilter && p.tags.indexOf(tagFilter) < 0) return false
     if (query) {
       const q = query.toLowerCase()
@@ -312,6 +338,23 @@ const RoadmapBoard = (props: RoadmapPageProps) => {
         </div>
         <VStack spacing={4}>
           <div className="c-roadmap-toolbar">
+            {(Fider.session.tenant.products?.length ?? 0) > 0 && (
+              <div className="c-prodfilter">
+                {(Fider.session.tenant.products ?? []).map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className="c-prodchip c-prodchip--toggle"
+                    aria-pressed={productFilter.includes(p.id)}
+                    style={{ "--pc": p.color || "var(--colors-primary-base)" } as React.CSSProperties}
+                    onClick={() => toggleProductFilter(p.id)}
+                  >
+                    <i />
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            )}
             <input className="c-roadmap-toolbar__search" placeholder="Search the roadmap" value={query} onChange={(e) => setQuery(e.target.value)} />
             <div className="c-roadmap-toolbar__tags">
               {tags.map((t) => (

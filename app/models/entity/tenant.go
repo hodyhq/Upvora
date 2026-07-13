@@ -32,6 +32,8 @@ type Tenant struct {
 	RailCtaText         string            `json:"railCtaText"`
 	RailCtaButton       string            `json:"railCtaButton"`
 	DefaultTheme        string            `json:"defaultTheme"`
+	ThemePrimary        string            `json:"themePrimary"`
+	ThemeAccents        map[string]string `json:"themeAccents,omitempty"`
 	SiteBannerEnabled   bool              `json:"siteBannerEnabled"`
 	SiteBannerMessage   string            `json:"siteBannerMessage"`
 	SiteBannerVariant   string            `json:"siteBannerVariant"`
@@ -48,6 +50,7 @@ type Tenant struct {
 	ScorecardTriggerStatusSlug string `json:"scorecardTriggerStatusSlug"`
 	Statuses            []*Status         `json:"statuses,omitempty"`
 	ScorecardFields     []*ScorecardField `json:"scorecardFields,omitempty"`
+	Products            []*Product        `json:"products,omitempty"`
 	// ScheduledDeletionAt is set when the account owner has requested deletion of the whole
 	// site. The tenant stays active during the grace window; a background job performs the
 	// hard delete once this time passes. Not exposed to clients.

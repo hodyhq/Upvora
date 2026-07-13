@@ -1,3 +1,5 @@
+import "../../Scorecard/Scorecard.scss"
+
 import React from "react"
 import { Button, Form, Input, Select, SelectOption, Toggle } from "@fider/components"
 import { HStack, VStack } from "@fider/components/layout"
@@ -52,6 +54,7 @@ const slugify = (s: string): string =>
     .slice(0, 50)
 
 export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPageProps, ManageStatusesPageState> {
+  public bare = true
   public id = "p-admin-statuses"
   public name = "statuses"
   public title = i18n._({ id: "admin.statuses.page.title", message: "Statuses" })
@@ -259,175 +262,194 @@ export default class ManageStatusesPage extends AdminBasePage<ManageStatusesPage
   public content() {
     return (
       <VStack spacing={4}>
-        <p className="text-sm text-muted">
-          <Trans id="admin.statuses.help">
-            The 6 built-in statuses are seeded for every site and can be renamed, recolored, or deactivated but not deleted. Add custom statuses for your own
-            workflow — e.g. <em>Under Review</em> between Open and Planned.
-          </Trans>
-        </p>
+        {/* The form renders ABOVE the table so "+ Add a status" (in the toolbar
+            right below) opens it in place — same pattern as Scorecard Fields. */}
+        {this.state.isAdding && this.renderForm()}
 
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-muted">
-              <th className="py-2">
-                <Trans id="admin.statuses.table.label">Label</Trans>
-              </th>
-              <th>
-                <Trans id="admin.statuses.table.slug">Slug</Trans>
-              </th>
-              <th>
-                <Trans id="admin.statuses.table.kind">Kind</Trans>
-              </th>
-              <th>
-                <Trans id="admin.statuses.table.color">Color</Trans>
-              </th>
-              <th>
-                <Trans id="admin.statuses.table.home">Home</Trans>
-              </th>
-              <th>
-                <Trans id="admin.statuses.table.roadmap">Roadmap</Trans>
-              </th>
-              <th>
-                <Trans id="admin.statuses.table.filter">Filter</Trans>
-              </th>
-              <th>
-                <Trans id="admin.statuses.table.active">Active</Trans>
-              </th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {this.state.statuses.map((s) => (
-              <tr key={s.id} className="border-t">
-                <td className="py-2">
-                  {s.label}{" "}
-                  {s.isSystem && (
-                    <span className="text-xs text-muted ml-1">
-                      <Trans id="admin.statuses.table.system">(system)</Trans>
-                    </span>
-                  )}
-                </td>
-                <td>
-                  <code>{s.slug}</code>
-                </td>
-                <td>{s.kind}</td>
-                <td>{s.color}</td>
-                <td>{s.showOnHome ? i18n._({ id: "admin.statuses.table.yes", message: "yes" }) : "—"}</td>
-                <td>{s.showOnRoadmap ? i18n._({ id: "admin.statuses.table.yes", message: "yes" }) : "—"}</td>
-                <td>{s.filterable ? i18n._({ id: "admin.statuses.table.yes", message: "yes" }) : "—"}</td>
-                <td>
-                  <Toggle active={s.isActive} onToggle={() => this.toggleActive(s)} />
-                </td>
-                <td>
-                  <HStack spacing={2}>
-                    <Button
-                      variant="tertiary"
-                      size="small"
-                      disabled={[...this.state.statuses].sort((a, b) => a.sortOrder - b.sortOrder)[0]?.id === s.id}
-                      onClick={() => this.move(s, -1)}
-                    >
-                      ↑
-                    </Button>
-                    <Button
-                      variant="tertiary"
-                      size="small"
-                      disabled={[...this.state.statuses].sort((a, b) => a.sortOrder - b.sortOrder).slice(-1)[0]?.id === s.id}
-                      onClick={() => this.move(s, 1)}
-                    >
-                      ↓
-                    </Button>
-                    <Button variant="tertiary" size="small" onClick={() => this.openEdit(s)}>
-                      <Trans id="admin.statuses.action.edit">Edit</Trans>
-                    </Button>
-                    {!s.isSystem && (
-                      <Button variant="danger" size="small" onClick={() => this.remove(s)}>
-                        <Trans id="admin.statuses.action.delete">Delete</Trans>
-                      </Button>
-                    )}
-                  </HStack>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {this.state.isAdding ? (
-          <Form error={this.state.error}>
-            <VStack spacing={4}>
-              <Input
-                field="label"
-                label={i18n._({ id: "admin.statuses.form.label", message: "Label" })}
-                value={this.state.draftLabel}
-                onChange={this.updateLabel}
-              />
-              {this.state.editingId === null ? (
-                <>
-                  <Input
-                    field="slug"
-                    label={i18n._({ id: "admin.statuses.form.slug", message: "Slug (URL-safe)" })}
-                    value={this.state.draftSlug}
-                    onChange={(v) => this.setState({ draftSlug: slugify(v) })}
-                  />
-                  <Select
-                    field="kind"
-                    label={i18n._({ id: "admin.statuses.form.kind", message: "Semantic kind" })}
-                    defaultValue={this.state.draftKind}
-                    options={kindOptions()}
-                    onChange={(opt) => this.setState({ draftKind: (opt?.value ?? "open") as StatusKind })}
-                  />
-                </>
-              ) : (
-                <p className="text-sm text-muted">
-                  <Trans id="admin.statuses.form.lockednote">
-                    Slug <code>{this.state.draftSlug}</code> and semantic kind <code>{this.state.draftKind}</code> are fixed once a status is created.
-                  </Trans>
-                </p>
+        <div className="c-scorecard__panel">
+          <div className="c-scorecard__toolbar">
+            <div className="c-scorecard__group-head" style={{ marginBottom: 0, paddingBottom: 9 }}>
+              <span className="c-scorecard__group-label">
+                <Trans id="admin.statuses.catalogue">Status catalogue</Trans>
+              </span>
+              <span className="c-scorecard__group-hint">
+                <Trans id="admin.statuses.help">
+                  Built-in statuses can be renamed, recolored, or deactivated — never deleted. Add custom ones for your own workflow.
+                </Trans>
+              </span>
+            </div>
+            <div className="c-scorecard__toolbar-right">
+              {!this.state.isAdding && (
+                <Button variant="primary" onClick={this.openAdd}>
+                  <Trans id="admin.statuses.add">+ Add a status</Trans>
+                </Button>
               )}
-              <Select
-                field="color"
-                label={i18n._({ id: "admin.statuses.form.color", message: "Color" })}
-                defaultValue={this.state.draftColor}
-                options={colorOptions()}
-                onChange={(opt) => this.setState({ draftColor: opt?.value ?? "blue" })}
-              />
-              <HStack spacing={4}>
-                <Toggle active={this.state.draftShowOnHome} onToggle={(v) => this.setState({ draftShowOnHome: v })} />
-                <span className="text-sm">
-                  <Trans id="admin.statuses.form.showonhome">Show posts in this status on the home page</Trans>
-                </span>
-              </HStack>
-              <HStack spacing={4}>
-                <Toggle active={this.state.draftShowOnRoadmap} onToggle={(v) => this.setState({ draftShowOnRoadmap: v })} />
-                <span className="text-sm">
-                  <Trans id="admin.statuses.form.showonroadmap">Publish posts in this status to the Roadmap page</Trans>
-                </span>
-              </HStack>
-              <HStack spacing={4}>
-                <Toggle active={this.state.draftFilterable} onToggle={(v) => this.setState({ draftFilterable: v })} />
-                <span className="text-sm">
-                  <Trans id="admin.statuses.form.filterable">Include this status in the home-page filter</Trans>
-                </span>
-              </HStack>
-              <HStack spacing={2}>
-                <Button variant="primary" onClick={this.save} disabled={this.state.busy}>
-                  {this.state.editingId === null ? (
-                    <Trans id="admin.statuses.form.save">Save status</Trans>
-                  ) : (
-                    <Trans id="admin.statuses.form.update">Update status</Trans>
-                  )}
-                </Button>
-                <Button variant="tertiary" onClick={this.cancelAdd}>
-                  <Trans id="action.cancel">Cancel</Trans>
-                </Button>
-              </HStack>
-            </VStack>
-          </Form>
-        ) : (
-          <Button variant="primary" onClick={this.openAdd}>
-            <Trans id="admin.statuses.add">Add a custom status</Trans>
-          </Button>
-        )}
+            </div>
+          </div>
+          <div className="c-scorecard__table-wrap">
+            <table className="c-scorecard__table c-scorecard__table--static c-status-table text-sm">
+              <thead>
+                <tr>
+                  <th>
+                    <Trans id="admin.statuses.table.label">Label</Trans>
+                  </th>
+                  <th>
+                    <Trans id="admin.statuses.table.slug">Slug</Trans>
+                  </th>
+                  <th>
+                    <Trans id="admin.statuses.table.kind">Kind</Trans>
+                  </th>
+                  <th>
+                    <Trans id="admin.statuses.table.color">Color</Trans>
+                  </th>
+                  <th>
+                    <Trans id="admin.statuses.table.home">Home</Trans>
+                  </th>
+                  <th>
+                    <Trans id="admin.statuses.table.roadmap">Roadmap</Trans>
+                  </th>
+                  <th>
+                    <Trans id="admin.statuses.table.filter">Filter</Trans>
+                  </th>
+                  <th>
+                    <Trans id="admin.statuses.table.active">Active</Trans>
+                  </th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {this.state.statuses.map((s) => (
+                  <tr key={s.id}>
+                    <td className="c-status-table__labelcell">
+                      <span className="c-status-table__pill" data-color={s.color} title={s.isSystem ? "system status" : undefined}>
+                        <span className="c-status-table__dot" />
+                        {s.label}
+                      </span>
+                      {s.isSystem && <span className="c-status-table__sys">sys</span>}
+                    </td>
+                    <td>
+                      <code>{s.slug}</code>
+                    </td>
+                    <td>{s.kind}</td>
+                    <td>
+                      <span className="c-status-table__swatch" data-color={s.color} title={s.color} />
+                    </td>
+                    <td className="c-status-table__flag">{s.showOnHome ? "✓" : "—"}</td>
+                    <td className="c-status-table__flag">{s.showOnRoadmap ? "✓" : "—"}</td>
+                    <td className="c-status-table__flag">{s.filterable ? "✓" : "—"}</td>
+                    <td>
+                      <Toggle active={s.isActive} onToggle={() => this.toggleActive(s)} />
+                    </td>
+                    <td>
+                      <HStack spacing={2}>
+                        <Button
+                          variant="tertiary"
+                          size="small"
+                          disabled={[...this.state.statuses].sort((a, b) => a.sortOrder - b.sortOrder)[0]?.id === s.id}
+                          onClick={() => this.move(s, -1)}
+                        >
+                          ↑
+                        </Button>
+                        <Button
+                          variant="tertiary"
+                          size="small"
+                          disabled={[...this.state.statuses].sort((a, b) => a.sortOrder - b.sortOrder).slice(-1)[0]?.id === s.id}
+                          onClick={() => this.move(s, 1)}
+                        >
+                          ↓
+                        </Button>
+                        <Button variant="tertiary" size="small" onClick={() => this.openEdit(s)}>
+                          <Trans id="admin.statuses.action.edit">Edit</Trans>
+                        </Button>
+                        {!s.isSystem && (
+                          <Button variant="danger" size="small" onClick={() => this.remove(s)}>
+                            <Trans id="admin.statuses.action.delete">Delete</Trans>
+                          </Button>
+                        )}
+                      </HStack>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </VStack>
+    )
+  }
+
+  private renderForm() {
+    return (
+      <Form error={this.state.error}>
+        <VStack spacing={4}>
+          <Input
+            field="label"
+            label={i18n._({ id: "admin.statuses.form.label", message: "Label" })}
+            value={this.state.draftLabel}
+            onChange={this.updateLabel}
+          />
+          {this.state.editingId === null ? (
+            <>
+              <Input
+                field="slug"
+                label={i18n._({ id: "admin.statuses.form.slug", message: "Slug (URL-safe)" })}
+                value={this.state.draftSlug}
+                onChange={(v) => this.setState({ draftSlug: slugify(v) })}
+              />
+              <Select
+                field="kind"
+                label={i18n._({ id: "admin.statuses.form.kind", message: "Semantic kind" })}
+                defaultValue={this.state.draftKind}
+                options={kindOptions()}
+                onChange={(opt) => this.setState({ draftKind: (opt?.value ?? "open") as StatusKind })}
+              />
+            </>
+          ) : (
+            <p className="text-sm text-muted">
+              <Trans id="admin.statuses.form.lockednote">
+                Slug <code>{this.state.draftSlug}</code> and semantic kind <code>{this.state.draftKind}</code> are fixed once a status is created.
+              </Trans>
+            </p>
+          )}
+          <Select
+            field="color"
+            label={i18n._({ id: "admin.statuses.form.color", message: "Color" })}
+            defaultValue={this.state.draftColor}
+            options={colorOptions()}
+            onChange={(opt) => this.setState({ draftColor: opt?.value ?? "blue" })}
+          />
+          <HStack spacing={4}>
+            <Toggle active={this.state.draftShowOnHome} onToggle={(v) => this.setState({ draftShowOnHome: v })} />
+            <span className="text-sm">
+              <Trans id="admin.statuses.form.showonhome">Show posts in this status on the home page</Trans>
+            </span>
+          </HStack>
+          <HStack spacing={4}>
+            <Toggle active={this.state.draftShowOnRoadmap} onToggle={(v) => this.setState({ draftShowOnRoadmap: v })} />
+            <span className="text-sm">
+              <Trans id="admin.statuses.form.showonroadmap">Publish posts in this status to the Roadmap page</Trans>
+            </span>
+          </HStack>
+          <HStack spacing={4}>
+            <Toggle active={this.state.draftFilterable} onToggle={(v) => this.setState({ draftFilterable: v })} />
+            <span className="text-sm">
+              <Trans id="admin.statuses.form.filterable">Include this status in the home-page filter</Trans>
+            </span>
+          </HStack>
+          <HStack spacing={2}>
+            <Button variant="primary" onClick={this.save} disabled={this.state.busy}>
+              {this.state.editingId === null ? (
+                <Trans id="admin.statuses.form.save">Save status</Trans>
+              ) : (
+                <Trans id="admin.statuses.form.update">Update status</Trans>
+              )}
+            </Button>
+            <Button variant="tertiary" onClick={this.cancelAdd}>
+              <Trans id="action.cancel">Cancel</Trans>
+            </Button>
+          </HStack>
+        </VStack>
+      </Form>
     )
   }
 }

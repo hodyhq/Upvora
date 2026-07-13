@@ -21,4 +21,5 @@ type Comment struct {
 	EditedBy       *User            `json:"editedBy,omitempty"`
 	ReactionCounts []ReactionCounts `json:"reactionCounts,omitempty"`
 	IsApproved     bool             `json:"isApproved"`
+	IsInternal     bool             `json:"isInternal"`
 }
