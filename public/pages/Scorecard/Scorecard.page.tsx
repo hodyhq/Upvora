@@ -176,7 +176,18 @@ const Scorecard: React.FC<ScorecardPageProps> = (props) => {
                   return (
                     <tr key={c.id} onClick={() => (window.location.href = `/scorecard/${c.id}`)}>
                       <td>
-                        <div className="c-scorecard__row-title">{c.title || `Scorecard #${c.id}`}</div>
+                        <div className="c-scorecard__row-title">
+                          {c.title || `Scorecard #${c.id}`}
+                          {(() => {
+                            const pr = (Fider.session.tenant.products ?? []).find((p) => p.id === c.productId)
+                            return pr ? (
+                              <span className="c-prodchip ml-2" style={{ "--pc": pr.color || "var(--colors-primary-base)" } as React.CSSProperties}>
+                                <i />
+                                {pr.name}
+                              </span>
+                            ) : null
+                          })()}
+                        </div>
                         {c.postNumber != null && <div className="c-scorecard__row-sub">Idea #{c.postNumber}</div>}
                       </td>
                       <td>

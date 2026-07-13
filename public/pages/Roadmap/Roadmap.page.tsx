@@ -98,6 +98,12 @@ const RoadmapPost = (props: {
           )}
         </HStack>
         {props.post.description && <Markdown className="c-roadmap-post__desc" maxLength={110} text={props.post.description} style="plainText" />}
+        {props.post.product && (
+          <span className="c-prodchip" style={{ "--pc": props.post.product.color || "var(--colors-primary-base)" } as React.CSSProperties}>
+            <i />
+            {props.post.product.name}
+          </span>
+        )}
         {props.tags.length >= 1 && (
           <HStack spacing={1} className="flex-wrap">
             {props.tags.map((tag) => (

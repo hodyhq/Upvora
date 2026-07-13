@@ -71,3 +71,27 @@
     padding: 0;
   }
 }
+
+/* Product chip - global. Ink border (near-black in light, near-white in dark)
+   marks products apart from status pills on every surface. */
+.c-prodchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 650;
+  padding: 2px 8px;
+  border-radius: 7px;
+  white-space: nowrap;
+  color: var(--pc);
+  background: color-mix(in srgb, var(--pc) 13%, transparent);
+  border: 1px solid color-mix(in srgb, var(--colors-gray-900) 40%, transparent);
+  text-decoration: none;
+
+  i {
+    width: 7px;
+    height: 7px;
+    border-radius: 2.5px;
+    background: var(--pc);
+  }
+}
