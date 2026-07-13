@@ -470,3 +470,14 @@
     background: var(--pc);
   }
 }
+
+.p-show-post__vote-avatars--btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+
+  &:hover {
+    filter: brightness(1.12);
+  }
+}

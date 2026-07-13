@@ -570,6 +570,14 @@
     padding: 6px 24px 24px;
   }
 
+  // The notes panel sits outside the head — give it the same 24px insets so
+  // it lines up with the score strip and idea card instead of running
+  // edge-to-edge.
+  &__notes-wrap {
+    margin-left: 24px;
+    margin-right: 24px;
+  }
+
   &__group {
     border-top: 1px solid var(--colors-gray-200);
     padding: 20px 0 22px;
