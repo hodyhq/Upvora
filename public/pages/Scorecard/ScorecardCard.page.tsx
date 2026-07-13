@@ -378,12 +378,6 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
             )}
           </div>
 
-          {post && (
-            <div className="mb-4">
-              <InternalNotesPanel postNumber={post.number} initialNote={props.internalNote} />
-            </div>
-          )}
-
           <div className="c-scorecard__gauge c-scorecard__gauge--ring">
             {(() => {
               const p = Math.min(100, Math.max(0, weightedScore))
@@ -493,6 +487,12 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
               </div>
             </div>
           </div>
+
+          {post && (
+            <div className="mb-4">
+              <InternalNotesPanel postNumber={post.number} initialNote={props.internalNote} />
+            </div>
+          )}
 
           <div className="c-scorecard__groups">
             {GROUP_ORDER.map((g) => {

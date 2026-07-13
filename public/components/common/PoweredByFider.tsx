@@ -28,7 +28,7 @@ export const PoweredByFider = (props: PoweredByFiderProps) => {
             d="M72 88 H168 V270 C168 346 202 382 256 382 C310 382 344 346 344 270 V88 H440 V276 C440 420 365 476 256 476 C147 476 72 420 72 276 Z"
             fill="currentColor"
           />
-          <path d="M48 66 H144 L256 216 L370 74 C397 42 425 20 468 12 C433 51 407 91 384 126 L258 326 Z" fill="var(--colors-primary-base)" />
+          <path d="M48 66 H144 L256 216 L370 74 C397 42 425 20 468 12 C433 51 407 91 384 126 L258 326 Z" fill="#F97316" />
         </svg>
         <span>
           Powered by <strong>Upvora</strong>

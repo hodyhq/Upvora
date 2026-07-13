@@ -827,6 +827,15 @@
     overflow-x: auto;
   }
 
+  // Actions never clip: the cell hugs its buttons on one line and the wide
+  // Question column absorbs the flexible space instead (was pushing the
+  // Delete/Deactivate buttons past the card edge on long catalogues).
+  &__table th:last-child,
+  &__table td:last-child {
+    white-space: nowrap;
+    width: 1%;
+  }
+
   &__table {
     width: 100%;
     border-collapse: collapse;
