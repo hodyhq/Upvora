@@ -13,8 +13,17 @@ export const ProductSwitcher = () => {
   const products = fider.session.tenant.products ?? []
 
   const pathname = typeof window !== "undefined" && window.location ? window.location.pathname : "/"
-  const match = /^\/p\/([^/]+)/.exec(pathname)
-  const current = match ? products.find((p) => p.slug === match[1]) : undefined
+  const search = typeof window !== "undefined" && window.location ? window.location.search : ""
+  const pathMatch = /^\/p\/([^/]+)/.exec(pathname)
+  const queryMatch = /[?&]product=([^&]+)/.exec(search)
+  const currentSlug = pathMatch ? pathMatch[1] : queryMatch ? decodeURIComponent(queryMatch[1]) : undefined
+  const current = currentSlug ? products.find((p) => p.slug === currentSlug) : undefined
+
+  // Context-aware targets: switching products keeps you on the page you're on.
+  const onRoadmap = pathname.startsWith("/roadmap")
+  const onScorecard = pathname === "/scorecard" || pathname.startsWith("/scorecard?")
+  const allHref = onRoadmap ? "/roadmap" : onScorecard ? "/scorecard" : "/"
+  const productHref = (slug: string) => (onRoadmap ? `/roadmap?product=${slug}` : onScorecard ? `/scorecard?product=${slug}` : `/p/${slug}`)
 
   useEffect(() => {
     const close = () => setIsOpen(false)
@@ -48,12 +57,12 @@ export const ProductSwitcher = () => {
       </button>
       {isOpen && (
         <div className="c-prodsw__menu" role="menu">
-          <a href="/" aria-current={!current}>
+          <a href={allHref} aria-current={!current}>
             <span className="c-prodsw__all" />
             All products
           </a>
           {products.map((p) => (
-            <a key={p.id} href={`/p/${p.slug}`} aria-current={current?.id === p.id}>
+            <a key={p.id} href={productHref(p.slug)} aria-current={current?.id === p.id}>
               <span className="c-prodsw__dot" style={{ background: p.color || "var(--colors-primary-base)" }} />
               {p.name}
             </a>

@@ -135,6 +135,20 @@ func updateProduct(ctx context.Context, c *cmd.UpdateProduct) error {
 	})
 }
 
+func setPostProduct(ctx context.Context, c *cmd.SetPostProduct) error {
+	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
+		var productID interface{}
+		if c.ProductID > 0 {
+			productID = c.ProductID
+		}
+		_, err := trx.Execute("UPDATE posts SET product_id = $1 WHERE id = $2 AND tenant_id = $3", productID, c.Post.ID, tenant.ID)
+		if err != nil {
+			return errors.Wrap(err, "failed to set product for post %d", c.Post.ID)
+		}
+		return nil
+	})
+}
+
 func deleteProduct(ctx context.Context, c *cmd.DeleteProduct) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
 		// posts fall back to General via ON DELETE SET NULL

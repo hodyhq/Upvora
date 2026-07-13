@@ -339,6 +339,41 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
             {!editMode && (
               <div className="p-show-post__meta">
                 <PostMetaInfo post={post} locale={fider.currentLocale} />
+                {(fider.session.tenant.products?.length ?? 0) > 0 &&
+                  (fider.session.isAuthenticated && fider.session.user.isCollaborator ? (
+                    <select
+                      className="p-show-post__productsel"
+                      value={post.product?.id ?? 0}
+                      onChange={async (e) => {
+                        const productId = parseInt(e.target.value, 10) || 0
+                        const result = await actions.setPostProduct(post.number, productId)
+                        if (result.ok) {
+                          const pr = (fider.session.tenant.products ?? []).find((p) => p.id === productId)
+                          setPost({ ...post, product: pr ? { id: pr.id, name: pr.name, slug: pr.slug, color: pr.color } : undefined })
+                        } else {
+                          notify.error("Could not change the product. Please try again.")
+                        }
+                      }}
+                    >
+                      <option value={0}>General</option>
+                      {(fider.session.tenant.products ?? []).map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    post.product && (
+                      <a
+                        href={`/p/${post.product.slug}`}
+                        className="c-post__prodchip p-show-post__prodchip"
+                        style={{ "--pc": post.product.color || "var(--colors-primary-base)" } as React.CSSProperties}
+                      >
+                        <i />
+                        {post.product.name}
+                      </a>
+                    )
+                  ))}
               </div>
             )}
           </VStack>

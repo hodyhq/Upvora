@@ -17,6 +17,7 @@ interface ScorecardRecord {
   postSlug?: string
   postVotes?: number
   submittedBy?: string
+  productId?: number
 }
 
 interface ScorecardPageProps {
@@ -43,6 +44,22 @@ const Scorecard: React.FC<ScorecardPageProps> = (props) => {
   const featureOff = !Fider.session.tenant.isScorecardEnabled
   const [tab, setTab] = useState<"all" | Bucket>("all")
   const [filter, setFilter] = useState("")
+  const initialProduct = (() => {
+    if (typeof window === "undefined") return 0
+    const m = /[?&]product=([^&]+)/.exec(window.location.search)
+    if (!m) return 0
+    const slug = decodeURIComponent(m[1])
+    return (Fider.session.tenant.products ?? []).find((p) => p.slug === slug)?.id ?? 0
+  })()
+  const [productFilter, setProductFilter] = useState(initialProduct)
+
+  const changeProductFilter = (id: number) => {
+    setProductFilter(id)
+    if (typeof window !== "undefined" && window.history) {
+      const slug = (Fider.session.tenant.products ?? []).find((p) => p.id === id)?.slug
+      window.history.replaceState(null, "", slug ? `/scorecard?product=${slug}` : "/scorecard")
+    }
+  }
 
   const fields = Fider.session.tenant.scorecardFields ?? []
   const statusField = fields.find((f) => f.groupKey === "header" && f.type === "choice" && f.isActive)
@@ -64,6 +81,7 @@ const Scorecard: React.FC<ScorecardPageProps> = (props) => {
   }
 
   const visible = cards.filter((c) => {
+    if (productFilter > 0 && c.productId !== productFilter) return false
     if (tab !== "all" && bucketOf(c) !== tab) return false
     if (filter !== "") {
       const q = filter.toLowerCase()
@@ -113,6 +131,16 @@ const Scorecard: React.FC<ScorecardPageProps> = (props) => {
               ))}
             </div>
             <div className="c-scorecard__toolbar-right">
+              {(Fider.session.tenant.products?.length ?? 0) > 0 && (
+                <select className="c-roadmap-toolbar__product" value={productFilter} onChange={(e) => changeProductFilter(parseInt(e.target.value, 10) || 0)}>
+                  <option value={0}>All products</option>
+                  {(Fider.session.tenant.products ?? []).map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              )}
               <input
                 type="search"
                 className="c-scorecard__search"

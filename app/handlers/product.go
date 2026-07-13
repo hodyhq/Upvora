@@ -52,6 +52,49 @@ func ManageProductsPage() web.HandlerFunc {
 	}
 }
 
+// SetPostProduct reassigns a post to a product (collaborators+; 0 = General).
+func SetPostProduct() web.HandlerFunc {
+	return func(c *web.Context) error {
+		if c.User() == nil || !c.User().IsCollaborator() {
+			return c.NotFound()
+		}
+		number, err := c.ParamAsInt("number")
+		if err != nil {
+			return c.NotFound()
+		}
+		input := new(struct {
+			ProductID int `json:"productId"`
+		})
+		if err := c.Bind(input); err != nil {
+			return c.Failure(err)
+		}
+		if input.ProductID > 0 {
+			products := &query.ListActiveProducts{}
+			if err := bus.Dispatch(c, products); err != nil {
+				return c.Failure(err)
+			}
+			found := false
+			for _, p := range products.Result {
+				if p.ID == input.ProductID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return c.BadRequest(web.Map{"message": "Pick a valid product."})
+			}
+		}
+		getPost := &query.GetPostByNumber{Number: number}
+		if err := bus.Dispatch(c, getPost); err != nil {
+			return c.Failure(err)
+		}
+		if err := bus.Dispatch(c, &cmd.SetPostProduct{Post: getPost.Result, ProductID: input.ProductID}); err != nil {
+			return c.Failure(err)
+		}
+		return c.Ok(web.Map{})
+	}
+}
+
 // ListProducts returns the full catalogue (admins see inactive too).
 func ListProducts() web.HandlerFunc {
 	return func(c *web.Context) error {

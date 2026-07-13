@@ -185,3 +185,7 @@ export const getInternalNote = async (postNumber: number): Promise<Result<Intern
 export const setInternalNote = async (postNumber: number, content: string): Promise<Result<InternalNote>> => {
   return http.put<InternalNote>(`/_api/posts/${postNumber}/internal-note`, { content })
 }
+
+export const setPostProduct = async (postNumber: number, productId: number): Promise<Result> => {
+  return http.put(`/_api/posts/${postNumber}/product`, { productId })
+}

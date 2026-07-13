@@ -428,3 +428,44 @@
     }
   }
 }
+
+/* product on the post byline: chip for visitors, select for collaborators */
+.p-show-post__productsel {
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--colors-gray-800);
+  background-color: color-mix(in srgb, var(--colors-gray-900) 4%, transparent);
+  border: 1px solid var(--colors-gray-300);
+  border-radius: 8px;
+  padding: 3px 8px;
+  margin-left: spacing(2);
+  outline: none;
+  cursor: pointer;
+
+  &:focus {
+    border-color: var(--colors-primary-base);
+  }
+}
+
+.p-show-post__prodchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 650;
+  padding: 3px 9px;
+  border-radius: 7px;
+  margin-left: spacing(2);
+  white-space: nowrap;
+  color: var(--pc);
+  background: color-mix(in srgb, var(--pc) 13%, transparent);
+  text-decoration: none;
+
+  i {
+    width: 7px;
+    height: 7px;
+    border-radius: 2.5px;
+    background: var(--pc);
+  }
+}

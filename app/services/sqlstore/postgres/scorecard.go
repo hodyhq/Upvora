@@ -444,7 +444,7 @@ func listScorecardsForTenant(ctx context.Context, q *query.ListScorecardsForTena
 		// they render current post data on every load, never a stored copy.
 		err := trx.Select(&rows, `
 			SELECT s.id, s.tenant_id, s.post_id, s.title, s.values::text AS values, s.created_at, s.updated_at,
-			       p.number AS post_number, p.slug AS post_slug, u.name AS submitted_by,
+			       p.number AS post_number, p.slug AS post_slug, p.product_id, u.name AS submitted_by,
 			       COALESCE((SELECT COUNT(*) FROM post_votes v WHERE v.post_id = p.id AND v.tenant_id = s.tenant_id), 0) AS post_votes
 			FROM scorecards s
 			LEFT JOIN posts p ON p.id = s.post_id AND p.tenant_id = s.tenant_id

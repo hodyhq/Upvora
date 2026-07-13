@@ -21,6 +21,12 @@ type UpdateProduct struct {
 	IsActive    bool
 }
 
+// SetPostProduct reassigns a post to a product (0 = General/unassigned).
+type SetPostProduct struct {
+	Post      *entity.Post
+	ProductID int
+}
+
 // DeleteProduct removes the product; its posts fall back to General via the
 // ON DELETE SET NULL foreign key.
 type DeleteProduct struct {

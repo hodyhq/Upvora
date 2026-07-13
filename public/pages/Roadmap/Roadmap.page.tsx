@@ -209,7 +209,22 @@ const RoadmapBoard = (props: RoadmapPageProps) => {
   const [columns, setColumns] = useState<ColumnState[]>((props.columns || []).map((c) => ({ status: c.status, posts: c.posts, limit: ROADMAP_DEFAULT_LIMIT })))
   const tags = props.tags || []
   const [query, setQuery] = useState("")
-  const [productFilter, setProductFilter] = useState(0)
+  const initialProductFilter = (() => {
+    if (typeof window === "undefined") return 0
+    const m = /[?&]product=([^&]+)/.exec(window.location.search)
+    if (!m) return 0
+    const slug = decodeURIComponent(m[1])
+    return (Fider.session.tenant.products ?? []).find((p) => p.slug === slug)?.id ?? 0
+  })()
+  const [productFilter, setProductFilter] = useState(initialProductFilter)
+
+  const changeProductFilter = (id: number) => {
+    setProductFilter(id)
+    if (typeof window !== "undefined" && window.history) {
+      const slug = (Fider.session.tenant.products ?? []).find((p) => p.id === id)?.slug
+      window.history.replaceState(null, "", slug ? `/roadmap?product=${slug}` : "/roadmap")
+    }
+  }
   const [tagFilter, setTagFilter] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState<{ [slug: string]: boolean }>({})
   const canDrag = Fider.session.isAuthenticated && Fider.session.user.isCollaborator
@@ -315,7 +330,7 @@ const RoadmapBoard = (props: RoadmapPageProps) => {
         <VStack spacing={4}>
           <div className="c-roadmap-toolbar">
             {(Fider.session.tenant.products?.length ?? 0) > 0 && (
-              <select className="c-roadmap-toolbar__product" value={productFilter} onChange={(e) => setProductFilter(parseInt(e.target.value, 10) || 0)}>
+              <select className="c-roadmap-toolbar__product" value={productFilter} onChange={(e) => changeProductFilter(parseInt(e.target.value, 10) || 0)}>
                 <option value={0}>All products</option>
                 {(Fider.session.tenant.products ?? []).map((p) => (
                   <option key={p.id} value={p.id}>
