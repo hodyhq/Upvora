@@ -3,6 +3,7 @@ import { Button, Form } from "@fider/components"
 import { HStack, VStack } from "@fider/components/layout"
 import { actions, notify, Fider, Failure } from "@fider/services"
 import { AdminBasePage } from "../components/AdminBasePage"
+import { ColorInput } from "../components/ColorInput"
 
 const ACCENT_SURFACES: { key: string; label: string; hint: string }[] = [
   { key: "buttons", label: "Buttons & CTA", hint: "Primary buttons, Share an Idea" },
@@ -89,17 +90,7 @@ export default class ManageThemePage extends AdminBasePage<any, ThemeState> {
               >
                 Custom
               </Button>
-              {this.state.primaryMode === "custom" && (
-                <>
-                  <input
-                    type="color"
-                    value={this.state.primary}
-                    onChange={(e) => this.setState({ primary: e.target.value })}
-                    style={{ width: 36, height: 32, border: 0, background: "none", cursor: "pointer" }}
-                  />
-                  <code>{this.state.primary}</code>
-                </>
-              )}
+              {this.state.primaryMode === "custom" && <ColorInput value={this.state.primary} onChange={(primary) => this.setState({ primary })} />}
             </HStack>
             <p className="text-muted mt-1">Light and dark shades are derived automatically for both appearances.</p>
           </div>
@@ -136,14 +127,7 @@ export default class ManageThemePage extends AdminBasePage<any, ThemeState> {
                     <Button variant={value !== "" ? "primary" : "tertiary"} size="small" onClick={() => this.setAccent(surface.key, value || "#3B82F6")}>
                       Custom
                     </Button>
-                    {value !== "" && (
-                      <input
-                        type="color"
-                        value={value}
-                        onChange={(e) => this.setAccent(surface.key, e.target.value)}
-                        style={{ width: 32, height: 28, border: 0, background: "none", cursor: "pointer" }}
-                      />
-                    )}
+                    {value !== "" && <ColorInput value={value} onChange={(hex) => this.setAccent(surface.key, hex)} />}
                     <span className="text-muted" style={{ fontSize: 12 }}>
                       {surface.hint}
                     </span>

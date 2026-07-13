@@ -6,6 +6,7 @@ import { HStack, VStack } from "@fider/components/layout"
 import { Product } from "@fider/models"
 import { actions, Failure, Fider } from "@fider/services"
 import { AdminBasePage } from "../components/AdminBasePage"
+import { ColorInput } from "../components/ColorInput"
 
 interface ManageProductsPageProps {
   products: Product[]
@@ -305,12 +306,7 @@ export default class ManageProductsPage extends AdminBasePage<ManageProductsPage
                     Custom
                   </Button>
                   {this.state.draftColorMode === "custom" && (
-                    <input
-                      type="color"
-                      value={this.state.draftColor}
-                      onChange={(e) => this.setState({ draftColor: e.target.value })}
-                      style={{ width: 36, height: 32, border: 0, background: "none", cursor: "pointer" }}
-                    />
+                    <ColorInput value={this.state.draftColor} onChange={(draftColor) => this.setState({ draftColor })} />
                   )}
                 </HStack>
               </div>
