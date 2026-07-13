@@ -497,7 +497,7 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
           </div>
 
           {post && (
-            <div className="mb-4">
+            <div className="c-scorecard__notes-wrap mb-4">
               <InternalNotesPanel postNumber={post.number} initialNote={props.internalNote} />
             </div>
           )}

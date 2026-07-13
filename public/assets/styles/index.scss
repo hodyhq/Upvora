@@ -19,5 +19,5 @@ body {
   --brand-glow: color-mix(in srgb, var(--colors-primary-base) 32%, transparent);
 }
 
-// HCM brand overrides — keep last so they win the cascade.
+// Fork additions — keep last so they win the cascade.
 @import "site-banner.scss";
