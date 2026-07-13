@@ -45,19 +45,22 @@ const Scorecard: React.FC<ScorecardPageProps> = (props) => {
   const [tab, setTab] = useState<"all" | Bucket>("all")
   const [filter, setFilter] = useState("")
   const initialProduct = (() => {
-    if (typeof window === "undefined") return 0
-    const m = /[?&]product=([^&]+)/.exec(window.location.search)
-    if (!m) return 0
-    const slug = decodeURIComponent(m[1])
-    return (Fider.session.tenant.products ?? []).find((p) => p.slug === slug)?.id ?? 0
+    if (typeof window === "undefined") return [] as number[]
+    const all = Fider.session.tenant.products ?? []
+    const single = /[?&]product=([^&]+)/.exec(window.location.search)
+    const multi = /[?&]products=([^&]+)/.exec(window.location.search)
+    const slugs = multi ? decodeURIComponent(multi[1]).split(",") : single ? [decodeURIComponent(single[1])] : []
+    return slugs.map((slug) => all.find((p) => p.slug === slug)?.id ?? 0).filter((id) => id > 0)
   })()
-  const [productFilter, setProductFilter] = useState(initialProduct)
+  const [productFilter, setProductFilter] = useState<number[]>(initialProduct)
 
-  const changeProductFilter = (id: number) => {
-    setProductFilter(id)
+  const toggleProductFilter = (id: number) => {
+    const next = productFilter.includes(id) ? productFilter.filter((x) => x !== id) : [...productFilter, id]
+    setProductFilter(next)
     if (typeof window !== "undefined" && window.history) {
-      const slug = (Fider.session.tenant.products ?? []).find((p) => p.id === id)?.slug
-      window.history.replaceState(null, "", slug ? `/scorecard?product=${slug}` : "/scorecard")
+      const all = Fider.session.tenant.products ?? []
+      const slugs = next.map((x) => all.find((p) => p.id === x)?.slug).filter(Boolean)
+      window.history.replaceState(null, "", slugs.length ? `/scorecard?products=${slugs.join(",")}` : "/scorecard")
     }
   }
 
@@ -81,7 +84,7 @@ const Scorecard: React.FC<ScorecardPageProps> = (props) => {
   }
 
   const visible = cards.filter((c) => {
-    if (productFilter > 0 && c.productId !== productFilter) return false
+    if (productFilter.length > 0 && !productFilter.includes(c.productId ?? -1)) return false
     if (tab !== "all" && bucketOf(c) !== tab) return false
     if (filter !== "") {
       const q = filter.toLowerCase()
@@ -132,14 +135,21 @@ const Scorecard: React.FC<ScorecardPageProps> = (props) => {
             </div>
             <div className="c-scorecard__toolbar-right">
               {(Fider.session.tenant.products?.length ?? 0) > 0 && (
-                <select className="c-roadmap-toolbar__product" value={productFilter} onChange={(e) => changeProductFilter(parseInt(e.target.value, 10) || 0)}>
-                  <option value={0}>All products</option>
+                <div className="c-prodfilter">
                   {(Fider.session.tenant.products ?? []).map((p) => (
-                    <option key={p.id} value={p.id}>
+                    <button
+                      key={p.id}
+                      type="button"
+                      className="c-prodchip c-prodchip--toggle"
+                      aria-pressed={productFilter.includes(p.id)}
+                      style={{ "--pc": p.color || "var(--colors-primary-base)" } as React.CSSProperties}
+                      onClick={() => toggleProductFilter(p.id)}
+                    >
+                      <i />
                       {p.name}
-                    </option>
+                    </button>
                   ))}
-                </select>
+                </div>
               )}
               <input
                 type="search"

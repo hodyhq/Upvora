@@ -174,6 +174,7 @@ What can we do better? This is the place for you to vote, discuss and share idea
                 countPerStatus={props.countPerStatus}
                 onPostClick={handlePostClick}
                 product={props.product}
+                countPerProduct={props.countPerProduct}
               />
             )}
           </div>

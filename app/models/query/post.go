@@ -44,7 +44,7 @@ type SearchPosts struct {
 	NoTagsOnly       bool
 	MyPostsOnly      bool
 	ModerationFilter string // "pending", "approved", or empty (all)
-	ProductID        int    // 0 = all products
+	ProductIDs       []int  // empty = all products
 
 	Result []*entity.Post
 }

@@ -493,8 +493,16 @@ func searchPosts(ctx context.Context, q *query.SearchPosts) error {
 			if q.MyPostsOnly && user != nil {
 				condition += " AND user_id = " + strconv.Itoa(user.ID)
 			}
-			if q.ProductID > 0 {
-				condition += " AND product_id = " + strconv.Itoa(q.ProductID)
+			if len(q.ProductIDs) > 0 {
+				ids := make([]string, 0, len(q.ProductIDs))
+				for _, id := range q.ProductIDs {
+					if id > 0 {
+						ids = append(ids, strconv.Itoa(id))
+					}
+				}
+				if len(ids) > 0 {
+					condition += " AND product_id IN (" + strings.Join(ids, ",") + ")"
+				}
 			}
 
 			sql := fmt.Sprintf(`
@@ -518,8 +526,16 @@ func searchPosts(ctx context.Context, q *query.SearchPosts) error {
 			if q.MyPostsOnly && user != nil {
 				condition += " AND user_id = " + strconv.Itoa(user.ID)
 			}
-			if q.ProductID > 0 {
-				condition += " AND product_id = " + strconv.Itoa(q.ProductID)
+			if len(q.ProductIDs) > 0 {
+				ids := make([]string, 0, len(q.ProductIDs))
+				for _, id := range q.ProductIDs {
+					if id > 0 {
+						ids = append(ids, strconv.Itoa(id))
+					}
+				}
+				if len(ids) > 0 {
+					condition += " AND product_id IN (" + strings.Join(ids, ",") + ")"
+				}
 			}
 
 			sql := fmt.Sprintf(`

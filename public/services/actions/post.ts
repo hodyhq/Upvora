@@ -24,6 +24,7 @@ export interface SearchPostsParams {
   statuses?: string[]
   moderation?: string
   product?: number
+  products?: number[]
 }
 
 export const searchPosts = async (params: SearchPostsParams): Promise<Result<Post[]>> => {
@@ -35,6 +36,7 @@ export const searchPosts = async (params: SearchPostsParams): Promise<Result<Pos
     limit: params.limit,
     moderation: params.moderation,
     product: params.product,
+    products: params.products?.map(String),
   })
   if (params.myVotes) {
     qsParams += `&myvotes=true`

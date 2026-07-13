@@ -18,6 +18,7 @@ interface PostsContainerProps {
   posts: Post[]
   tags: Tag[]
   countPerStatus: { [key: string]: number }
+  countPerProduct?: { [id: string]: number }
   onPostClick?: (postNumber: number, slug: string) => void
   product?: Product
 }
@@ -34,6 +35,7 @@ interface PostsContainerState {
 export interface FilterState {
   tags: string[]
   statuses: string[]
+  products: number[]
   myVotes: boolean
   myPosts: boolean
   noTags: boolean
@@ -53,6 +55,10 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
       filterState: {
         tags: querystring.getArray("tags"),
         statuses: querystring.getArray("statuses"),
+        products: querystring
+          .getArray("products")
+          .map((v) => parseInt(v, 10))
+          .filter((n) => n > 0),
         myVotes: querystring.get("myvotes") === "true",
         myPosts: querystring.get("myposts") === "true",
         noTags: querystring.get("notags") === "true",
@@ -68,6 +74,7 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
         querystring.stringify({
           statuses: this.state.filterState.statuses,
           tags: this.state.filterState.tags,
+          products: this.state.filterState.products.map(String),
           myvotes: this.state.filterState.myVotes ? "true" : undefined,
           myposts: this.state.filterState.myPosts ? "true" : undefined,
           notags: this.state.filterState.noTags ? "true" : undefined,
@@ -86,6 +93,7 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
         this.state.filterState.myVotes,
         this.state.filterState.myPosts,
         this.state.filterState.noTags,
+        this.state.filterState.products,
         reset
       )
     })
@@ -101,6 +109,7 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
     myVotes: boolean,
     myPosts: boolean,
     noTags: boolean,
+    products: number[],
     reset: boolean
   ) {
     window.clearTimeout(this.timer)
@@ -117,7 +126,19 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
       }
 
       actions
-        .searchPosts({ query, view: view, limit, tags, statuses: actualStatuses, myVotes, myPosts, noTags, moderation, product: this.props.product?.id })
+        .searchPosts({
+          query,
+          view: view,
+          limit,
+          tags,
+          statuses: actualStatuses,
+          myVotes,
+          myPosts,
+          noTags,
+          moderation,
+          product: this.props.product?.id,
+          products,
+        })
         .then((response) => {
           if (response.ok && this.state.loading) {
             this.setState({ loading: false, posts: response.data })
@@ -190,6 +211,8 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
               activeFilter={this.state.filterState}
               filtersChanged={this.handleFilterChanged}
               countPerStatus={this.props.countPerStatus}
+              countPerProduct={this.props.countPerProduct}
+              hideProducts={!!this.props.product}
             />
             {!this.state.query && <PostsSort onChange={this.handleSortChanged} value={this.state.view} />}
           </div>

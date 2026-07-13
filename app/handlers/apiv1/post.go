@@ -1,6 +1,7 @@
 package apiv1
 
 import (
+	"strconv"
 	"fmt"
 	"strings"
 
@@ -61,8 +62,13 @@ func SearchPosts() web.HandlerFunc {
 			Tags:             c.QueryParamAsArray("tags"),
 			ModerationFilter: c.QueryParam("moderation"),
 		}
-		if productID, err := c.QueryParamAsInt("product"); err == nil {
-			searchPosts.ProductID = productID
+		if productID, err := c.QueryParamAsInt("product"); err == nil && productID > 0 {
+			searchPosts.ProductIDs = append(searchPosts.ProductIDs, productID)
+		}
+		for _, raw := range c.QueryParamAsArray("products") {
+			if id, err := strconv.Atoi(raw); err == nil && id > 0 {
+				searchPosts.ProductIDs = append(searchPosts.ProductIDs, id)
+			}
 		}
 		if myVotesOnly, err := c.QueryParamAsBool("myvotes"); err == nil {
 			searchPosts.MyVotesOnly = myVotesOnly

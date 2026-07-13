@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"strconv"
 	"fmt"
 	"net/http"
 
@@ -70,8 +71,14 @@ func renderBoard(c *web.Context, product *entity.Product) error {
 			_ = bus.Dispatch(c, countPerProduct)
 		}
 		if product != nil {
-			searchPosts.ProductID = product.ID
+			searchPosts.ProductIDs = []int{product.ID}
 			countPerStatus.ProductID = product.ID
+		} else {
+			for _, raw := range c.QueryParamAsArray("products") {
+				if id, err := strconv.Atoi(raw); err == nil && id > 0 {
+					searchPosts.ProductIDs = append(searchPosts.ProductIDs, id)
+				}
+			}
 		}
 
 		if err := bus.Dispatch(c, searchPosts, getAllTags, countPerStatus); err != nil {

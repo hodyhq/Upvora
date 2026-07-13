@@ -9,7 +9,7 @@ import { FilterState } from "./PostsContainer"
 
 import "./PostFilter.scss"
 
-type FilterType = "tag" | "status" | "myVotes" | "noTags" | "myPosts"
+type FilterType = "tag" | "status" | "product" | "myVotes" | "noTags" | "myPosts"
 
 interface OptionItem {
   value: string | boolean
@@ -21,6 +21,8 @@ interface OptionItem {
 interface PostFilterProps {
   activeFilter: FilterState
   countPerStatus: { [key: string]: number }
+  countPerProduct?: { [id: string]: number }
+  hideProducts?: boolean
   filtersChanged: (filter: FilterState) => void
   tags: Tag[]
 }
@@ -38,6 +40,9 @@ const FilterStateToFilterItems = (filterState: FilterState): FilterItem[] => {
   filterState.tags.forEach((t) => {
     filterItems.push({ type: "tag", value: t })
   })
+  filterState.products.forEach((p) => {
+    filterItems.push({ type: "product", value: String(p) })
+  })
   if (filterState.myVotes) {
     filterItems.push({ type: "myVotes", value: true })
   }
@@ -51,12 +56,14 @@ const FilterStateToFilterItems = (filterState: FilterState): FilterItem[] => {
 }
 
 const FilterItemsToFilterState = (filterItems: FilterItem[]): FilterState => {
-  const filterState: FilterState = { tags: [], statuses: [], myVotes: false, noTags: false, myPosts: false }
+  const filterState: FilterState = { tags: [], statuses: [], products: [], myVotes: false, noTags: false, myPosts: false }
   filterItems.forEach((i) => {
     if (i.type === "tag") {
       filterState.tags.push(i.value as string)
     } else if (i.type === "status") {
       filterState.statuses.push(i.value as string)
+    } else if (i.type === "product") {
+      filterState.products.push(parseInt(i.value as string, 10))
     } else if (i.type === "myVotes") {
       filterState.myVotes = true
     } else if (i.type === "noTags") {
@@ -126,6 +133,18 @@ export const PostFilter = (props: PostFilterProps) => {
       label: "Pending",
       value: "pending",
       type: "status",
+    })
+  }
+
+  const tenantProducts = fider.session.tenant.products ?? []
+  if (tenantProducts.length > 0 && !props.hideProducts) {
+    tenantProducts.forEach((p) => {
+      options.push({
+        label: p.name,
+        value: String(p.id),
+        count: props.countPerProduct?.[String(p.id)] || 0,
+        type: "product",
+      })
     })
   }
 
@@ -199,6 +218,8 @@ export const PostFilter = (props: PostFilterProps) => {
         <FilterGroupSection title={i18n._({ id: "home.postfilter.label.myactivity", message: "My activity" })} type={["myVotes", "myPosts"]} />
 
         <FilterGroupSection title={i18n._({ id: "home.postfilter.label.status", message: "Status" })} type={["status"]} />
+
+        <FilterGroupSection title={i18n._({ id: "home.postfilter.label.products", message: "Products" })} type={["product"]} />
 
         <FilterGroupSection title={i18n._({ id: "label.tags", message: "Tags" })} type={["noTags", "tag"]} />
       </Dropdown>
