@@ -124,11 +124,11 @@ export default class ManageThemePage extends AdminBasePage<any, ThemeState> {
           <div>
             <h2>Accents per function</h2>
             <p>Leave everything on Brand, or point a surface at its own color.</p>
-            <VStack spacing={3} className="mt-2">
+            <VStack spacing={2} className="mt-2">
               {ACCENT_SURFACES.map((surface) => {
                 const value = this.state.accents[surface.key] ?? ""
                 return (
-                  <HStack key={surface.key} spacing={3} align="center">
+                  <HStack key={surface.key} spacing={2} align="center">
                     <span style={{ minWidth: 140, fontWeight: 650, fontSize: 13 }}>{surface.label}</span>
                     <Button variant={value === "" ? "primary" : "tertiary"} size="small" onClick={() => this.setAccent(surface.key, "")}>
                       Brand (default)
