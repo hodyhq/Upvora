@@ -350,6 +350,8 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
                         if (result.ok) {
                           const pr = (fider.session.tenant.products ?? []).find((p) => p.id === productId)
                           setPost({ ...post, product: pr ? { id: pr.id, name: pr.name, slug: pr.slug, color: pr.color } : undefined })
+                          // board/roadmap behind the overlay refetch this row - no stale chip on close
+                          props.onDataChanged?.()
                         } else {
                           notify.error("Could not change the product. Please try again.")
                         }
