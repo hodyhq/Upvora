@@ -94,7 +94,9 @@
     &__welcome-body {
       line-height: 1.6;
       color: var(--colors-gray-700);
-      max-width: 60ch;
+      // Long, structured welcome messages (lists, sections) need room —
+      // 60ch squeezed them into a narrow column with dead space beside it.
+      max-width: 90ch;
     }
 
     &__add-idea-btn {

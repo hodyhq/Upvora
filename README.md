@@ -106,7 +106,7 @@ services:
     volumes: [db-data:/var/lib/postgresql/data]
 
   app:
-    image: your-registry.example.com/upvora:latest   # build from this repo (below)
+    image: ghcr.io/hodyhq/upvora:latest   # or pin a release tag, e.g. :v0.36.1.3.1
     depends_on: [db]
     ports: ["3000:3000"]
     environment:
@@ -125,9 +125,10 @@ volumes:
 ```
 
 ```bash
-docker build -t your-registry.example.com/upvora:latest .
 docker compose up -d
 ```
+
+(Prefer building from source? `docker build -t upvora .` in this repo produces the same image.)
 
 Migrations run on start; the app serves on port `3000`. Put a TLS-terminating proxy in front (Traefik, Caddy, nginx, or a Cloudflare tunnel) and open `BASE_URL`. Tag-on-post and Prometheus metrics (`:4000`, keep it internal) ship enabled; social sign-in is two env vars away (`OAUTH_GOOGLE_*`, `OAUTH_GITHUB_*`).
 
