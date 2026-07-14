@@ -45,31 +45,4 @@
     font-variant-numeric: tabular-nums;
   }
 
-  &__hody {
-    margin-top: spacing(1);
-    opacity: 0.75;
-    transition: opacity 0.15s ease;
-
-    &:hover {
-      opacity: 1;
-    }
-  }
-
-  &__hody-logo {
-    width: 56px;
-    display: block;
-
-    &--dark {
-      display: none;
-    }
-  }
-
-  @include dark-mode {
-    .c-powered__hody-logo--light {
-      display: none;
-    }
-    .c-powered__hody-logo--dark {
-      display: block;
-    }
-  }
 }
