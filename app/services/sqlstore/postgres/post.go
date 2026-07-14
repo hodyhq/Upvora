@@ -217,10 +217,10 @@ func markPostAsDuplicate(ctx context.Context, c *cmd.MarkPostAsDuplicate) error 
 		// 1) The duplicate's description becomes a comment on the primary,
 		//    authored by the duplicate's reporter, linking back to it.
 		_, err = trx.Execute(`
-		INSERT INTO comments (tenant_id, post_id, content, user_id, created_at)
+		INSERT INTO comments (tenant_id, post_id, content, user_id, created_at, is_approved)
 		SELECT p.tenant_id, $3,
 		       'Merged from duplicate [#' || p.number || ': ' || p.title || '](/posts/' || p.number || '/' || p.slug || ')' || E'\n\n' || p.description,
-		       p.user_id, NOW()
+		       p.user_id, NOW(), TRUE
 		FROM posts p
 		WHERE p.id = $1 AND p.tenant_id = $2 AND COALESCE(p.description, '') <> ''
 		`, c.Post.ID, tenant.ID, c.Original.ID)
@@ -231,10 +231,10 @@ func markPostAsDuplicate(ctx context.Context, c *cmd.MarkPostAsDuplicate) error 
 		// 2) Comments (public and internal) copy over with their original
 		//    authors, timestamps and visibility, marked with their origin.
 		_, err = trx.Execute(`
-		INSERT INTO comments (tenant_id, post_id, content, user_id, created_at, is_internal)
+		INSERT INTO comments (tenant_id, post_id, content, user_id, created_at, is_internal, is_approved)
 		SELECT cm.tenant_id, $3,
 		       cm.content || E'\n\n' || '*(from duplicate #' || p.number || ')*',
-		       cm.user_id, cm.created_at, cm.is_internal
+		       cm.user_id, cm.created_at, cm.is_internal, cm.is_approved
 		FROM comments cm
 		JOIN posts p ON p.id = cm.post_id AND p.tenant_id = cm.tenant_id
 		WHERE cm.post_id = $1 AND cm.tenant_id = $2 AND cm.deleted_at IS NULL
