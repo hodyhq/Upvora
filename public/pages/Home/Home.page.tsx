@@ -151,7 +151,6 @@ What can we do better? This is the place for you to vote, discuss and share idea
           {...(isShareFeedbackOpen && !fider.isReadOnly && { inert: "true" })}
         >
           <div className="p-home__head">
-            <span className="p-home__eyebrow">{props.product ? props.product.name : <Trans id="home.head.eyebrow">Feedback</Trans>}</span>
             <h1 className="p-home__welcome-title mb-3">
               {props.product ? (
                 <>What should we build next for {props.product.name}?</>
