@@ -326,9 +326,6 @@ const RoadmapBoard = (props: RoadmapPageProps) => {
     <div id="p-roadmap" className="page container">
       <div style={selectedPostId !== null ? { display: "none" } : undefined}>
         <div className="p-roadmap__head">
-          <span className="p-roadmap__eyebrow">
-            <Trans id="roadmap.head.eyebrow">Roadmap</Trans>
-          </span>
           <h1 className="p-roadmap__title">
             <Trans id="roadmap.head.title">Where things stand</Trans>
           </h1>
