@@ -211,6 +211,54 @@ func markPostAsDuplicate(ctx context.Context, c *cmd.MarkPostAsDuplicate) error 
 			}
 		}
 
+		// Content merge: the duplicate's story moves to the primary so nothing
+		// the team or reporter wrote is stranded behind a closed post.
+
+		// 1) The duplicate's description becomes a comment on the primary,
+		//    authored by the duplicate's reporter, linking back to it.
+		_, err = trx.Execute(`
+		INSERT INTO comments (tenant_id, post_id, content, user_id, created_at)
+		SELECT p.tenant_id, $3,
+		       'Merged from duplicate [#' || p.number || ': ' || p.title || '](/posts/' || p.number || '/' || p.slug || ')' || E'\n\n' || p.description,
+		       p.user_id, NOW()
+		FROM posts p
+		WHERE p.id = $1 AND p.tenant_id = $2 AND COALESCE(p.description, '') <> ''
+		`, c.Post.ID, tenant.ID, c.Original.ID)
+		if err != nil {
+			return errors.Wrap(err, "failed to merge duplicate description")
+		}
+
+		// 2) Comments (public and internal) copy over with their original
+		//    authors, timestamps and visibility, marked with their origin.
+		_, err = trx.Execute(`
+		INSERT INTO comments (tenant_id, post_id, content, user_id, created_at, is_internal)
+		SELECT cm.tenant_id, $3,
+		       cm.content || E'\n\n' || '*(from duplicate #' || p.number || ')*',
+		       cm.user_id, cm.created_at, cm.is_internal
+		FROM comments cm
+		JOIN posts p ON p.id = cm.post_id AND p.tenant_id = cm.tenant_id
+		WHERE cm.post_id = $1 AND cm.tenant_id = $2 AND cm.deleted_at IS NULL
+		`, c.Post.ID, tenant.ID, c.Original.ID)
+		if err != nil {
+			return errors.Wrap(err, "failed to merge duplicate comments")
+		}
+
+		// 3) The internal note appends to the primary's, marked as imported.
+		_, err = trx.Execute(`
+		INSERT INTO post_internal_notes (tenant_id, post_id, content, updated_by, updated_at)
+		SELECT n.tenant_id, $3,
+		       E'--- From duplicate #' || p.number || ' ---' || E'\n' || n.content,
+		       n.updated_by, NOW()
+		FROM post_internal_notes n
+		JOIN posts p ON p.id = n.post_id AND p.tenant_id = n.tenant_id
+		WHERE n.post_id = $1 AND n.tenant_id = $2 AND n.content <> ''
+		ON CONFLICT (tenant_id, post_id) DO UPDATE
+		SET content = post_internal_notes.content || E'\n\n' || EXCLUDED.content, updated_at = NOW()
+		`, c.Post.ID, tenant.ID, c.Original.ID)
+		if err != nil {
+			return errors.Wrap(err, "failed to merge duplicate internal note")
+		}
+
 		_, err = trx.Execute(`
 		UPDATE posts
 		SET response = '', original_id = $3, response_date = $4, response_user_id = $5, status_slug = 'duplicate'

@@ -1,6 +1,7 @@
 package postgres_test
 
 import (
+	"strings"
 	"os"
 	"testing"
 	"time"
@@ -600,6 +601,61 @@ func TestPostStorage_SetResponse_AsDuplicate(t *testing.T) {
 	Expect(getPost2.Result.Response.Original.Title).Equals(newPost1.Result.Title)
 	Expect(getPost2.Result.Response.Original.Slug).Equals(newPost1.Result.Slug)
 	Expect(getPost2.Result.Response.Original.StatusSlug).Equals(newPost1.Result.StatusSlug)
+}
+
+func TestPostStorage_SetResponse_AsDuplicate_MergesContent(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+
+	newPost1 := &cmd.AddNewPost{Title: "Primary post", Description: "primary description"}
+	Expect(bus.Dispatch(jonSnowCtx, newPost1)).IsNil()
+
+	newPost2 := &cmd.AddNewPost{Title: "Duplicate post", Description: "duplicate description"}
+	Expect(bus.Dispatch(aryaStarkCtx, newPost2)).IsNil()
+
+	Expect(bus.Dispatch(aryaStarkCtx, &cmd.AddNewComment{Post: newPost2.Result, Content: "a public comment"})).IsNil()
+	Expect(bus.Dispatch(jonSnowCtx, &cmd.AddNewComment{Post: newPost2.Result, Content: "a team-only comment", IsInternal: true})).IsNil()
+	Expect(bus.Dispatch(jonSnowCtx, &cmd.SetInternalNote{Post: newPost1.Result, Content: "primary note"})).IsNil()
+	Expect(bus.Dispatch(jonSnowCtx, &cmd.SetInternalNote{Post: newPost2.Result, Content: "duplicate note"})).IsNil()
+
+	Expect(bus.Dispatch(jonSnowCtx, &cmd.MarkPostAsDuplicate{Post: newPost2.Result, Original: newPost1.Result})).IsNil()
+
+	comments := &query.GetCommentsByPost{Post: newPost1.Result}
+	Expect(bus.Dispatch(jonSnowCtx, comments)).IsNil()
+	Expect(comments.Result).HasLen(3)
+
+	var descComment, publicCopy, internalCopy *entity.Comment
+	for _, cm := range comments.Result {
+		switch {
+		case strings.Contains(cm.Content, "Merged from duplicate"):
+			descComment = cm
+		case strings.Contains(cm.Content, "a public comment"):
+			publicCopy = cm
+		case strings.Contains(cm.Content, "a team-only comment"):
+			internalCopy = cm
+		}
+	}
+
+	Expect(descComment).IsNotNil()
+	Expect(strings.Contains(descComment.Content, "duplicate description")).IsTrue()
+	Expect(strings.Contains(descComment.Content, "/posts/")).IsTrue()
+	Expect(descComment.User.ID).Equals(aryaStark.ID)
+	Expect(descComment.IsInternal).IsFalse()
+
+	Expect(publicCopy).IsNotNil()
+	Expect(strings.Contains(publicCopy.Content, "(from duplicate #")).IsTrue()
+	Expect(publicCopy.User.ID).Equals(aryaStark.ID)
+	Expect(publicCopy.IsInternal).IsFalse()
+
+	Expect(internalCopy).IsNotNil()
+	Expect(internalCopy.User.ID).Equals(jonSnow.ID)
+	Expect(internalCopy.IsInternal).IsTrue()
+
+	note := &query.GetInternalNote{PostID: newPost1.Result.ID}
+	Expect(bus.Dispatch(jonSnowCtx, note)).IsNil()
+	Expect(strings.Contains(note.Result.Content, "primary note")).IsTrue()
+	Expect(strings.Contains(note.Result.Content, "From duplicate #")).IsTrue()
+	Expect(strings.Contains(note.Result.Content, "duplicate note")).IsTrue()
 }
 
 func TestPostStorage_SetResponse_AsDeleted(t *testing.T) {
