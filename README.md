@@ -92,7 +92,18 @@ Want the smallest tool with the largest community? Use Fider — it's great. Wan
 
 ## Getting started (self-hosted)
 
-One image, one Postgres:
+One image, one Postgres — and one-click updates included:
+
+```bash
+curl -LO https://raw.githubusercontent.com/hodyhq/Upvora/main/docker-compose.example.yml
+mv docker-compose.example.yml docker-compose.yml
+# edit BASE_URL, secrets and SMTP, then:
+docker compose up -d
+```
+
+[`docker-compose.example.yml`](docker-compose.example.yml) ships the app, Postgres, and the **updater sidecar** that powers the admin System panel's *Update now* button (the sidecar is self-configuring and the only container holding the Docker socket — remove it if you'd rather update by hand). Migrating from Fider? Keep your database and env values, swap the compose for this one, and the migrations upgrade your data on first boot.
+
+Or hand-rolled, without the updater:
 
 ```yaml
 # docker-compose.yml
@@ -132,7 +143,7 @@ docker compose up -d
 
 Migrations run on start; the app serves on port `3000`. Put a TLS-terminating proxy in front (Traefik, Caddy, nginx, or a Cloudflare tunnel) and open `BASE_URL`. Tag-on-post and Prometheus metrics (`:4000`, keep it internal) ship enabled; social sign-in is two env vars away (`OAUTH_GOOGLE_*`, `OAUTH_GITHUB_*`).
 
-**One-click updates:** add the updater sidecar from [`etc/updater/updater.sh`](etc/updater/updater.sh) (instructions in the file header) and the admin System panel gains an **Update now** button. The sidecar holds the Docker socket so the app container never has to — the app only writes an empty trigger file.
+**One-click updates:** included in [`docker-compose.example.yml`](docker-compose.example.yml). On an existing deployment, copy its `updater` service + `updater-shared` volume + the two `updater` lines on the app service into your compose (the System panel in the admin also shows these instructions when the sidecar is missing). The sidecar holds the Docker socket so the app container never has to — the app only writes an empty trigger file.
 
 ## Development
 

@@ -248,7 +248,7 @@ What can we do better? This is the place for you to vote, discuss and share idea
         </div>
         {selectedPostId !== null && (
           <div className="page container">
-            <Button onClick={handleCloseOverlay} variant="link">
+            <Button onClick={handleCloseOverlay} variant="link" className="mb-2">
               <HStack spacing={2}>
                 <Icon sprite={IconArrowLeft} />
                 <span className="text-body clickable text-blue-600 hover">

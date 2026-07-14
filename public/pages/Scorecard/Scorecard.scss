@@ -297,6 +297,11 @@
     gap: 18px;
     flex-wrap: wrap;
     margin: 2px 0 6px;
+    // Same card treatment as the idea box below it.
+    background: var(--colors-gray-100);
+    border: 1px solid var(--colors-gray-200);
+    border-radius: 10px;
+    padding: 10px 14px;
   }
 
   &__ring {
@@ -563,6 +568,14 @@
   // ─────────── field groups ───────────
   &__groups {
     padding: 6px 24px 24px;
+  }
+
+  // The notes panel sits outside the head — give it the same 24px insets so
+  // it lines up with the score strip and idea card instead of running
+  // edge-to-edge.
+  &__notes-wrap {
+    margin-left: 24px;
+    margin-right: 24px;
   }
 
   &__group {

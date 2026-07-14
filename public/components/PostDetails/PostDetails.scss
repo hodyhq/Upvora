@@ -369,9 +369,8 @@
   }
 }
 
-// single centered column at a comfortable reading measure (prototype width)
+// full container width, matching the roadmap and scorecard pages
 .p-show-post {
-  max-width: 960px;
   margin-inline: auto;
 }
 
@@ -468,5 +467,16 @@
     height: 7px;
     border-radius: 2.5px;
     background: var(--pc);
+  }
+}
+
+.p-show-post__vote-avatars--btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+
+  &:hover {
+    filter: brightness(1.12);
   }
 }

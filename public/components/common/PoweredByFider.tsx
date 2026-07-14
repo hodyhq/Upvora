@@ -35,10 +35,6 @@ export const PoweredByFider = (props: PoweredByFiderProps) => {
         </span>
       </a>
       {versionString && <span className="c-powered__version">{versionString}</span>}
-      <a rel="noopener" className="c-powered__hody" href="https://hody.dev" target="_blank" title="hody.dev">
-        <img className="c-powered__hody-logo c-powered__hody-logo--light" src="/static/assets/hody-logo.png" alt="Hody" />
-        <img className="c-powered__hody-logo c-powered__hody-logo--dark" src="/static/assets/hody-logo-white.png" alt="Hody" />
-      </a>
     </div>
   )
 }

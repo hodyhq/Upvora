@@ -9,6 +9,7 @@ import { i18n } from "@lingui/core"
 import IconRSS from "@fider/assets/images/heroicons-rss.svg"
 import IconPencil from "@fider/assets/images/heroicons-pencil-alt.svg"
 import IconChat from "@fider/assets/images/heroicons-chat-alt-2.svg"
+import { VotesModal } from "@fider/pages/ShowPost/components/VotesModal"
 
 import { ResponseDetails, Button, UserName, Moment, Markdown, Input, Form, Icon, Avatar, PoweredByFider, RSSModal, ResponseLozenge } from "@fider/components"
 import { CommentInput } from "@fider/pages/ShowPost/components/CommentInput"
@@ -83,6 +84,9 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
   const [loading, setLoading] = useState(!props.initialPost)
 
   const [editMode, setEditMode] = useState(false)
+  const [isVotesModalOpen, setIsVotesModalOpen] = useState(false)
+  // Same gate the old VotesPanel used: the voter list is a team view.
+  const canSeeVoters = Fider.session.isAuthenticated && Fider.session.user.isCollaborator
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isRSSModalOpen, setIsRSSModalOpen] = useState(false)
   const [showResponseModal, setShowResponseModal] = useState(false)
@@ -452,14 +456,28 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
           {!editMode && (
             <div className="p-show-post__vote-section">
               <VoteSection post={post} votes={post.votesCount} onDataChanged={props.onDataChanged} />
-              {votes.length > 0 && (
-                <div className="p-show-post__vote-avatars">
-                  {votes.slice(0, 5).map((v) => (
-                    <Avatar key={v.user.id} user={v.user} size="small" />
-                  ))}
-                  {votes.length > 5 && <span className="p-show-post__vote-more">+{votes.length - 5}</span>}
-                </div>
-              )}
+              {votes.length > 0 &&
+                (canSeeVoters ? (
+                  <button
+                    type="button"
+                    className="p-show-post__vote-avatars p-show-post__vote-avatars--btn"
+                    onClick={() => setIsVotesModalOpen(true)}
+                    title="See who voted"
+                  >
+                    {votes.slice(0, 5).map((v) => (
+                      <Avatar key={v.user.id} user={v.user} size="small" />
+                    ))}
+                    {votes.length > 5 && <span className="p-show-post__vote-more">+{votes.length - 5}</span>}
+                  </button>
+                ) : (
+                  <div className="p-show-post__vote-avatars">
+                    {votes.slice(0, 5).map((v) => (
+                      <Avatar key={v.user.id} user={v.user} size="small" />
+                    ))}
+                    {votes.length > 5 && <span className="p-show-post__vote-more">+{votes.length - 5}</span>}
+                  </div>
+                ))}
+              {canSeeVoters && <VotesModal isOpen={isVotesModalOpen} post={post} onClose={() => setIsVotesModalOpen(false)} />}
             </div>
           )}
 

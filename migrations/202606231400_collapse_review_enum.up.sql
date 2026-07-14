@@ -1,4 +1,4 @@
--- Collapse the HCM-only PostReview=7 legacy enum value. Any post that was
+-- Collapse the fork-only PostReview=7 legacy enum value. Any post that was
 -- previously responded as "review" gets its status_slug filled in (defensive,
 -- the dual-write should have already done this) and its int status reset to 0
 -- (PostOpen). Identity continues to live in posts.status_slug; the upcoming
