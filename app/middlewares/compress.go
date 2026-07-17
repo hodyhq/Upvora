@@ -42,6 +42,12 @@ func Compress() web.MiddlewareFunc {
 	}
 }
 
+// Unwrap exposes the underlying writer so http.NewResponseController can
+// reach the real connection (per-route deadline extension on AI routes).
+func (w *gzipResponseWriter) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
+}
+
 func (w *gzipResponseWriter) Header() http.Header {
 	return w.ResponseWriter.Header()
 }

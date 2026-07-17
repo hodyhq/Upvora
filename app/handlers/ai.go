@@ -12,6 +12,7 @@ import (
 	"github.com/getfider/fider/app/models/entity"
 	"github.com/getfider/fider/app/models/query"
 	"github.com/getfider/fider/app/pkg/bus"
+	"github.com/getfider/fider/app/pkg/log"
 	"github.com/getfider/fider/app/pkg/web"
 )
 
@@ -61,7 +62,9 @@ func aiRateAllow(userID int) bool {
 // WriteTimeout — LLM turns routinely take 10-60s, and without this the server
 // silently kills the socket right as the (successful) response is written.
 func extendWriteDeadline(c *web.Context) {
-	_ = http.NewResponseController(c.Response.Writer).SetWriteDeadline(time.Now().Add(2 * time.Minute))
+	if err := http.NewResponseController(c.Response.Writer).SetWriteDeadline(time.Now().Add(2 * time.Minute)); err != nil {
+		log.Warn(c, "could not extend AI write deadline: "+err.Error())
+	}
 }
 
 func resolveAgent(c *web.Context, productID int) (*entity.AIAgent, error) {
