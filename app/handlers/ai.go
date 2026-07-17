@@ -181,7 +181,7 @@ one line, under 90 characters, specific
 ===TAGS===
 ` + tagLine(tagNames) + `
 ===BRIEF===
-a complete markdown document with these sections: Problem; Who's affected & workflow today; Proposed behavior; Out of scope (v1); Owner & success; Data & dependencies; Risks & open questions; How this conversation went (2-3 sentences). Do not include any names, emails or a title header — those are added by the system.`
+a complete markdown document with these sections: Problem; Who's affected & workflow today; Proposed behavior; Out of scope (v1); Owner & success; Data & dependencies; Risks & open questions; How this conversation went (2-3 sentences). Base every statement on what the user actually said — anything not discussed goes under Risks & open questions as an open point, never as an invented decision. Do not include any names, emails or a title header — those are added by the system.`
 
 		// Providers like Anthropic reject histories that end with an assistant
 		// turn ("prefill"); close the conversation with a user message.
