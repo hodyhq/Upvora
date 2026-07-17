@@ -58,13 +58,27 @@
     border-radius: 12px;
     font-size: 13.5px;
     line-height: 1.5;
-    white-space: pre-wrap;
 
     &--agent {
       background-color: var(--colors-gray-100);
       border: 1px solid var(--colors-gray-200);
       border-bottom-left-radius: 4px;
       align-self: flex-start;
+
+      // rendered markdown inside the bubble
+      p,
+      ul,
+      ol {
+        margin: 0 0 8px;
+      }
+      ul,
+      ol {
+        padding-left: 18px;
+      }
+      > *:last-child,
+      p:last-child {
+        margin-bottom: 0;
+      }
     }
 
     &--user {
@@ -72,6 +86,7 @@
       border: 1px solid color-mix(in srgb, var(--colors-primary-base) 32%, transparent);
       border-bottom-right-radius: 4px;
       align-self: flex-end;
+      white-space: pre-wrap;
     }
   }
 

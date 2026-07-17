@@ -5,10 +5,11 @@ export interface AIFinalizeResponse {
   title: string
   description: string
   brief: string
+  tags: string[]
 }
 
-export const aiIdeate = async (productId: number, messages: AIMessage[]): Promise<Result<{ reply: string }>> => {
-  return http.post<{ reply: string }>(`/api/v1/ai/ideate`, { productId, messages })
+export const aiIdeate = async (productId: number, messages: AIMessage[]): Promise<Result<{ reply: string; ready: boolean }>> => {
+  return http.post<{ reply: string; ready: boolean }>(`/api/v1/ai/ideate`, { productId, messages })
 }
 
 export const aiFinalize = async (productId: number, messages: AIMessage[]): Promise<Result<AIFinalizeResponse>> => {

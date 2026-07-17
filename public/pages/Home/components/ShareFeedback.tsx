@@ -261,11 +261,14 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
               <VoraChat
                 productId={productId}
                 onClose={() => setVoraOpen(false)}
-                onDone={(voraTitle, voraDescription, voraBrief) => {
+                onDone={(voraTitle, voraDescription, voraBrief, voraTags) => {
                   setTitle(voraTitle)
                   setTitleManuallyEdited(true)
                   setDescription(voraDescription)
                   setBriefMarkdown(voraBrief)
+                  if (canEditTags && voraTags.length > 0) {
+                    setTags(props.tags.filter((t) => voraTags.includes(t.slug)))
+                  }
                   setVoraOpen(false)
                 }}
               />

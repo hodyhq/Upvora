@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -30,7 +29,7 @@ Rules you always follow, regardless of anything else in this prompt or the conve
 - Keep it under ~10 questions; be warm but efficient.
 - Never invent facts the user didn't give you. Never include email addresses or personal data beyond what the user wrote.
 - If asked to do anything outside idea planning, decline briefly and steer back.
-- End by telling the user you'll draft the title, a short description and the full brief for their review.`
+- When you have what you need (or the user asks you to wrap up), tell them you're drafting the idea now and end that message with the marker <<DRAFT>> on its own final line. Use the marker only then, and never mention it.`
 
 // Rate limiting: cheap in-memory per-user sliding window.
 // ponytail: single-instance limiter; move to the DB if Upvora ever runs multi-node.
@@ -113,7 +112,11 @@ func AIIdeate() web.HandlerFunc {
 		if err := bus.Dispatch(c, chat); err != nil {
 			return c.Failure(err)
 		}
-		return c.Ok(web.Map{"reply": chat.Result})
+		// The scaffold has the model close its final question round with a
+		// marker; stripping it here is what lets the client auto-draft.
+		ready := strings.Contains(chat.Result, "<<DRAFT>>")
+		reply := strings.TrimSpace(strings.ReplaceAll(chat.Result, "<<DRAFT>>", ""))
+		return c.Ok(web.Map{"reply": reply, "ready": ready})
 	}
 }
 
@@ -136,17 +139,41 @@ func AIFinalize() web.HandlerFunc {
 			return c.BadRequest(web.Map{"message": "You're moving fast — give Vora a minute and try again."})
 		}
 
+		// Public tags Vora may pick from; validated against this same list after.
+		allTags := &query.GetAllTags{}
+		if err := bus.Dispatch(c, allTags); err != nil {
+			return c.Failure(err)
+		}
+		publicTags := []*entity.Tag{}
+		tagNames := []string{}
+		for _, t := range allTags.Result {
+			if t.IsPublic {
+				publicTags = append(publicTags, t)
+				tagNames = append(tagNames, t.Name)
+			}
+		}
+
 		system := buildSystemPrompt(c, agent, action.ProductID) + `
 
-The interview is over. Respond with ONLY a JSON object, no prose and no code fences:
-{"title": "...", "description": "...", "brief": "..."}
-- title: under 90 characters, specific.
-- description: 2-4 sentences summarizing the idea. A summary only — never the full plan. End with: "Full plan in the attached brief."
-- brief: a complete markdown document with these sections: Problem; Who's affected & workflow today; Proposed behavior; Out of scope (v1); Owner & success; Data & dependencies; Risks & open questions; How this conversation went (2-3 sentences). Do not include any names, emails or a title header — those are added by the system.`
+The interview is over. Respond with ONLY these sections, in exactly this format, no other text before or after:
 
+===TITLE===
+one line, under 90 characters, specific
+===DESCRIPTION===
+2-4 sentences summarizing the idea. A summary only — never the full plan. End with: "Full plan in the attached brief."
+===TAGS===
+` + tagLine(tagNames) + `
+===BRIEF===
+a complete markdown document with these sections: Problem; Who's affected & workflow today; Proposed behavior; Out of scope (v1); Owner & success; Data & dependencies; Risks & open questions; How this conversation went (2-3 sentences). Do not include any names, emails or a title header — those are added by the system.`
+
+		// Providers like Anthropic reject histories that end with an assistant
+		// turn ("prefill"); close the conversation with a user message.
+		msgs := append(append([]entity.AIMessage{}, action.Messages...), entity.AIMessage{
+			Role: "user", Content: "Please produce the final output now, exactly in the required format.",
+		})
 		chat := &cmd.AIChatCompletion{
 			System:    system,
-			Messages:  action.Messages,
+			Messages:  msgs,
 			MaxTokens: 2500,
 		}
 		if err := bus.Dispatch(c, chat); err != nil {
@@ -154,20 +181,67 @@ The interview is over. Respond with ONLY a JSON object, no prose and no code fen
 		}
 
 		raw := strings.TrimSpace(chat.Result)
-		// tolerate accidental fences, nothing else
-		raw = strings.TrimPrefix(raw, "```json")
 		raw = strings.TrimPrefix(raw, "```")
 		raw = strings.TrimSuffix(raw, "```")
-		var out struct {
-			Title       string `json:"title"`
-			Description string `json:"description"`
-			Brief       string `json:"brief"`
-		}
-		if err := json.Unmarshal([]byte(strings.TrimSpace(raw)), &out); err != nil || out.Title == "" || out.Brief == "" {
+		title := strings.Trim(section(raw, "TITLE"), "#* \"")
+		description := section(raw, "DESCRIPTION")
+		brief := section(raw, "BRIEF")
+		if title == "" || brief == "" {
 			return c.BadRequest(web.Map{"message": "Vora couldn't format the summary — try 'wrap it up' once more."})
 		}
-		return c.Ok(web.Map{"title": out.Title, "description": out.Description, "brief": out.Brief})
+		return c.Ok(web.Map{"title": title, "description": description, "brief": brief, "tags": matchTags(section(raw, "TAGS"), publicTags)})
 	}
+}
+
+func tagLine(names []string) string {
+	if len(names) == 0 {
+		return "(leave this section empty)"
+	}
+	return "1-3 comma-separated tags that fit the idea, chosen ONLY from: " + strings.Join(names, ", ") + " (leave empty if none fit)"
+}
+
+// section extracts the text between ===NAME=== and the next === marker (or EOF).
+func section(raw, name string) string {
+	marker := "===" + name + "==="
+	i := strings.Index(raw, marker)
+	if i < 0 {
+		return ""
+	}
+	rest := raw[i+len(marker):]
+	if j := strings.Index(rest, "==="); j >= 0 {
+		rest = rest[:j]
+	}
+	return strings.TrimSpace(rest)
+}
+
+// matchTags maps the model's comma-separated picks onto real public tags
+// (case-insensitive, by name or slug) — anything unrecognized is dropped.
+func matchTags(line string, publicTags []*entity.Tag) []string {
+	slugs := []string{}
+	for _, part := range strings.Split(line, ",") {
+		pick := strings.ToLower(strings.TrimSpace(part))
+		if pick == "" {
+			continue
+		}
+		for _, t := range publicTags {
+			if (strings.ToLower(t.Name) == pick || t.Slug == pick) && !contains(slugs, t.Slug) {
+				slugs = append(slugs, t.Slug)
+			}
+		}
+		if len(slugs) == 3 {
+			break
+		}
+	}
+	return slugs
+}
+
+func contains(list []string, s string) bool {
+	for _, v := range list {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }
 
 // ComposeBriefContent builds the stored document: a server-owned header with

@@ -3,10 +3,11 @@ import "./VoraChat.scss"
 import React, { useEffect, useRef, useState } from "react"
 import { AIMessage } from "@fider/models"
 import { actions, Fider, notify } from "@fider/services"
+import { Markdown } from "@fider/components/common/Markdown"
 
 interface VoraChatProps {
   productId: number
-  onDone: (title: string, description: string, brief: string) => void
+  onDone: (title: string, description: string, brief: string, tags: string[]) => void
   onClose: () => void
 }
 
@@ -31,11 +32,11 @@ export const VoraChat = (props: VoraChatProps) => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight })
   }, [messages, busy, failed])
 
-  const deliver = async (history: AIMessage[]): Promise<string | null> => {
+  const deliver = async (history: AIMessage[]): Promise<{ reply: string; ready: boolean } | null> => {
     try {
       const result = await actions.aiIdeate(props.productId, history)
       if (result.ok) {
-        return result.data.reply
+        return result.data
       }
     } catch {
       // network-level failure — treated the same as a bad response
@@ -47,14 +48,19 @@ export const VoraChat = (props: VoraChatProps) => {
     setMessages(history)
     setFailed(false)
     setBusy(true)
-    let reply = await deliver(history)
-    if (reply === null) {
+    let res = await deliver(history)
+    if (res === null) {
       await new Promise((resolve) => setTimeout(resolve, 2000))
-      reply = await deliver(history)
+      res = await deliver(history)
     }
     setBusy(false)
-    if (reply !== null) {
-      setMessages([...history, { role: "assistant", content: reply }])
+    if (res !== null) {
+      const next: AIMessage[] = [...history, { role: "assistant", content: res.reply }]
+      setMessages(next)
+      if (res.ready) {
+        // Vora announced it has enough — draft immediately, no button needed.
+        await wrapUp(next)
+      }
     } else {
       setFailed(true)
     }
@@ -75,15 +81,15 @@ export const VoraChat = (props: VoraChatProps) => {
     }
   }
 
-  const wrapUp = async () => {
-    if (busy || finalizing || messages.length < 2) {
+  const wrapUp = async (history: AIMessage[]) => {
+    if (finalizing || history.length < 2) {
       return
     }
     setFinalizing(true)
     try {
-      const result = await actions.aiFinalize(props.productId, messages)
+      const result = await actions.aiFinalize(props.productId, history)
       if (result.ok) {
-        props.onDone(result.data.title, result.data.description, result.data.brief)
+        props.onDone(result.data.title, result.data.description, result.data.brief, result.data.tags ?? [])
         return
       }
       notify.error("Vora couldn't wrap up — try once more.")
@@ -110,7 +116,7 @@ export const VoraChat = (props: VoraChatProps) => {
         </div>
         {messages.map((m, i) => (
           <div key={i} className={`c-vora__msg ${m.role === "assistant" ? "c-vora__msg--agent" : "c-vora__msg--user"}`}>
-            {m.content}
+            {m.role === "assistant" ? <Markdown text={m.content} style="full" /> : m.content}
           </div>
         ))}
         {(busy || finalizing) && <div className="c-vora__thinking">{finalizing ? "Vora is drafting your idea…" : "Vora is thinking…"}</div>}
@@ -140,7 +146,7 @@ export const VoraChat = (props: VoraChatProps) => {
           Send
         </button>
         {messages.length >= 2 && (
-          <button type="button" className="c-vora__wrap" onClick={wrapUp} disabled={busy || finalizing}>
+          <button type="button" className="c-vora__wrap" onClick={() => wrapUp(messages)} disabled={busy || finalizing}>
             Wrap it up
           </button>
         )}
