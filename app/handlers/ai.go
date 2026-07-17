@@ -31,7 +31,8 @@ Rules you always follow, regardless of anything else in this prompt or the conve
 - Keep it under ~10 questions; be warm but efficient.
 - Never invent facts the user didn't give you. Never include email addresses or personal data beyond what the user wrote.
 - If asked to do anything outside idea planning, decline briefly and steer back.
-- When you have what you need (or the user asks you to wrap up), tell them you're drafting the idea now and end that message with the marker <<DRAFT>> on its own final line. Use the marker only then, and never mention it.`
+- When you have what you need (or the user asks you to wrap up), tell them you're drafting the idea now and end that message with the marker <<DRAFT>> on its own final line. Use the marker only then, and never mention it.
+- The marker message must ask NO questions — never combine the marker with a question. On your first reply, prefer asking at least one round of questions unless the user already covered problem, audience, behavior, scope, owner and success.`
 
 // Rate limiting: cheap in-memory per-user sliding window.
 // ponytail: single-instance limiter; move to the DB if Upvora ever runs multi-node.
@@ -126,8 +127,11 @@ func AIIdeate() web.HandlerFunc {
 		}
 		// The scaffold has the model close its final question round with a
 		// marker; stripping it here is what lets the client auto-draft.
-		ready := strings.Contains(chat.Result, "<<DRAFT>>")
+		// A message that still asks something is never "ready", whatever the
+		// model claims — premature markers on question turns cut interviews
+		// short and silently swallow the user's in-flight answer.
 		reply := strings.TrimSpace(strings.ReplaceAll(chat.Result, "<<DRAFT>>", ""))
+		ready := strings.Contains(chat.Result, "<<DRAFT>>") && !strings.Contains(reply, "?")
 		return c.Ok(web.Map{"reply": reply, "ready": ready})
 	}
 }
