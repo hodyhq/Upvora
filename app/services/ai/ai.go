@@ -5,10 +5,13 @@
 package ai
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/getfider/fider/app"
 	"github.com/getfider/fider/app/models/cmd"
@@ -37,6 +40,29 @@ func (s Service) Enabled() bool {
 
 func (s Service) Init() {
 	bus.AddHandler(chatCompletion)
+}
+
+// LLM calls routinely outlast the 30s global HTTP client (a long finalize on
+// a big conversation can take a minute) — providers get their own client.
+var aiHTTP = &http.Client{Timeout: 90 * time.Second}
+
+func aiPost(url string, headers map[string]string, body []byte) (int, []byte, error) {
+	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
+	if err != nil {
+		return 0, nil, err
+	}
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	res, err := aiHTTP.Do(req)
+	if err != nil {
+		return 0, nil, err
+	}
+	defer func() {
+		_ = res.Body.Close()
+	}()
+	out, err := io.ReadAll(io.LimitReader(res.Body, 4<<20))
+	return res.StatusCode, out, err
 }
 
 // UI model selectors map to real model IDs server-side so clients never
@@ -100,21 +126,16 @@ func anthropicCall(ctx context.Context, c *cmd.AIChatCompletion, key, model stri
 		return errors.Wrap(err, "ai: failed to marshal request")
 	}
 
-	req := &cmd.HTTPRequest{
-		URL:    "https://api.anthropic.com/v1/messages",
-		Method: "POST",
-		Body:   strings.NewReader(string(body)),
-		Headers: map[string]string{
-			"Content-Type":      "application/json",
-			"x-api-key":         key,
-			"anthropic-version": "2023-06-01",
-		},
-	}
-	if err := bus.Dispatch(ctx, req); err != nil {
+	status, respBody, err := aiPost("https://api.anthropic.com/v1/messages", map[string]string{
+		"Content-Type":      "application/json",
+		"x-api-key":         key,
+		"anthropic-version": "2023-06-01",
+	}, body)
+	if err != nil {
 		return errors.Wrap(err, "ai: anthropic request failed")
 	}
-	if req.ResponseStatusCode != http.StatusOK {
-		return errors.New("ai: anthropic returned %d: %s", req.ResponseStatusCode, truncate(string(req.ResponseBody), 300))
+	if status != http.StatusOK {
+		return errors.New("ai: anthropic returned %d: %s", status, truncate(string(respBody), 300))
 	}
 
 	var parsed struct {
@@ -123,7 +144,7 @@ func anthropicCall(ctx context.Context, c *cmd.AIChatCompletion, key, model stri
 			Text string `json:"text"`
 		} `json:"content"`
 	}
-	if err := json.Unmarshal(req.ResponseBody, &parsed); err != nil {
+	if err := json.Unmarshal(respBody, &parsed); err != nil {
 		return errors.Wrap(err, "ai: failed to parse anthropic response")
 	}
 	var sb strings.Builder
@@ -156,20 +177,15 @@ func openaiCall(ctx context.Context, c *cmd.AIChatCompletion, key, baseURL, mode
 		return errors.Wrap(err, "ai: failed to marshal request")
 	}
 
-	req := &cmd.HTTPRequest{
-		URL:    baseURL + "/chat/completions",
-		Method: "POST",
-		Body:   strings.NewReader(string(body)),
-		Headers: map[string]string{
-			"Content-Type":  "application/json",
-			"Authorization": "Bearer " + key,
-		},
-	}
-	if err := bus.Dispatch(ctx, req); err != nil {
+	status, respBody, err := aiPost(baseURL+"/chat/completions", map[string]string{
+		"Content-Type":  "application/json",
+		"Authorization": "Bearer " + key,
+	}, body)
+	if err != nil {
 		return errors.Wrap(err, "ai: openai-compatible request failed")
 	}
-	if req.ResponseStatusCode != http.StatusOK {
-		return errors.New("ai: provider returned %d: %s", req.ResponseStatusCode, truncate(string(req.ResponseBody), 300))
+	if status != http.StatusOK {
+		return errors.New("ai: provider returned %d: %s", status, truncate(string(respBody), 300))
 	}
 
 	var parsed struct {
@@ -179,7 +195,7 @@ func openaiCall(ctx context.Context, c *cmd.AIChatCompletion, key, baseURL, mode
 			} `json:"message"`
 		} `json:"choices"`
 	}
-	if err := json.Unmarshal(req.ResponseBody, &parsed); err != nil {
+	if err := json.Unmarshal(respBody, &parsed); err != nil {
 		return errors.Wrap(err, "ai: failed to parse provider response")
 	}
 	if len(parsed.Choices) == 0 {

@@ -166,3 +166,25 @@
     color: var(--colors-gray-900);
   }
 }
+
+.c-vora__fail {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--colors-red-600);
+  border: 1px dashed color-mix(in srgb, var(--colors-red-600) 45%, transparent);
+  border-radius: 9px;
+  padding: 5px 12px;
+
+  button {
+    font: inherit;
+    font-weight: 700;
+    color: var(--colors-primary-base);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+  }
+}

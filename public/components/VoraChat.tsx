@@ -12,36 +12,66 @@ interface VoraChatProps {
 
 // Vora — the ideation agent. Pure conversation: the only outputs are text
 // and, at the end, a {title, description, brief} the user reviews.
+//
+// Delivery is resilient by design: a failed turn keeps the user's message in
+// the log with an inline Retry (never dumped back into the input), and every
+// turn gets one silent retry first — the edge occasionally drops a response
+// the server actually produced.
 export const VoraChat = (props: VoraChatProps) => {
   const agent = Fider.session.tenant.aiAgents?.find((a) => a.productId === props.productId) ?? Fider.session.tenant.aiAgents?.find((a) => a.productId === null)
 
   const [messages, setMessages] = useState<AIMessage[]>([])
   const [input, setInput] = useState("")
   const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState(false)
   const [finalizing, setFinalizing] = useState(false)
   const logRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight })
-  }, [messages, busy])
+  }, [messages, busy, failed])
 
-  const send = async () => {
+  const deliver = async (history: AIMessage[]): Promise<string | null> => {
+    try {
+      const result = await actions.aiIdeate(props.productId, history)
+      if (result.ok) {
+        return result.data.reply
+      }
+    } catch {
+      // network-level failure — treated the same as a bad response
+    }
+    return null
+  }
+
+  const run = async (history: AIMessage[]) => {
+    setMessages(history)
+    setFailed(false)
+    setBusy(true)
+    let reply = await deliver(history)
+    if (reply === null) {
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+      reply = await deliver(history)
+    }
+    setBusy(false)
+    if (reply !== null) {
+      setMessages([...history, { role: "assistant", content: reply }])
+    } else {
+      setFailed(true)
+    }
+  }
+
+  const send = () => {
     const text = input.trim()
-    if (!text || busy) {
+    if (!text || busy || finalizing) {
       return
     }
-    const next: AIMessage[] = [...messages, { role: "user", content: text }]
-    setMessages(next)
     setInput("")
-    setBusy(true)
-    const result = await actions.aiIdeate(props.productId, next)
-    setBusy(false)
-    if (result.ok) {
-      setMessages([...next, { role: "assistant", content: result.data.reply }])
-    } else {
-      notify.error(result.error?.errors?.[0]?.message || "Vora didn't answer — try again.")
-      setMessages(messages)
-      setInput(text)
+    run([...messages, { role: "user", content: text }])
+  }
+
+  const retry = () => {
+    if (!busy && !finalizing) {
+      run(messages)
     }
   }
 
@@ -50,12 +80,17 @@ export const VoraChat = (props: VoraChatProps) => {
       return
     }
     setFinalizing(true)
-    const result = await actions.aiFinalize(props.productId, messages)
-    setFinalizing(false)
-    if (result.ok) {
-      props.onDone(result.data.title, result.data.description, result.data.brief)
-    } else {
-      notify.error(result.error?.errors?.[0]?.message || "Vora couldn't wrap up — try once more.")
+    try {
+      const result = await actions.aiFinalize(props.productId, messages)
+      if (result.ok) {
+        props.onDone(result.data.title, result.data.description, result.data.brief)
+        return
+      }
+      notify.error("Vora couldn't wrap up — try once more.")
+    } catch {
+      notify.error("Vora couldn't wrap up — try once more.")
+    } finally {
+      setFinalizing(false)
     }
   }
 
@@ -79,6 +114,14 @@ export const VoraChat = (props: VoraChatProps) => {
           </div>
         ))}
         {(busy || finalizing) && <div className="c-vora__thinking">{finalizing ? "Vora is drafting your idea…" : "Vora is thinking…"}</div>}
+        {failed && !busy && (
+          <div className="c-vora__fail">
+            That didn&apos;t get through.
+            <button type="button" onClick={retry}>
+              Retry
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="c-vora__box">
