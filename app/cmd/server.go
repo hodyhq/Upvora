@@ -17,6 +17,7 @@ import (
 	"github.com/getfider/fider/app/pkg/web"
 	"github.com/robfig/cron"
 
+	_ "github.com/getfider/fider/app/services/ai"
 	_ "github.com/getfider/fider/app/services/blob/fs"
 	_ "github.com/getfider/fider/app/services/blob/s3"
 	_ "github.com/getfider/fider/app/services/blob/sql"

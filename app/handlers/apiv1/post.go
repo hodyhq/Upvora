@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/getfider/fider/app/actions"
+	"github.com/getfider/fider/app/handlers"
 	"github.com/getfider/fider/app/metrics"
 	"github.com/getfider/fider/app/models/cmd"
 	"github.com/getfider/fider/app/models/dto"
@@ -122,6 +123,26 @@ func CreatePost() web.HandlerFunc {
 		err := bus.Dispatch(c, newPost)
 		if err != nil {
 			return c.Failure(err)
+		}
+
+		if action.BriefMarkdown != "" {
+			productName := ""
+			if action.ProductID > 0 && c.Tenant().Products != nil {
+				for _, p := range c.Tenant().Products {
+					if p.ID == action.ProductID {
+						productName = p.Name
+					}
+				}
+			}
+			saveBrief := &cmd.SaveIdeaBrief{
+				PostID:          newPost.Result.ID,
+				Content:         handlers.ComposeBriefContent(c.User(), productName, action.Title, action.BriefMarkdown),
+				Transcript:      handlers.ComposeTranscript(c.User(), action.VoraTranscript),
+				SubmitterUserID: c.User().ID,
+			}
+			if err := bus.Dispatch(c, saveBrief); err != nil {
+				return c.Failure(err)
+			}
 		}
 
 		setAttachments := &cmd.SetAttachments{Post: newPost.Result, Attachments: action.Attachments}

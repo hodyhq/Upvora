@@ -1,0 +1,1 @@
+ALTER TABLE idea_briefs ADD COLUMN transcript TEXT NOT NULL DEFAULT '';

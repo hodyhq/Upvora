@@ -44,6 +44,8 @@ export interface Tenant {
   scorecardTriggerStatusSlug: string
   scorecardFields?: ScorecardField[]
   products?: Product[]
+  aiEnabled?: boolean
+  aiAgents?: AIAgentInfo[]
 }
 
 // One entry in a choice-typed field's list. bucket maps the choice onto a
@@ -130,4 +132,17 @@ export interface CurrentUser {
   isAdministrator: boolean
   isCollaborator: boolean
   isTrusted: boolean
+}
+
+// Sanitized agent info attached to the session — instructions never ship to clients.
+export interface AIAgentInfo {
+  id: number
+  productId: number | null
+  description: string
+  enabled: boolean
+}
+
+export interface AIMessage {
+  role: "user" | "assistant"
+  content: string
 }

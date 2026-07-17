@@ -211,6 +211,11 @@ func routes(r *web.Engine) *web.Engine {
 		// From this step, only Administrators are allowed
 		ui.Use(middlewares.IsAuthorized(enum.RoleAdministrator))
 
+		ui.Get("/admin/ai", handlers.ManageAIPage())
+		ui.Post("/_api/admin/settings/ai", handlers.UpdateAISettings())
+		ui.Post("/_api/admin/ai/agents", handlers.UpsertAIAgentHandler())
+		ui.Get("/_api/posts/:number/brief/download", handlers.DownloadIdeaBrief())
+		ui.Get("/_api/posts/:number/brief/transcript", handlers.GetBriefTranscript())
 		ui.Get("/_api/admin/system/status", handlers.SystemStatus())
 		ui.Post("/_api/admin/system/update", handlers.SystemTriggerUpdate())
 		ui.Get("/admin/advanced", handlers.AdvancedSettingsPage())
@@ -302,6 +307,9 @@ func routes(r *web.Engine) *web.Engine {
 		membersApi.Post("/api/v1/posts/:number/comments", apiv1.PostComment())
 		membersApi.Put("/api/v1/posts/:number/comments/:id", apiv1.UpdateComment())
 		membersApi.Delete("/api/v1/posts/:number/comments/:id", apiv1.DeleteComment())
+		membersApi.Post("/api/v1/ai/ideate", handlers.AIIdeate())
+		membersApi.Post("/api/v1/ai/finalize", handlers.AIFinalize())
+		membersApi.Get("/api/v1/posts/:number/brief", handlers.GetIdeaBriefHandler())
 		membersApi.Post("/api/v1/posts/:number/votes", apiv1.AddVote())
 		membersApi.Delete("/api/v1/posts/:number/votes", apiv1.RemoveVote())
 		membersApi.Post("/api/v1/posts/:number/votes/toggle", apiv1.ToggleVote())
