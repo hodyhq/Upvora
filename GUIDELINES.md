@@ -29,7 +29,7 @@ public/pages/Home // Home page component folder
 
 **CSS Naming**
 
-Fider uses a combination of BEM and Utility Classes.
+Upvora uses a combination of BEM and Utility Classes.
 
 - `p-<page_name>` is the HTML ID of each page component. This is truly unique and should be used to provide page isolated style. E.g.: `p-home`, `p-user-settings`;
 

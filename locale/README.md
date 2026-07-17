@@ -1,6 +1,6 @@
-# Adding a New Language to Fider 💪
+# Adding a New Language to Upvora 💪
 
-This guide explains how to add a new language/locale to Fider.
+This guide explains how to add a new language/locale to Upvora.
 
 ## Overview
 
@@ -120,7 +120,7 @@ After adding the locale to all configuration files:
 
 ## When New Translation Strings Are Added
 
-Fider uses [LinguiJS](https://lingui.dev) for i18n management. When new features are added:
+Upvora uses [LinguiJS](https://lingui.dev) for i18n management. When new features are added:
 
 1. New translation keys are automatically extracted and added to all locale files (`client.json` / `server.json`)
 2. A [GitHub Action](/.github/workflows/locale.yml) uses Google Cloud Translate to automatically translate missing keys
