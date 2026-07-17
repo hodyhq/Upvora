@@ -1,8 +1,8 @@
 # Moderation
 
-We are going to implement the ability to moderate posts and comments added to fider. The idea is that when a new post is added, that post is then flagged as unmoderated. An admin will need to approve it.
+We are going to implement the ability to moderate posts and comments added to Upvora. The idea is that when a new post is added, that post is then flagged as unmoderated. An admin will need to approve it.
 
-This document explains everything that needs to change in Fider to facilitate this feature.
+This document explains everything that needs to change in Upvora to facilitate this feature.
 
 ## Settings
 
@@ -18,7 +18,7 @@ Once added, the post is only visible to the person who added it (and admins, see
 
 ## Doing the moderation
 
-The "admin" section of fider looks like this (public/pages/Administration/components/AdminBasePage.tsx):
+The "admin" section of Upvora looks like this (public/pages/Administration/components/AdminBasePage.tsx):
 ![alt text](<CleanShot 2025-07-01 at 20.39.05@2x.png>)
 
 There neeeds to be a new menu item on the left for "Moderation"
@@ -52,6 +52,6 @@ We've decided to make some changes to the moderation admin:
 
 2. We've decided to make the moderation less onourous to the admins by making some more changes:
 
-   2.1) As well as decline, you have another option - "decline and block". This option will decline the post or comment, and block the user who made it from posting again. We already have the ability to block users in Fider (see BlockUser in app/handlers/user.go), so we can hook into that. So if you had 1 user who had 5 posts and some comments, and you declined and blocked them, we would also decline all other posts and comments they made, and block them from posting again.
+   2.1) As well as decline, you have another option - "decline and block". This option will decline the post or comment, and block the user who made it from posting again. We already have the ability to block users in Upvora (see BlockUser in app/handlers/user.go), so we can hook into that. So if you had 1 user who had 5 posts and some comments, and you declined and blocked them, we would also decline all other posts and comments they made, and block them from posting again.
 
    2.2) As well as "approve", you have another option - "approve and verify". This option will approve the post (or comment) and ALL other posts and comments from this user. It will also make the user "verified" for posting, meaning that any future posts or comments from that user can bypass moderation. To facilitate this, we're going to need a new column on the user, which will work similar to how blocking a user works, except that it will do the opposite. You can't be both blocked and verified, so if you "approve and verify" we'll need to unset any blocked status for that user.

@@ -1,30 +1,29 @@
 # Contributing
 
-There are many ways you can contribute to Fider.
+There are many ways you can contribute to Upvora.
 
-- **Send us a Pull Request** on GitHub. Make sure you read our [Getting Started](#getting-started-with-fider-codebase) guide to learn how to setup the development environment;
-- **Translate Fider** to your language. See our [translation guide](/locale/README.md) to learn how to add a new language;
-- **Report issues** and bug reports on https://github.com/getfider/fider/issues;
-- **Give feedback** and vote on features you'd like to see at https://feedback.fider.io;
-- **Spread the word** by starring us on GitHub. Tweet about the project and show it to your friends. The more people know about Fider, the bigger the community will be and more contributions will be made;
-- **Support us financially** by donating any amount to our [OpenCollective](https://opencollective.com/fider) and help us continue our activities;
+- **Send us a Pull Request** on GitHub. Make sure you read our [Getting Started](#getting-started-with-the-upvora-codebase) guide to learn how to setup the development environment;
+- **Translate Upvora** to your language. See our [translation guide](/locale/README.md) to learn how to add a new language;
+- **Report issues** and bug reports on https://github.com/hodyhq/Upvora/issues;
+- **Give feedback** and vote on features you'd like to see at https://feedback.hody.dev;
+- **Spread the word** by starring us on GitHub. Tweet about the project and show it to your friends. The more people know about Upvora, the bigger the community will be and more contributions will be made;
 
 ## Before you build a new feature
 
 We love contributions, but please help us keep them reviewable and maintainable. Before writing code for a **new feature**:
 
-- Features start as a suggestion on https://feedback.fider.io, where the community can discuss and vote on them. This helps us gauge whether a change is valuable to other users.
-- Once a suggestion has enough discussion and support, open a [GitHub Issue](https://github.com/getfider/fider/issues) referencing it and **wait for a maintainer to confirm it's accepted onto the roadmap** before you start building.
+- Features start as a suggestion on https://feedback.hody.dev, where the community can discuss and vote on them. This helps us gauge whether a change is valuable to other users.
+- Once a suggestion has enough discussion and support, open a [GitHub Issue](https://github.com/hodyhq/Upvora/issues) referencing it and **wait for a maintainer to confirm it's accepted onto the roadmap** before you start building.
 - **Bug fixes and small technical improvements** don't need a feedback suggestion — an issue is still appreciated so we know what you're working on.
-- Pull Requests for features that weren't discussed and accepted may be closed. This isn't anti-AI — it's about reviewer burden and the long-term maintainability of Fider. See [discussion #1529](https://github.com/getfider/fider/discussions/1529) for the full reasoning.
+- Pull Requests for features that weren't discussed and accepted may be closed. This isn't anti-AI — it's about reviewer burden and the long-term maintainability of Upvora.
 
-## Getting started with Fider codebase
+## Getting started with the Upvora codebase
 
-Before start working on something that you intend to send a Pull Request, make sure there's an [GitHub Issue](https://github.com/getfider/fider/issues) open for that or create one yourself. If it's a new feature you're working on, please share your high level thoughts on the ticket so we can agree on a solution that aligns with the overall architecture and future of Fider.
+Before start working on something that you intend to send a Pull Request, make sure there's an [GitHub Issue](https://github.com/hodyhq/Upvora/issues) open for that or create one yourself. If it's a new feature you're working on, please share your high level thoughts on the ticket so we can agree on a solution that aligns with the overall architecture and future of Upvora.
 
 If you have any question or need help, leave a comment on the issue and we'll do our best to help you out.
 
-Fider is written in Go (backend) and TypeScript (frontend), but we also use things like Node.js, React and PostgreSQL.
+Upvora is written in Go (backend) and TypeScript (frontend), but we also use things like Node.js, React and PostgreSQL.
 If you know these technologies or would like to learn them, lucky you! This is the right place!
 
 #### 1. Install the following tools:
@@ -46,7 +45,7 @@ If you know these technologies or would like to learn them, lucky you! This is t
 7. run `docker compose up -d` to start a local PostgreSQL database and Local SMTP (with [MailHog](https://github.com/mailhog/MailHog)) on Docker.
 8. run `cp .example.env .env` to create a local environment configuration file.
 
-- **Important:** Fider has a strong dependency on an email delivery service. For easier local development, the docker-compose file already provides
+- **Important:** Upvora has a strong dependency on an email delivery service. For easier local development, the docker-compose file already provides
   a fake SMTP server running at port **1025** and a UI (to check sent emails) at http://localhost:8025. The `.example.env` is already
   configured to use it. If you want to, you can edit `.env` file and configure the `EMAIL_*` environment variables with your own SMTP server
   details. If you don't have an SMTP server, you can either sign up for a [Mailgun account](https://www.mailgun.com/) (it's Free) or sign
@@ -55,8 +54,8 @@ If you know these technologies or would like to learn them, lucky you! This is t
 
 #### 3. To start the application
 
-1. run `make watch` to start both the server and ui on watch mode. The application will be reloaded every time a file is changed. Alternatively, it's also possible to start Fider by running `make build` and `make run`.
-2. Navigate to `http://localhost:3000/` and 🎉! You should see the sign up page of Fider!
+1. run `make watch` to start both the server and ui on watch mode. The application will be reloaded every time a file is changed. Alternatively, it's also possible to start Upvora by running `make build` and `make run`.
+2. Navigate to `http://localhost:3000/` and 🎉! You should see the sign up page of Upvora!
 
 #### 4. To run the unit tests:
 

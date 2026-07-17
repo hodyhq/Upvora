@@ -7,8 +7,8 @@ assignees: ''
 
 ---
 
-**Fider Cloud or Self Hosted**
-If you're using Self Hosted FIder, specify the version here.
+**Upvora version**
+The version shown in the footer or the admin System panel (e.g. v0.36.1.4.9).
 
 **Describe the bug**
 A clear and concise description of what the bug is.
