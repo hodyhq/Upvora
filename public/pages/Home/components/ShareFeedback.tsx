@@ -10,7 +10,7 @@ import { Trans } from "@lingui/react/macro"
 import { actions, Failure, querystring, classSet, cache } from "@fider/services"
 import { plainText } from "@fider/services/markdown"
 import { i18n } from "@lingui/core"
-import { Tag, Product } from "@fider/models"
+import { Tag, Product, AIMessage } from "@fider/models"
 import { SimilarPosts } from "../components/SimilarPosts"
 import { TagsSelect } from "@fider/components/common/TagsSelect"
 import CommentEditor from "@fider/components/common/form/CommentEditor"
@@ -41,6 +41,7 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
   const tenantProducts = fider.session.tenant.products ?? []
   const [productId, setProductId] = useState<number>(props.product?.id ?? tenantProducts[0]?.id ?? 0)
   const [briefMarkdown, setBriefMarkdown] = useState("")
+  const [voraTranscript, setVoraTranscript] = useState<AIMessage[]>([])
   const [voraOpen, setVoraOpen] = useState(false)
   // Vora is available when the feature is on and this product (or the
   // default) has an enabled agent — for signed-in users only.
@@ -196,7 +197,8 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
           attachments,
           tags.map((tag) => tag.slug),
           productId,
-          briefMarkdown
+          briefMarkdown,
+          voraTranscript
         ),
         minDelay,
       ])
@@ -261,11 +263,12 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
               <VoraChat
                 productId={productId}
                 onClose={() => setVoraOpen(false)}
-                onDone={(voraTitle, voraDescription, voraBrief, voraTags) => {
+                onDone={(voraTitle, voraDescription, voraBrief, voraTags, transcript) => {
                   setTitle(voraTitle)
                   setTitleManuallyEdited(true)
                   setDescription(voraDescription)
                   setBriefMarkdown(voraBrief)
+                  setVoraTranscript(transcript)
                   if (canEditTags && voraTags.length > 0) {
                     setTags(props.tags.filter((t) => voraTags.includes(t.slug)))
                   }

@@ -125,11 +125,11 @@ func getAIAgentForProduct(ctx context.Context, q *query.GetAIAgentForProduct) er
 func saveIdeaBrief(ctx context.Context, c *cmd.SaveIdeaBrief) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, user *entity.User) error {
 		_, err := trx.Execute(`
-			INSERT INTO idea_briefs (tenant_id, post_id, content, submitter_user_id)
-			VALUES ($1, $2, $3, $4)
+			INSERT INTO idea_briefs (tenant_id, post_id, content, transcript, submitter_user_id)
+			VALUES ($1, $2, $3, $4, $5)
 			ON CONFLICT (tenant_id, post_id) DO UPDATE
-			SET content = EXCLUDED.content, submitter_user_id = EXCLUDED.submitter_user_id`,
-			tenant.ID, c.PostID, c.Content, c.SubmitterUserID)
+			SET content = EXCLUDED.content, transcript = EXCLUDED.transcript, submitter_user_id = EXCLUDED.submitter_user_id`,
+			tenant.ID, c.PostID, c.Content, c.Transcript, c.SubmitterUserID)
 		if err != nil {
 			return errors.Wrap(err, "failed to save idea brief")
 		}
@@ -140,6 +140,7 @@ func saveIdeaBrief(ctx context.Context, c *cmd.SaveIdeaBrief) error {
 type dbIdeaBrief struct {
 	PostID          int         `db:"post_id"`
 	Content         string      `db:"content"`
+	Transcript      string      `db:"transcript"`
 	SubmitterUserID dbx.NullInt `db:"submitter_user_id"`
 }
 
@@ -148,7 +149,7 @@ func getIdeaBrief(ctx context.Context, q *query.GetIdeaBrief) error {
 		q.Result = nil
 		b := &dbIdeaBrief{}
 		err := trx.Get(b, `
-			SELECT post_id, content, submitter_user_id
+			SELECT post_id, content, transcript, submitter_user_id
 			FROM idea_briefs WHERE tenant_id = $1 AND post_id = $2`, tenant.ID, q.PostID)
 		if err != nil {
 			if errors.Cause(err) == app.ErrNotFound {
@@ -156,7 +157,7 @@ func getIdeaBrief(ctx context.Context, q *query.GetIdeaBrief) error {
 			}
 			return errors.Wrap(err, "failed to get idea brief")
 		}
-		brief := &entity.IdeaBrief{PostID: b.PostID, Content: b.Content}
+		brief := &entity.IdeaBrief{PostID: b.PostID, Content: b.Content, Transcript: b.Transcript}
 		if b.SubmitterUserID.Valid {
 			id := int(b.SubmitterUserID.Int64)
 			brief.SubmitterUserID = &id

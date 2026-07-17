@@ -27,6 +27,7 @@ type UpsertAIAgent struct {
 type SaveIdeaBrief struct {
 	PostID          int
 	Content         string
+	Transcript      string // JSON []entity.AIMessage, already email-scrubbed
 	SubmitterUserID int
 }
 

@@ -137,6 +137,7 @@ func CreatePost() web.HandlerFunc {
 			saveBrief := &cmd.SaveIdeaBrief{
 				PostID:          newPost.Result.ID,
 				Content:         handlers.ComposeBriefContent(c.User(), productName, action.Title, action.BriefMarkdown),
+				Transcript:      handlers.ComposeTranscript(c.User(), action.VoraTranscript),
 				SubmitterUserID: c.User().ID,
 			}
 			if err := bus.Dispatch(c, saveBrief); err != nil {

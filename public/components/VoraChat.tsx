@@ -7,7 +7,7 @@ import { Markdown } from "@fider/components/common/Markdown"
 
 interface VoraChatProps {
   productId: number
-  onDone: (title: string, description: string, brief: string, tags: string[]) => void
+  onDone: (title: string, description: string, brief: string, tags: string[], transcript: AIMessage[]) => void
   onClose: () => void
 }
 
@@ -89,7 +89,7 @@ export const VoraChat = (props: VoraChatProps) => {
     try {
       const result = await actions.aiFinalize(props.productId, history)
       if (result.ok) {
-        props.onDone(result.data.title, result.data.description, result.data.brief, result.data.tags ?? [])
+        props.onDone(result.data.title, result.data.description, result.data.brief, result.data.tags ?? [], history)
         return
       }
       notify.error("Vora couldn't wrap up — try once more.")

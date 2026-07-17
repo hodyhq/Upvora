@@ -140,10 +140,11 @@ export const createPost = async (
   attachments: ImageUpload[],
   tags: string[],
   productId = 0,
-  briefMarkdown = ""
+  briefMarkdown = "",
+  voraTranscript: AIMessage[] = []
 ): Promise<Result<CreatePostResponse>> => {
   return http
-    .post<CreatePostResponse>(`/api/v1/posts`, { title, description, attachments, tags, productId, briefMarkdown })
+    .post<CreatePostResponse>(`/api/v1/posts`, { title, description, attachments, tags, productId, briefMarkdown, voraTranscript })
     .then(http.event("post", "create"))
 }
 

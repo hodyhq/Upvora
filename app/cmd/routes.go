@@ -215,6 +215,7 @@ func routes(r *web.Engine) *web.Engine {
 		ui.Post("/_api/admin/settings/ai", handlers.UpdateAISettings())
 		ui.Post("/_api/admin/ai/agents", handlers.UpsertAIAgentHandler())
 		ui.Get("/_api/posts/:number/brief/download", handlers.DownloadIdeaBrief())
+		ui.Get("/_api/posts/:number/brief/transcript", handlers.GetBriefTranscript())
 		ui.Get("/_api/admin/system/status", handlers.SystemStatus())
 		ui.Post("/_api/admin/system/update", handlers.SystemTriggerUpdate())
 		ui.Get("/admin/advanced", handlers.AdvancedSettingsPage())

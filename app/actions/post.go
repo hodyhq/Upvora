@@ -28,6 +28,8 @@ type CreateNewPost struct {
 	ProductID   int                `json:"productId"`
 	// BriefMarkdown is Vora's plan document; optional, stored alongside the post.
 	BriefMarkdown string `json:"briefMarkdown"`
+	// VoraTranscript is the conversation that produced the brief; admin-viewable.
+	VoraTranscript []entity.AIMessage `json:"voraTranscript"`
 
 	Tags []*entity.Tag
 }
@@ -67,6 +69,16 @@ func (action *CreateNewPost) IsAuthorized(ctx context.Context, user *entity.User
 // Validate if current model is valid
 func (action *CreateNewPost) Validate(ctx context.Context, user *entity.User) *validate.Result {
 	result := validate.Success()
+
+	if len(action.VoraTranscript) > 60 {
+		result.AddFieldFailure("voraTranscript", "The conversation is too long to store.")
+	}
+	for _, m := range action.VoraTranscript {
+		if len(m.Content) > 6000 || (m.Role != "user" && m.Role != "assistant") {
+			result.AddFieldFailure("voraTranscript", "Invalid conversation transcript.")
+			break
+		}
+	}
 
 	if action.ProductID > 0 {
 		products := &query.ListActiveProducts{}

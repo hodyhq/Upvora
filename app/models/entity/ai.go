@@ -18,6 +18,7 @@ type AIAgent struct {
 type IdeaBrief struct {
 	PostID          int       `json:"postId"`
 	Content         string    `json:"content"`
+	Transcript      string    `json:"-"` // JSON []AIMessage, email-scrubbed; admin endpoint only
 	SubmitterUserID *int      `json:"-"`
 	CreatedAt       time.Time `json:"createdAt"`
 }

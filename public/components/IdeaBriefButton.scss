@@ -27,3 +27,20 @@
   overflow-y: auto;
   padding-right: 6px;
 }
+
+// Admin-only Vora transcript inside the brief modal — bubbles reuse .c-vora__msg
+.c-brief-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--colors-gray-200);
+
+  h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--colors-gray-600);
+    margin: 0 0 4px;
+  }
+}

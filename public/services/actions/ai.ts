@@ -16,6 +16,10 @@ export const aiFinalize = async (productId: number, messages: AIMessage[]): Prom
   return http.post<AIFinalizeResponse>(`/api/v1/ai/finalize`, { productId, messages })
 }
 
+export const getBriefTranscript = async (postNumber: number): Promise<Result<{ messages: AIMessage[] }>> => {
+  return http.get<{ messages: AIMessage[] }>(`/_api/posts/${postNumber}/brief/transcript`)
+}
+
 export const getIdeaBrief = async (postNumber: number): Promise<Result<{ content: string; createdAt: string }>> => {
   return http.get<{ content: string; createdAt: string }>(`/api/v1/posts/${postNumber}/brief`)
 }

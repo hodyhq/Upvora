@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -267,6 +268,56 @@ func ComposeBriefContent(user *entity.User, productName string, title string, bo
 	}
 	header += " · " + time.Now().Format("2006-01-02")
 	return header + "\n\n" + body
+}
+
+// ComposeTranscript serializes the Vora conversation for storage, with the
+// submitter's email replaced by the token — same policy as the brief itself.
+func ComposeTranscript(user *entity.User, msgs []entity.AIMessage) string {
+	if len(msgs) == 0 {
+		return ""
+	}
+	out := make([]entity.AIMessage, 0, len(msgs))
+	for _, m := range msgs {
+		if m.Role != "user" && m.Role != "assistant" {
+			continue
+		}
+		out = append(out, entity.AIMessage{Role: m.Role, Content: strings.ReplaceAll(m.Content, user.Email, emailToken)})
+	}
+	b, err := json.Marshal(out)
+	if err != nil {
+		return ""
+	}
+	return string(b)
+}
+
+// GetBriefTranscript returns the Vora conversation behind a brief. The route
+// is admin-gated; the email token is stripped even here.
+func GetBriefTranscript() web.HandlerFunc {
+	return func(c *web.Context) error {
+		number, err := c.ParamAsInt("number")
+		if err != nil {
+			return c.NotFound()
+		}
+		getPost := &query.GetPostByNumber{Number: number}
+		if err := bus.Dispatch(c, getPost); err != nil {
+			return c.Failure(err)
+		}
+		q := &query.GetIdeaBrief{PostID: getPost.Result.ID}
+		if err := bus.Dispatch(c, q); err != nil {
+			return c.Failure(err)
+		}
+		if q.Result == nil || q.Result.Transcript == "" {
+			return c.NotFound()
+		}
+		var msgs []entity.AIMessage
+		if err := json.Unmarshal([]byte(q.Result.Transcript), &msgs); err != nil {
+			return c.NotFound()
+		}
+		for i := range msgs {
+			msgs[i].Content = strings.ReplaceAll(msgs[i].Content, emailToken, "")
+		}
+		return c.Ok(web.Map{"messages": msgs, "createdAt": q.Result.CreatedAt})
+	}
 }
 
 // GetIdeaBriefHandler returns the brief for viewing. The email token is
