@@ -31,6 +31,7 @@ interface ManageAIPageState {
   customModel: string
   agents: AgentConfig[]
   busy: boolean
+  hasKey: boolean
 }
 
 const claudeModels = [
@@ -70,6 +71,7 @@ export default class ManageAIPage extends AdminBasePage<ManageAIPageProps, Manag
       customModel: props.customModel,
       agents,
       busy: false,
+      hasKey: props.hasKey,
     }
   }
 
@@ -86,7 +88,7 @@ export default class ManageAIPage extends AdminBasePage<ManageAIPageProps, Manag
     this.setState({ busy: false })
     if (result.ok) {
       notify.success("AI settings saved.")
-      this.setState({ apiKey: "" })
+      this.setState((prev) => ({ apiKey: "", hasKey: prev.hasKey || prev.apiKey.trim() !== "" }))
     } else {
       notify.error(result.error?.errors?.[0]?.message || "Failed to save AI settings.")
     }
@@ -175,12 +177,24 @@ export default class ManageAIPage extends AdminBasePage<ManageAIPageProps, Manag
               label="API key"
               value={s.apiKey}
               onChange={(apiKey) => this.setState({ apiKey })}
-              placeholder={this.props.hasKey ? "•••••••• key is set — enter a new one to replace it" : "paste the provider API key"}
+              placeholder={s.hasKey ? "•••••••••••••••• enter a new key to replace the saved one" : "paste the provider API key"}
               autoComplete="off"
             />
-            <p className="text-muted" style={{ fontSize: 12 }}>
-              Write-only: the key is stored server-side and never shown or sent back to any browser.
-            </p>
+            {s.hasKey ? (
+              <p style={{ fontSize: 12.5, fontWeight: 650, color: "var(--colors-green-600)", display: "flex", alignItems: "center", gap: 6 }}>
+                <span
+                  style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--colors-green-600)", boxShadow: "0 0 6px var(--colors-green-600)" }}
+                />
+                A key is saved for this site
+                <span className="text-muted" style={{ fontWeight: 400 }}>
+                  — write-only; it is never shown or sent back to any browser
+                </span>
+              </p>
+            ) : (
+              <p className="text-muted" style={{ fontSize: 12 }}>
+                No key saved yet. Keys are write-only: stored server-side, never shown or sent back to any browser.
+              </p>
+            )}
           </Form>
           <Button variant="primary" disabled={s.busy} onClick={this.saveSettings}>
             Save AI settings
