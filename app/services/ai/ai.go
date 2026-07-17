@@ -9,7 +9,9 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -104,8 +106,8 @@ func chatCompletion(ctx context.Context, c *cmd.AIChatCompletion) error {
 		return openaiCall(ctx, c, tenant.AIAPIKey, "https://api.openai.com/v1", model)
 	case "custom":
 		base := strings.TrimSuffix(tenant.AICustomBaseURL, "/")
-		if !strings.HasPrefix(base, "https://") {
-			return errors.New("ai: custom base URL must be https")
+		if !isAllowedBaseURL(base) {
+			return errors.New("ai: custom base URL must be https (http is allowed only for private-network hosts)")
 		}
 		if tenant.AICustomModel == "" {
 			return errors.New("ai: custom model is not set")
@@ -206,6 +208,27 @@ func openaiCall(ctx context.Context, c *cmd.AIChatCompletion, key, baseURL, mode
 		return errors.New("ai: provider returned an empty reply")
 	}
 	return nil
+}
+
+// isAllowedBaseURL mirrors the admin-side validation: https anywhere, plain
+// http only toward private/loopback hosts (local LLMs).
+func isAllowedBaseURL(raw string) bool {
+	u, err := url.Parse(raw)
+	if err != nil || u.Host == "" {
+		return false
+	}
+	if u.Scheme == "https" {
+		return true
+	}
+	if u.Scheme != "http" {
+		return false
+	}
+	host := u.Hostname()
+	if host == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && (ip.IsLoopback() || ip.IsPrivate())
 }
 
 func truncate(s string, n int) string {

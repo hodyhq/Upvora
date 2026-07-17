@@ -2,6 +2,8 @@ package actions
 
 import (
 	"context"
+	"net"
+	"net/url"
 	"strings"
 
 	"github.com/getfider/fider/app/models/entity"
@@ -46,8 +48,8 @@ func (a *UpdateAISettings) Validate(ctx context.Context, user *entity.User) *val
 			result.AddFieldFailure("model", "OpenAI model must be luna or terra.")
 		}
 	case "custom":
-		if !strings.HasPrefix(a.CustomBaseURL, "https://") {
-			result.AddFieldFailure("customBaseUrl", "Custom base URL must start with https://")
+		if !isAllowedCustomBaseURL(a.CustomBaseURL) {
+			result.AddFieldFailure("customBaseUrl", "Custom base URL must be https:// — plain http is allowed only for private-network hosts (e.g. a local LLM).")
 		}
 		if strings.TrimSpace(a.CustomModel) == "" {
 			result.AddFieldFailure("customModel", "Custom model name is required.")
@@ -111,4 +113,31 @@ func (a *AIConverse) Validate(ctx context.Context, user *entity.User) *validate.
 		}
 	}
 	return result
+}
+
+// isAllowedCustomBaseURL permits https anywhere, and plain http only toward
+// private/loopback hosts so self-hosters can point Vora at a local LLM
+// without a TLS proxy. Public http endpoints stay forbidden.
+func isAllowedCustomBaseURL(raw string) bool {
+	u, err := url.Parse(raw)
+	if err != nil || u.Host == "" {
+		return false
+	}
+	if u.Scheme == "https" {
+		return true
+	}
+	if u.Scheme != "http" {
+		return false
+	}
+	host := u.Hostname()
+	if host == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(host)
+	if ip == nil {
+		// http toward a public DNS name is not allowed; private-use names
+		// must use the IP directly.
+		return false
+	}
+	return ip.IsLoopback() || ip.IsPrivate()
 }
