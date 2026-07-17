@@ -5,6 +5,7 @@ import IconTag from "@fider/assets/images/heroicons-tagsolid.svg"
 import React, { useEffect, useMemo, useRef, useState } from "react"
 import { Button, Header, Icon } from "@fider/components"
 import { InternalNotesPanel } from "@fider/components/PostDetails/InternalNotesPanel"
+import { IdeaBriefButton } from "@fider/components/IdeaBriefButton"
 import { ScorecardField, ScorecardFieldChoice, Post, User, InternalNote } from "@fider/models"
 import { actions, notify, Fider } from "@fider/services"
 import { computeWeightedScore, bandForScore } from "./ScoreBand"
@@ -473,6 +474,7 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
                   <span>
                     Submitted by <strong>{post.user?.name ?? "—"}</strong> on {formatDate(post.createdAt)}
                   </span>
+                  <IdeaBriefButton postNumber={post.number} />
                   <span>To scorecard {formatDate(props.scorecard.createdAt)}</span>
                   <span>
                     <strong>{(post as any).votesCount ?? 0}</strong> votes · <strong>{(post as any).commentsCount ?? 0}</strong> comments

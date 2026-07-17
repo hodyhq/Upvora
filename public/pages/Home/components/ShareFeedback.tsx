@@ -1,6 +1,7 @@
 import "./ShareFeedback.scss"
 
 import React, { useEffect, useRef, useState } from "react"
+import { VoraChat } from "@fider/components/VoraChat"
 import { SignInControl } from "@fider/components/common/SignInControl"
 import { Modal, CloseIcon, Form, Button, Input, Select, LegalFooter } from "@fider/components/common"
 import { Markdown } from "@fider/components/common/Markdown"
@@ -9,7 +10,7 @@ import { Trans } from "@lingui/react/macro"
 import { actions, Failure, querystring, classSet, cache } from "@fider/services"
 import { plainText } from "@fider/services/markdown"
 import { i18n } from "@lingui/core"
-import { Tag, Product } from "@fider/models"
+import { Tag, Product, AIMessage } from "@fider/models"
 import { SimilarPosts } from "../components/SimilarPosts"
 import { TagsSelect } from "@fider/components/common/TagsSelect"
 import CommentEditor from "@fider/components/common/form/CommentEditor"
@@ -39,6 +40,15 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
   const { isOpen, onClose } = props
   const tenantProducts = fider.session.tenant.products ?? []
   const [productId, setProductId] = useState<number>(props.product?.id ?? tenantProducts[0]?.id ?? 0)
+  const [briefMarkdown, setBriefMarkdown] = useState("")
+  const [voraTranscript, setVoraTranscript] = useState<AIMessage[]>([])
+  const [voraOpen, setVoraOpen] = useState(false)
+  // Vora is available when the feature is on and this product (or the
+  // default) has an enabled agent — for signed-in users only.
+  const voraAvailable =
+    fider.session.isAuthenticated &&
+    !!fider.session.tenant.aiEnabled &&
+    !!fider.session.tenant.aiAgents?.some((a) => a.productId === productId || a.productId === null)
 
   const getTagsCachedValue = (): Tag[] => {
     if (!canEditTags) {
@@ -186,7 +196,9 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
           description,
           attachments,
           tags.map((tag) => tag.slug),
-          productId
+          productId,
+          briefMarkdown,
+          voraTranscript
         ),
         minDelay,
       ])
@@ -239,10 +251,43 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
               <Markdown text={fider.session.tenant.shareIdeaInstructions} style="full" />
             </div>
           )}
+          {voraAvailable && !voraOpen && !briefMarkdown && (
+            <div className="mb-4">
+              <button type="button" className="c-vora-cta" onClick={() => setVoraOpen(true)}>
+                ✦ Talk it through with Vora
+              </button>
+            </div>
+          )}
+          {voraOpen && (
+            <div className="mb-4">
+              <VoraChat
+                productId={productId}
+                onClose={() => setVoraOpen(false)}
+                onDone={(voraTitle, voraDescription, voraBrief, voraTags, transcript) => {
+                  setTitle(voraTitle)
+                  setTitleManuallyEdited(true)
+                  setDescription(voraDescription)
+                  setBriefMarkdown(voraBrief)
+                  setVoraTranscript(transcript)
+                  if (canEditTags && voraTags.length > 0) {
+                    setTags(props.tags.filter((t) => voraTags.includes(t.slug)))
+                  }
+                  setVoraOpen(false)
+                }}
+              />
+            </div>
+          )}
+          {briefMarkdown && (
+            <div className="c-vora-attached mb-4">
+              📎 <b>Idea Brief attached</b> — the full plan Vora built with you will be saved with this idea. Review the title and description below, edit
+              anything, then submit.
+            </div>
+          )}
           <div className="c-share-feedback-form">
             <Form error={error}>
               <div ref={editorRef} className="mb-4">
                 <CommentEditor
+                  key={briefMarkdown ? "vora-filled" : "manual"}
                   field="description"
                   onChange={handleDescriptionChange}
                   onFocus={handleEditorFocus}

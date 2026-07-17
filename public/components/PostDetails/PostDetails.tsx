@@ -10,6 +10,7 @@ import IconRSS from "@fider/assets/images/heroicons-rss.svg"
 import IconPencil from "@fider/assets/images/heroicons-pencil-alt.svg"
 import IconChat from "@fider/assets/images/heroicons-chat-alt-2.svg"
 import { VotesModal } from "@fider/pages/ShowPost/components/VotesModal"
+import { IdeaBriefButton } from "@fider/components/IdeaBriefButton"
 
 import { ResponseDetails, Button, UserName, Moment, Markdown, Input, Form, Icon, Avatar, PoweredByFider, RSSModal, ResponseLozenge } from "@fider/components"
 import { CommentInput } from "@fider/pages/ShowPost/components/CommentInput"
@@ -449,6 +450,12 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
           {tags.length >= 1 && (
             <div className="pt-4">
               <TagsPanel post={post} tags={tags} onDataChanged={props.onDataChanged} />
+            </div>
+          )}
+
+          {!editMode && (
+            <div className="mt-2">
+              <IdeaBriefButton postNumber={post.number} />
             </div>
           )}
 
