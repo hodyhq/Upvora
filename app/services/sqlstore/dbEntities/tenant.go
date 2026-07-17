@@ -52,6 +52,12 @@ type Tenant struct {
 	ScorecardBandRefineLabel   string         `db:"scorecard_band_refine_label"`
 	ScorecardBandLowLabel      string         `db:"scorecard_band_low_label"`
 	ScorecardBandNoneLabel     string         `db:"scorecard_band_none_label"`
+	AIEnabled                  bool           `db:"ai_enabled"`
+	AIProvider                 string         `db:"ai_provider"`
+	AIAPIKey                   string         `db:"ai_api_key"`
+	AIModel                    string         `db:"ai_model"`
+	AICustomBaseURL            string         `db:"ai_custom_base_url"`
+	AICustomModel              string         `db:"ai_custom_model"`
 	ScorecardTriggerStatusSlug sql.NullString `db:"scorecard_trigger_status_slug"`
 }
 
@@ -106,6 +112,12 @@ func (t *Tenant) ToModel() *entity.Tenant {
 		ScorecardBandRefineLabel: t.ScorecardBandRefineLabel,
 		ScorecardBandLowLabel:    t.ScorecardBandLowLabel,
 		ScorecardBandNoneLabel:   t.ScorecardBandNoneLabel,
+		AIEnabled:                t.AIEnabled,
+		AIProvider:               t.AIProvider,
+		AIAPIKey:                 t.AIAPIKey,
+		AIModel:                  t.AIModel,
+		AICustomBaseURL:          t.AICustomBaseURL,
+		AICustomModel:            t.AICustomModel,
 	}
 
 	if t.ScorecardTriggerStatusSlug.Valid {

@@ -1,0 +1,168 @@
+@use "~@fider/assets/styles/variables.scss" as *;
+
+.c-vora {
+  display: flex;
+  flex-direction: column;
+  height: 420px;
+  border: 1px solid var(--colors-gray-200);
+  border-radius: 12px;
+  background-color: var(--colors-white);
+  overflow: hidden;
+
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--colors-gray-200);
+  }
+
+  &__name {
+    font-weight: 800;
+    font-size: 13px;
+    color: var(--colors-primary-base);
+    letter-spacing: 0.02em;
+  }
+
+  &__tag {
+    font-size: 11.5px;
+    color: var(--colors-gray-600);
+  }
+
+  &__close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--colors-gray-600);
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+
+    &:hover {
+      color: var(--colors-gray-900);
+    }
+  }
+
+  &__log {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  &__msg {
+    max-width: 88%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+
+    &--agent {
+      background-color: var(--colors-gray-100);
+      border: 1px solid var(--colors-gray-200);
+      border-bottom-left-radius: 4px;
+      align-self: flex-start;
+    }
+
+    &--user {
+      background-color: color-mix(in srgb, var(--colors-primary-base) 14%, var(--colors-white));
+      border: 1px solid color-mix(in srgb, var(--colors-primary-base) 32%, transparent);
+      border-bottom-right-radius: 4px;
+      align-self: flex-end;
+    }
+  }
+
+  &__thinking {
+    font-size: 12px;
+    color: var(--colors-gray-500);
+    padding: 2px 4px;
+  }
+
+  &__box {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--colors-gray-200);
+
+    input {
+      flex: 1;
+      font: inherit;
+      font-size: 13.5px;
+      color: var(--colors-gray-900);
+      background-color: var(--colors-gray-100);
+      border: 1px solid var(--colors-gray-200);
+      border-radius: 9px;
+      padding: 8px 11px;
+
+      &:focus {
+        outline: none;
+        border-color: var(--colors-primary-base);
+      }
+    }
+  }
+
+  &__send,
+  &__wrap {
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+    border: none;
+    border-radius: 9px;
+    padding: 8px 14px;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+  }
+
+  &__send {
+    color: #fff;
+    background-color: var(--colors-primary-base);
+    background-image: var(--brand-grad);
+  }
+
+  &__wrap {
+    color: var(--colors-primary-base);
+    background: none;
+    border: 1px solid color-mix(in srgb, var(--colors-primary-base) 50%, transparent);
+    white-space: nowrap;
+  }
+}
+
+// The button that opens Vora from the share-an-idea form
+.c-vora-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--colors-primary-base);
+  background: color-mix(in srgb, var(--colors-primary-base) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--colors-primary-base) 35%, transparent);
+  border-radius: 9px;
+  padding: 7px 13px;
+  cursor: pointer;
+
+  &:hover {
+    background: color-mix(in srgb, var(--colors-primary-base) 15%, transparent);
+  }
+}
+
+// Brief attached notice on the share form after Vora finishes
+.c-vora-attached {
+  margin-top: spacing(2);
+  border: 1px dashed var(--colors-gray-300);
+  border-radius: 9px;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  color: var(--colors-gray-700);
+
+  b {
+    color: var(--colors-gray-900);
+  }
+}

@@ -48,9 +48,17 @@ type Tenant struct {
 	ScorecardBandLowLabel      string `json:"scorecardBandLowLabel"`
 	ScorecardBandNoneLabel     string `json:"scorecardBandNoneLabel"`
 	ScorecardTriggerStatusSlug string `json:"scorecardTriggerStatusSlug"`
+	AIEnabled                  bool   `json:"aiEnabled,omitempty"`
+	// Provider configuration is server-only — the API key must never reach a client.
+	AIProvider      string `json:"-"`
+	AIAPIKey        string `json:"-"`
+	AIModel         string `json:"-"`
+	AICustomBaseURL string `json:"-"`
+	AICustomModel   string `json:"-"`
 	Statuses            []*Status         `json:"statuses,omitempty"`
 	ScorecardFields     []*ScorecardField `json:"scorecardFields,omitempty"`
 	Products            []*Product        `json:"products,omitempty"`
+	AIAgents            []*AIAgent        `json:"aiAgents,omitempty"` // sanitized: instructions never attached here
 	// ScheduledDeletionAt is set when the account owner has requested deletion of the whole
 	// site. The tenant stays active during the grace window; a background job performs the
 	// hard delete once this time passes. Not exposed to clients.

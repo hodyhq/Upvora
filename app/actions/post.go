@@ -26,6 +26,8 @@ type CreateNewPost struct {
 	TagSlugs    []string           `json:"tags"`
 	Attachments []*dto.ImageUpload `json:"attachments"`
 	ProductID   int                `json:"productId"`
+	// BriefMarkdown is Vora's plan document; optional, stored alongside the post.
+	BriefMarkdown string `json:"briefMarkdown"`
 
 	Tags []*entity.Tag
 }

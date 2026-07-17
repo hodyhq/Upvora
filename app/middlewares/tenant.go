@@ -41,6 +41,7 @@ func SingleTenant() web.MiddlewareFunc {
 				attachTenantStatuses(c, firstTenant.Result)
 				attachTenantScorecardFields(c, firstTenant.Result)
 				attachTenantProducts(c, firstTenant.Result)
+				attachTenantAIAgents(c, firstTenant.Result)
 			}
 
 			return next(c)
@@ -65,6 +66,7 @@ func MultiTenant() web.MiddlewareFunc {
 				attachTenantStatuses(c, byDomain.Result)
 				attachTenantScorecardFields(c, byDomain.Result)
 				attachTenantProducts(c, byDomain.Result)
+				attachTenantAIAgents(c, byDomain.Result)
 
 				if byDomain.Result.CNAME != "" && !c.IsAjax() {
 					baseURL := web.TenantBaseURL(c, byDomain.Result)
@@ -103,6 +105,29 @@ func attachTenantProducts(c *web.Context, tenant *entity.Tenant) {
 	q := &query.ListActiveProducts{}
 	if err := bus.Dispatch(c, q); err == nil && len(q.Result) > 0 {
 		tenant.Products = q.Result
+	}
+}
+
+// attachTenantAIAgents exposes which products have Vora enabled (and its
+// public description) so the share-idea flow renders with zero extra calls.
+// Instructions are ADMIN-ONLY and are stripped before attaching.
+func attachTenantAIAgents(c *web.Context, tenant *entity.Tenant) {
+	defer func() { _ = recover() }()
+	if !tenant.AIEnabled {
+		return
+	}
+	q := &query.ListAIAgents{}
+	if err := bus.Dispatch(c, q); err == nil && len(q.Result) > 0 {
+		sanitized := make([]*entity.AIAgent, 0, len(q.Result))
+		for _, a := range q.Result {
+			if !a.Enabled {
+				continue
+			}
+			sanitized = append(sanitized, &entity.AIAgent{ID: a.ID, ProductID: a.ProductID, Description: a.Description, Enabled: true})
+		}
+		if len(sanitized) > 0 {
+			tenant.AIAgents = sanitized
+		}
 	}
 }
 

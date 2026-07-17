@@ -1,0 +1,29 @@
+@use "~@fider/assets/styles/variables.scss" as *;
+
+.c-brief-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--colors-gray-700);
+  background-color: var(--colors-gray-100);
+  border: 1px solid var(--colors-gray-200);
+  border-radius: 8px;
+  padding: 5px 11px;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--colors-gray-900);
+    border-color: var(--colors-gray-300);
+  }
+}
+
+.c-brief-doc {
+  font-size: 14px;
+  line-height: 1.6;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 6px;
+}
