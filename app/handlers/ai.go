@@ -57,6 +57,13 @@ func aiRateAllow(userID int) bool {
 	return true
 }
 
+// extendWriteDeadline lifts this one connection past the server's global 10s
+// WriteTimeout — LLM turns routinely take 10-60s, and without this the server
+// silently kills the socket right as the (successful) response is written.
+func extendWriteDeadline(c *web.Context) {
+	_ = http.NewResponseController(c.Response.Writer).SetWriteDeadline(time.Now().Add(2 * time.Minute))
+}
+
 func resolveAgent(c *web.Context, productID int) (*entity.AIAgent, error) {
 	if c.Tenant() == nil || !c.Tenant().AIEnabled {
 		return nil, nil
@@ -103,6 +110,7 @@ func AIIdeate() web.HandlerFunc {
 		if !aiRateAllow(c.User().ID) {
 			return c.BadRequest(web.Map{"message": "You're moving fast — give Vora a minute and try again."})
 		}
+		extendWriteDeadline(c)
 
 		chat := &cmd.AIChatCompletion{
 			System:    buildSystemPrompt(c, agent, action.ProductID),
@@ -138,6 +146,7 @@ func AIFinalize() web.HandlerFunc {
 		if !aiRateAllow(c.User().ID) {
 			return c.BadRequest(web.Map{"message": "You're moving fast — give Vora a minute and try again."})
 		}
+		extendWriteDeadline(c)
 
 		// Public tags Vora may pick from; validated against this same list after.
 		allTags := &query.GetAllTags{}
