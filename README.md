@@ -60,6 +60,9 @@ Your brand color and four per-function accents (buttons, votes, links, header) a
 ### 🔄 One-click updates
 A System panel under the admin menu shows your installed version against the latest GitHub release (checked daily, re-check on demand) and — with the bundled updater sidecar — **updates your instance from the browser**. No SSH, no runbook, and the recovery steps are printed right on the panel for the day something goes wrong.
 
+### ✦ Vora — an AI ideation agent (optional)
+Turn rough thoughts into well-planned ideas: Vora interviews the submitter in chat, then drafts the title, a summary description, suggested tags, and a full **Idea Brief** — a structured plan saved with the post. Everything is reviewed and editable before submitting. Bring your own provider — Anthropic, OpenAI, or any OpenAI-compatible endpoint including a local LLM on your own network — with per-product interview instructions, admin-viewable conversation transcripts, and strict email privacy (the submitter's address is stored only as a token, never rendered to any browser). Off by default; one switch to enable.
+
 ### 🔐 Sign-in your users already have
 Passwordless email magic links out of the box, plus Google, GitHub, and any OAuth2/OIDC provider (Microsoft, Authentik, Keycloak…) — visitors bring an account they already own.
 
@@ -85,6 +88,7 @@ Upvora is a friendly fork of [Fider](https://fider.io) (AGPL-3.0). The engine �
 | Prioritization scorecard | — | ✅ custom dimensions, fields, weighted ring |
 | Internal notes & team-only comments | — | ✅ |
 | Theming | custom CSS | ✅ token-based color system + custom CSS |
+| AI ideation agent (Vora) | — | ✅ optional; BYO provider incl. local LLMs, Idea Briefs, transcripts |
 | In-app updates | — | ✅ System panel + updater sidecar |
 | Engine, API, SSO, i18n, webhooks | ✅ | ✅ inherited, kept current |
 
@@ -117,7 +121,7 @@ services:
     volumes: [db-data:/var/lib/postgresql/data]
 
   app:
-    image: ghcr.io/hodyhq/upvora:latest   # or pin a release tag, e.g. :v0.36.1.3.1
+    image: ghcr.io/hodyhq/upvora:latest   # or pin a release tag, e.g. :v0.36.1.4.9
     depends_on: [db]
     ports: ["3000:3000"]
     environment:

@@ -2,27 +2,18 @@
 
 ## Reporting a Vulnerability
 
-The Fider team takes security issues seriously. We appreciate your efforts to responsibly disclose your findings and will make every effort to acknowledge and address security issues promptly.
+Security reports are taken seriously and appreciated. Please disclose responsibly.
 
-### How to Report a Security Vulnerability
+**Preferred:** open a private report via GitHub — [Security → Report a vulnerability](https://github.com/hodyhq/Upvora/security/advisories/new) on this repository. Do not open public issues for security problems.
 
-If you believe you've found a security vulnerability in Fider, please send your report to:
+Include a description of the vulnerability, steps to reproduce, the potential impact, and any mitigations you've identified.
 
-**Email: contact@fider.io**
+Reports are acknowledged as quickly as possible and you'll receive updates as the issue is investigated and fixed.
 
-### What to Include in Your Report
+## Scope
 
-To help us better understand and address the issue, please include the following information in your report:
+This policy covers the Upvora application and the images published at `ghcr.io/hodyhq/upvora`. Issues that also affect the upstream [Fider](https://github.com/getfider/fider) engine will be coordinated with the upstream project.
 
-- Description of the vulnerability
-- Steps to reproduce the issue
-- Potential impact of the vulnerability
-- Any possible mitigations you've identified
+## No Bug Bounty Program
 
-### Response Timeline
-
-We'll acknowledge receipt of your vulnerability report within 4 days and will send you regular updates about our progress.
-
-### No Bug Bounty Program
-
-Unfortunately, we do not offer monetary rewards or bounties for vulnerability reports at this time.
+No monetary rewards or bounties are offered at this time.

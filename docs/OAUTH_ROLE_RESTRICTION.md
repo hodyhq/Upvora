@@ -40,7 +40,7 @@ Leave the **Allowed Roles** field empty.
 
 ## JSON User Roles Path
 
-The roles path tells Fider where to find roles in the OAuth profile response.
+The roles path tells Upvora where to find roles in the OAuth profile response.
 
 ### Examples
 
