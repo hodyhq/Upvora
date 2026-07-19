@@ -19,44 +19,43 @@
       background-color: var(--colors-gray-100);
     }
 
-    // Wider, more breathing room, rounded + soft brand-tinted border.
-    padding: spacing(8);
+    // Condensed like the board: tighter padding, rounded, brand-tinted border.
+    padding: spacing(6);
     border: 1px solid var(--colors-gray-200);
-    border-radius: 16px;
+    border-radius: 14px;
     box-shadow: 0 18px 48px -24px rgba(0, 0, 0, 0.5);
-    max-width: 860px;
+    max-width: 820px;
     width: 100%;
     margin: spacing(4) auto;
     flex-shrink: 0;
 
     h1 {
-      font-size: 28px;
+      font-size: 24px;
       font-weight: 800;
       letter-spacing: -0.02em;
+      margin-bottom: spacing(4);
     }
 
-    // Modern form fields — bigger, rounded, brand-accented focus. Scoped to
-    // .c-form-field so the Vora chat input (.c-vora__box) keeps its own style.
+    // Small uppercase brand labels — the board's condensed section style.
     .c-form-field > label {
-      font-size: 14px;
+      font-size: 11px;
       font-weight: 700;
-      color: var(--colors-gray-800);
-
-      @include dark-mode {
-        color: var(--colors-gray-800);
-      }
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--colors-gray-500);
+      padding-bottom: spacing(1);
     }
 
     .c-form-field input:not([type="checkbox"]):not([type="radio"]),
     .c-form-field select,
     .c-form-field textarea {
       width: 100%;
-      font-size: 15px;
+      font-size: 14px;
       color: var(--colors-gray-900);
       background-color: var(--colors-gray-50);
       border: 1px solid var(--colors-gray-200);
-      border-radius: 11px;
-      padding: 12px 14px;
+      border-radius: 9px;
+      padding: 9px 12px;
       transition: border-color 0.12s ease, box-shadow 0.12s ease;
 
       &:focus {
@@ -66,10 +65,10 @@
       }
     }
 
-    // TipTap rich-text editor — framed like the other fields.
+    // TipTap rich-text editor — framed like the other fields, but compact.
     .fider-tiptap-editor {
       border: 1px solid var(--colors-gray-200);
-      border-radius: 12px;
+      border-radius: 10px;
       background-color: var(--colors-gray-50);
       overflow: hidden;
       transition: border-color 0.12s ease, box-shadow 0.12s ease;
@@ -80,10 +79,10 @@
       }
 
       .ProseMirror {
-        min-height: 140px;
-        padding: 14px 16px;
-        font-size: 15px;
-        line-height: 1.6;
+        min-height: 92px;
+        padding: 10px 13px;
+        font-size: 14px;
+        line-height: 1.55;
       }
     }
 
@@ -132,10 +131,10 @@
 
 .c-share-feedback-form {
   .c-form-field {
-    margin-bottom: spacing(6);
+    margin-bottom: spacing(4);
 
     label {
-      padding-bottom: spacing(2);
+      padding-bottom: spacing(1);
     }
   }
 }
