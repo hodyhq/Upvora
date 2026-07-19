@@ -36,13 +36,14 @@
       margin-bottom: spacing(4);
     }
 
-    // Small uppercase brand labels — the board's condensed section style.
+    // Small uppercase brand labels — the board's condensed section style,
+    // in the brand color to match the board's rail headers.
     .c-form-field > label {
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: var(--colors-gray-500);
+      color: var(--colors-primary-base);
       padding-bottom: spacing(1);
     }
 
