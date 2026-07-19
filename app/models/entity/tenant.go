@@ -8,53 +8,59 @@ import (
 
 // Tenant represents a tenant
 type Tenant struct {
-	ID                  int               `json:"id"`
-	Name                string            `json:"name"`
-	Subdomain           string            `json:"subdomain"`
-	Invitation          string            `json:"invitation"`
-	WelcomeMessage      string            `json:"welcomeMessage"`
-	WelcomeHeader       string            `json:"welcomeHeader"`
-	DescriptionTemplate string            `json:"descriptionTemplate"`
-	CNAME               string            `json:"cname"`
-	Status              enum.TenantStatus `json:"status"`
-	Locale              string            `json:"locale"`
-	IsPrivate           bool              `json:"isPrivate"`
-	LogoBlobKey         string            `json:"logoBlobKey"`
-	CustomCSS           string            `json:"-"`
-	AllowedSchemes      string            `json:"allowedSchemes"`
-	IsEmailAuthAllowed  bool              `json:"isEmailAuthAllowed"`
-	IsFeedEnabled       bool              `json:"isFeedEnabled"`
-	PreventIndexing     bool              `json:"preventIndexing"`
-	IsModerationEnabled bool              `json:"isModerationEnabled"`
-	IsPro               bool              `json:"isPro"`
-	ShareIdeaInstructions string          `json:"shareIdeaInstructions"`
-	RailCtaHeading      string            `json:"railCtaHeading"`
-	RailCtaText         string            `json:"railCtaText"`
-	RailCtaButton       string            `json:"railCtaButton"`
-	DefaultTheme        string            `json:"defaultTheme"`
-	ThemePrimary        string            `json:"themePrimary"`
-	ThemeAccents        map[string]string `json:"themeAccents,omitempty"`
-	SiteBannerEnabled   bool              `json:"siteBannerEnabled"`
-	SiteBannerMessage   string            `json:"siteBannerMessage"`
-	SiteBannerVariant   string            `json:"siteBannerVariant"`
-	IsScorecardEnabled         bool   `json:"isScorecardEnabled"`
-	ScorecardBandStrong        int    `json:"scorecardBandStrong"`
-	ScorecardBandGood          int    `json:"scorecardBandGood"`
-	ScorecardBandRefine        int    `json:"scorecardBandRefine"`
-	ScorecardBandLow           int    `json:"scorecardBandLow"`
-	ScorecardBandStrongLabel   string `json:"scorecardBandStrongLabel"`
-	ScorecardBandGoodLabel     string `json:"scorecardBandGoodLabel"`
-	ScorecardBandRefineLabel   string `json:"scorecardBandRefineLabel"`
-	ScorecardBandLowLabel      string `json:"scorecardBandLowLabel"`
-	ScorecardBandNoneLabel     string `json:"scorecardBandNoneLabel"`
-	ScorecardTriggerStatusSlug string `json:"scorecardTriggerStatusSlug"`
-	AIEnabled                  bool   `json:"aiEnabled,omitempty"`
+	ID                         int               `json:"id"`
+	Name                       string            `json:"name"`
+	Subdomain                  string            `json:"subdomain"`
+	Invitation                 string            `json:"invitation"`
+	WelcomeMessage             string            `json:"welcomeMessage"`
+	WelcomeHeader              string            `json:"welcomeHeader"`
+	DescriptionTemplate        string            `json:"descriptionTemplate"`
+	CNAME                      string            `json:"cname"`
+	Status                     enum.TenantStatus `json:"status"`
+	Locale                     string            `json:"locale"`
+	IsPrivate                  bool              `json:"isPrivate"`
+	LogoBlobKey                string            `json:"logoBlobKey"`
+	CustomCSS                  string            `json:"-"`
+	AllowedSchemes             string            `json:"allowedSchemes"`
+	IsEmailAuthAllowed         bool              `json:"isEmailAuthAllowed"`
+	IsFeedEnabled              bool              `json:"isFeedEnabled"`
+	PreventIndexing            bool              `json:"preventIndexing"`
+	IsModerationEnabled        bool              `json:"isModerationEnabled"`
+	IsPro                      bool              `json:"isPro"`
+	ShareIdeaInstructions      string            `json:"shareIdeaInstructions"`
+	RailCtaHeading             string            `json:"railCtaHeading"`
+	RailCtaText                string            `json:"railCtaText"`
+	RailCtaButton              string            `json:"railCtaButton"`
+	DefaultTheme               string            `json:"defaultTheme"`
+	ThemePrimary               string            `json:"themePrimary"`
+	ThemeAccents               map[string]string `json:"themeAccents,omitempty"`
+	SiteBannerEnabled          bool              `json:"siteBannerEnabled"`
+	SiteBannerMessage          string            `json:"siteBannerMessage"`
+	SiteBannerVariant          string            `json:"siteBannerVariant"`
+	IsScorecardEnabled         bool              `json:"isScorecardEnabled"`
+	ScorecardBandStrong        int               `json:"scorecardBandStrong"`
+	ScorecardBandGood          int               `json:"scorecardBandGood"`
+	ScorecardBandRefine        int               `json:"scorecardBandRefine"`
+	ScorecardBandLow           int               `json:"scorecardBandLow"`
+	ScorecardBandStrongLabel   string            `json:"scorecardBandStrongLabel"`
+	ScorecardBandGoodLabel     string            `json:"scorecardBandGoodLabel"`
+	ScorecardBandRefineLabel   string            `json:"scorecardBandRefineLabel"`
+	ScorecardBandLowLabel      string            `json:"scorecardBandLowLabel"`
+	ScorecardBandNoneLabel     string            `json:"scorecardBandNoneLabel"`
+	ScorecardTriggerStatusSlug string            `json:"scorecardTriggerStatusSlug"`
+	AIEnabled                  bool              `json:"aiEnabled,omitempty"`
 	// Provider configuration is server-only — the API key must never reach a client.
 	AIProvider      string `json:"-"`
 	AIAPIKey        string `json:"-"`
 	AIModel         string `json:"-"`
 	AICustomBaseURL string `json:"-"`
 	AICustomModel   string `json:"-"`
+
+	// Web search (Vora grounding) — all server-only.
+	AIWebSearchEnabled  bool              `json:"-"`
+	AIWebSearchProvider string            `json:"-"` // "serper" | "searxng"
+	AIWebSearchAPIKey   string            `json:"-"`
+	AIWebSearchBaseURL  string            `json:"-"` // SearXNG instance URL
 	Statuses            []*Status         `json:"statuses,omitempty"`
 	ScorecardFields     []*ScorecardField `json:"scorecardFields,omitempty"`
 	Products            []*Product        `json:"products,omitempty"`

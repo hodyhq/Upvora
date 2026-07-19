@@ -11,15 +11,22 @@ type SetAISettings struct {
 	Model         string // provider-specific selector, e.g. "haiku", "sonnet-5", "luna", "terra"
 	CustomBaseURL string
 	CustomModel   string
+
+	// Web search
+	WebSearchEnabled  bool
+	WebSearchProvider string
+	WebSearchAPIKey   string // empty = keep stored
+	WebSearchBaseURL  string
 }
 
 // UpsertAIAgent creates or updates the agent config for a product
 // (ProductID nil = the default agent, used for General).
 type UpsertAIAgent struct {
-	ProductID    *int
-	Description  string
-	Instructions string
-	Enabled      bool
+	ProductID        *int
+	Description      string
+	Instructions     string
+	Enabled          bool
+	WebSearchEnabled bool
 }
 
 // SaveIdeaBrief attaches Vora's brief to a post. Content must already carry
@@ -39,4 +46,19 @@ type AIChatCompletion struct {
 	MaxTokens int
 
 	Result string
+}
+
+// AIWebSearch runs a web search through the tenant's configured provider
+// (Serper.dev or a self-hosted SearXNG). Results are used only as untrusted
+// grounding context for Vora — never executed or acted on.
+type AIWebSearch struct {
+	Query string
+
+	Result []AIWebSearchResult
+}
+
+type AIWebSearchResult struct {
+	Title   string
+	URL     string
+	Snippet string
 }

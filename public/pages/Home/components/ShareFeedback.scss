@@ -1,16 +1,11 @@
 @import "~@fider/assets/styles/variables.scss";
 
 .c-share-feedback {
-  background-color: var(--colors-gray-200);
+  // The fullscreen modal backdrop — brand glow washed over a deep ground.
+  background: radial-gradient(900px 460px at 88% -8%, var(--brand-glow), transparent 60%), var(--colors-gray-100);
 
   @include dark-mode {
-    background-color: var(--colors-gray-100);
-  }
-
-  @include dark-mode {
-    input {
-      background-color: var(--colors-gray-100);
-    }
+    background: radial-gradient(900px 460px at 88% -8%, var(--brand-glow), transparent 60%), var(--colors-gray-50);
   }
 
   display: flex;
@@ -21,19 +16,47 @@
     background-color: var(--colors-white);
 
     @include dark-mode {
-      background-color: var(--colors-gray-200);
+      background-color: var(--colors-gray-100);
     }
 
-    padding: spacing(6);
-    border-radius: get("border.radius.large");
-    max-width: 720px;
-    margin: 0 auto spacing(4);
+    // Wider, more breathing room, rounded + soft brand-tinted border.
+    padding: spacing(8);
+    border: 1px solid var(--colors-gray-200);
+    border-radius: 16px;
+    box-shadow: 0 18px 48px -24px rgba(0, 0, 0, 0.5);
+    max-width: 860px;
+    width: 100%;
+    margin: spacing(4) auto;
     flex-shrink: 0;
+
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
   }
 
   .c-modal-content {
     flex: 1;
     overflow-y: auto;
+    padding: spacing(2);
+  }
+
+  // Mobile: edge-to-edge card, tighter padding, no side margin.
+  @media (max-width: 640px) {
+    &__content {
+      padding: spacing(4);
+      border-radius: 12px;
+      margin: spacing(2) auto;
+    }
+
+    .c-modal-content {
+      padding: 0;
+    }
+
+    &__content h1 {
+      font-size: 22px;
+    }
   }
 }
 

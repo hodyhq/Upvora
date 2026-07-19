@@ -149,22 +149,55 @@
   }
 }
 
-// The button that opens Vora from the share-an-idea form
+// The button that opens Vora from the share-an-idea form — a large, centered,
+// gradient call-to-action so it's the obvious first move.
 .c-vora-cta {
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 7px;
-  font-size: 13px;
-  font-weight: 650;
-  color: var(--colors-primary-base);
-  background: color-mix(in srgb, var(--colors-primary-base) 9%, transparent);
-  border: 1px solid color-mix(in srgb, var(--colors-primary-base) 35%, transparent);
-  border-radius: 9px;
-  padding: 7px 13px;
+  gap: 3px;
+  width: 100%;
+  text-align: center;
+  color: #fff;
+  background-image: var(--brand-grad);
+  border: none;
+  border-radius: 14px;
+  padding: 18px 24px;
   cursor: pointer;
+  box-shadow: 0 10px 26px -10px var(--brand-glow);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+
+  &__title {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  &__sub {
+    font-size: 12.5px;
+    font-weight: 500;
+    opacity: 0.92;
+  }
 
   &:hover {
-    background: color-mix(in srgb, var(--colors-primary-base) 15%, transparent);
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+    box-shadow: 0 14px 32px -10px var(--brand-glow);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  @media (max-width: 640px) {
+    padding: 16px 18px;
+
+    &__title {
+      font-size: 16px;
+    }
   }
 }
 

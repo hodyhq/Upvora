@@ -286,6 +286,7 @@ func getFirstTenant(ctx context.Context, q *query.GetFirstTenant) error {
 			t.is_scorecard_enabled, t.scorecard_band_strong, t.scorecard_band_good, t.scorecard_band_refine, t.scorecard_band_low, t.scorecard_trigger_status_slug,
 			t.scorecard_band_strong_label, t.scorecard_band_good_label, t.scorecard_band_refine_label, t.scorecard_band_low_label, t.scorecard_band_none_label,
 			t.ai_enabled, t.ai_provider, t.ai_api_key, t.ai_model, t.ai_custom_base_url, t.ai_custom_model,
+			t.ai_web_search_enabled, t.ai_web_search_provider, t.ai_web_search_api_key, t.ai_web_search_base_url,
 			(b.paddle_subscription_id IS NOT NULL AND b.stripe_subscription_id IS NULL) AS has_paddle_subscription
 		FROM tenants t
 		LEFT JOIN tenants_billing b ON b.tenant_id = t.id
@@ -310,6 +311,7 @@ func getTenantByDomain(ctx context.Context, q *query.GetTenantByDomain) error {
 			t.is_scorecard_enabled, t.scorecard_band_strong, t.scorecard_band_good, t.scorecard_band_refine, t.scorecard_band_low, t.scorecard_trigger_status_slug,
 			t.scorecard_band_strong_label, t.scorecard_band_good_label, t.scorecard_band_refine_label, t.scorecard_band_low_label, t.scorecard_band_none_label,
 			t.ai_enabled, t.ai_provider, t.ai_api_key, t.ai_model, t.ai_custom_base_url, t.ai_custom_model,
+			t.ai_web_search_enabled, t.ai_web_search_provider, t.ai_web_search_api_key, t.ai_web_search_base_url,
 			(b.paddle_subscription_id IS NOT NULL AND b.stripe_subscription_id IS NULL) AS has_paddle_subscription
 		FROM tenants t
 		LEFT JOIN tenants_billing b ON b.tenant_id = t.id

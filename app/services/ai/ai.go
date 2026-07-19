@@ -42,6 +42,7 @@ func (s Service) Enabled() bool {
 
 func (s Service) Init() {
 	bus.AddHandler(chatCompletion)
+	bus.AddHandler(webSearch)
 }
 
 // LLM calls routinely outlast the 30s global HTTP client (a long finalize on
@@ -65,6 +66,11 @@ func aiPost(url string, headers map[string]string, body []byte) (int, []byte, er
 	}()
 	out, err := io.ReadAll(io.LimitReader(res.Body, 4<<20))
 	return res.StatusCode, out, err
+}
+
+// readLimited reads a response body with the same 4MB ceiling as aiPost.
+func readLimited(res *http.Response) ([]byte, error) {
+	return io.ReadAll(io.LimitReader(res.Body, 4<<20))
 }
 
 // UI model selectors map to real model IDs server-side so clients never
