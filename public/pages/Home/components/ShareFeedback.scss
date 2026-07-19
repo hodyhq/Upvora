@@ -34,6 +34,64 @@
       font-weight: 800;
       letter-spacing: -0.02em;
     }
+
+    // Modern form fields — bigger, rounded, brand-accented focus. Scoped to
+    // .c-form-field so the Vora chat input (.c-vora__box) keeps its own style.
+    .c-form-field > label {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--colors-gray-800);
+
+      @include dark-mode {
+        color: var(--colors-gray-800);
+      }
+    }
+
+    .c-form-field input:not([type="checkbox"]):not([type="radio"]),
+    .c-form-field select,
+    .c-form-field textarea {
+      width: 100%;
+      font-size: 15px;
+      color: var(--colors-gray-900);
+      background-color: var(--colors-gray-50);
+      border: 1px solid var(--colors-gray-200);
+      border-radius: 11px;
+      padding: 12px 14px;
+      transition: border-color 0.12s ease, box-shadow 0.12s ease;
+
+      &:focus {
+        outline: none;
+        border-color: var(--colors-primary-base);
+        box-shadow: 0 0 0 3px var(--brand-glow);
+      }
+    }
+
+    // TipTap rich-text editor — framed like the other fields.
+    .fider-tiptap-editor {
+      border: 1px solid var(--colors-gray-200);
+      border-radius: 12px;
+      background-color: var(--colors-gray-50);
+      overflow: hidden;
+      transition: border-color 0.12s ease, box-shadow 0.12s ease;
+
+      &:focus-within {
+        border-color: var(--colors-primary-base);
+        box-shadow: 0 0 0 3px var(--brand-glow);
+      }
+
+      .ProseMirror {
+        min-height: 140px;
+        padding: 14px 16px;
+        font-size: 15px;
+        line-height: 1.6;
+      }
+    }
+
+    .c-editor-toolbar {
+      border: none;
+      border-bottom: 1px solid var(--colors-gray-200);
+      background-color: color-mix(in srgb, var(--colors-primary-base) 5%, transparent);
+    }
   }
 
   .c-modal-content {
@@ -56,6 +114,18 @@
 
     &__content h1 {
       font-size: 22px;
+    }
+
+    // >=16px font stops iOS Safari from zooming when a field is focused.
+    &__content .c-form-field input:not([type="checkbox"]):not([type="radio"]),
+    &__content .c-form-field select,
+    &__content .c-form-field textarea,
+    &__content .fider-tiptap-editor .ProseMirror {
+      font-size: 16px;
+    }
+
+    &__content .fider-tiptap-editor .ProseMirror {
+      min-height: 120px;
     }
   }
 }

@@ -52,7 +52,7 @@ export const IdeaBriefButton = (props: IdeaBriefButtonProps) => {
       <button type="button" className="c-brief-btn" onClick={() => setIsOpen(true)}>
         📄 View Idea Brief
       </button>
-      <Modal.Window isOpen={isOpen} onClose={() => setIsOpen(false)} center={false} size="large">
+      <Modal.Window className="c-brief-modal" isOpen={isOpen} onClose={() => setIsOpen(false)} center={false} size="large">
         <Modal.Content>
           <div className="c-brief-doc">
             <Markdown text={content} style="full" />

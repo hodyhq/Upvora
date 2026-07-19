@@ -20,27 +20,59 @@
   }
 }
 
+// Wider than the default 750px "large" modal — two classes beat --large.
+.c-modal-window.c-brief-modal {
+  width: 100%;
+
+  @media (min-width: 768px) {
+    width: 960px;
+  }
+}
+
 .c-brief-doc {
-  font-size: 14px;
-  line-height: 1.6;
-  max-height: 70vh;
+  font-size: 15px;
+  line-height: 1.65;
+  max-height: 72vh;
   overflow-y: auto;
-  padding-right: 6px;
+  padding-right: 12px;
+
+  // Modern thin, rounded, brand-tinted scrollbar.
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--colors-primary-base) 45%, transparent) transparent;
+
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--colors-primary-base) 38%, transparent);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+
+    &:hover {
+      background: color-mix(in srgb, var(--colors-primary-base) 60%, transparent);
+      background-clip: content-box;
+    }
+  }
 }
 
 // Admin-only Vora transcript inside the brief modal — bubbles reuse .c-vora__msg
 .c-brief-chat {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 16px;
-  padding-top: 14px;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 18px;
   border-top: 1px solid var(--colors-gray-200);
 
   h3 {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--colors-gray-600);
-    margin: 0 0 4px;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--colors-primary-base);
+    letter-spacing: 0.01em;
+    margin: 0 0 6px;
   }
 }
