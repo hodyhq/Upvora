@@ -10,6 +10,7 @@ interface AgentConfig {
   description: string
   instructions: string
   enabled: boolean
+  webSearchEnabled: boolean
 }
 
 interface ManageAIPageProps {
@@ -20,6 +21,10 @@ interface ManageAIPageProps {
   customBaseUrl: string
   customModel: string
   hasKey: boolean
+  webSearchEnabled: boolean
+  webSearchProvider: string
+  webSearchBaseUrl: string
+  webSearchHasKey: boolean
 }
 
 interface ManageAIPageState {
@@ -32,6 +37,12 @@ interface ManageAIPageState {
   agents: AgentConfig[]
   busy: boolean
   hasKey: boolean
+  keyRevealed: boolean
+  webSearchEnabled: boolean
+  webSearchProvider: string
+  webSearchApiKey: string
+  webSearchBaseUrl: string
+  webSearchHasKey: boolean
 }
 
 const claudeModels = [
@@ -55,11 +66,11 @@ export default class ManageAIPage extends AdminBasePage<ManageAIPageProps, Manag
     super(props)
     const agents = [...props.agents]
     if (!agents.some((a) => a.productId === null)) {
-      agents.unshift({ id: 0, productId: null, description: "", instructions: "", enabled: true })
+      agents.unshift({ id: 0, productId: null, description: "", instructions: "", enabled: true, webSearchEnabled: false })
     }
     for (const p of Fider.session.tenant.products ?? []) {
       if (!agents.some((a) => a.productId === p.id)) {
-        agents.push({ id: 0, productId: p.id, description: "", instructions: "", enabled: false })
+        agents.push({ id: 0, productId: p.id, description: "", instructions: "", enabled: false, webSearchEnabled: false })
       }
     }
     this.state = {
@@ -72,6 +83,12 @@ export default class ManageAIPage extends AdminBasePage<ManageAIPageProps, Manag
       agents,
       busy: false,
       hasKey: props.hasKey,
+      keyRevealed: false,
+      webSearchEnabled: props.webSearchEnabled,
+      webSearchProvider: props.webSearchProvider || "serper",
+      webSearchApiKey: "",
+      webSearchBaseUrl: props.webSearchBaseUrl,
+      webSearchHasKey: props.webSearchHasKey,
     }
   }
 
@@ -84,11 +101,20 @@ export default class ManageAIPage extends AdminBasePage<ManageAIPageProps, Manag
       model: this.state.model,
       customBaseUrl: this.state.customBaseUrl,
       customModel: this.state.customModel,
+      webSearchEnabled: this.state.webSearchEnabled,
+      webSearchProvider: this.state.webSearchProvider,
+      webSearchApiKey: this.state.webSearchApiKey,
+      webSearchBaseUrl: this.state.webSearchBaseUrl,
     })
     this.setState({ busy: false })
     if (result.ok) {
       notify.success("AI settings saved.")
-      this.setState((prev) => ({ apiKey: "", hasKey: prev.hasKey || prev.apiKey.trim() !== "" }))
+      this.setState((prev) => ({
+        apiKey: "",
+        hasKey: prev.hasKey || prev.apiKey.trim() !== "",
+        webSearchApiKey: "",
+        webSearchHasKey: prev.webSearchHasKey || prev.webSearchApiKey.trim() !== "",
+      }))
     } else {
       notify.error(result.error?.errors?.[0]?.message || "Failed to save AI settings.")
     }
@@ -100,6 +126,7 @@ export default class ManageAIPage extends AdminBasePage<ManageAIPageProps, Manag
       description: agent.description,
       instructions: agent.instructions,
       enabled: agent.enabled,
+      webSearchEnabled: agent.webSearchEnabled,
     })
     if (result.ok) {
       notify.success("Vora updated.")
@@ -123,7 +150,20 @@ export default class ManageAIPage extends AdminBasePage<ManageAIPageProps, Manag
 
   private setModelsForProvider(provider: string) {
     const model = provider === "openai" ? "luna" : provider === "claude" ? "sonnet-5" : ""
-    this.setState({ provider, model })
+    // switching provider hides any revealed key again
+    this.setState({ provider, model, keyRevealed: false })
+  }
+
+  // revealKey fetches the stored provider key so a custom-AI admin can see what
+  // they saved (handy for self-hosted / local endpoints). Admin-only endpoint;
+  // the server only returns it for the custom provider.
+  private revealKey = async () => {
+    const result = await actions.getAIProviderKey()
+    if (result.ok && result.data.apiKey) {
+      this.setState({ apiKey: result.data.apiKey, keyRevealed: true })
+    } else {
+      notify.error(result.error?.errors?.[0]?.message || "Couldn't reveal the saved key.")
+    }
   }
 
   public content() {
@@ -181,24 +221,122 @@ export default class ManageAIPage extends AdminBasePage<ManageAIPageProps, Manag
               autoComplete="off"
             />
             {s.hasKey ? (
-              <p style={{ fontSize: 12.5, fontWeight: 650, color: "var(--colors-green-600)", display: "flex", alignItems: "center", gap: 6 }}>
+              <p style={{ fontSize: 12.5, fontWeight: 650, color: "var(--colors-green-600)", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                 <span
                   style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--colors-green-600)", boxShadow: "0 0 6px var(--colors-green-600)" }}
                 />
                 A key is saved for this site
-                <span className="text-muted" style={{ fontWeight: 400 }}>
-                  — write-only; it is never shown or sent back to any browser
-                </span>
+                {s.provider === "custom" && !s.keyRevealed && (
+                  <button
+                    type="button"
+                    onClick={this.revealKey}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      cursor: "pointer",
+                      color: "var(--colors-primary-base)",
+                      fontWeight: 650,
+                      fontSize: 12.5,
+                    }}
+                  >
+                    reveal saved key
+                  </button>
+                )}
+                {s.keyRevealed && (
+                  <span className="text-muted" style={{ fontWeight: 400 }}>
+                    — shown above; it will not be re-hidden until you reload
+                  </span>
+                )}
               </p>
             ) : (
               <p className="text-muted" style={{ fontSize: 12 }}>
-                No key saved yet. Keys are write-only: stored server-side, never shown or sent back to any browser.
+                No key saved yet. Keys are stored server-side. For hosted providers (Claude / OpenAI) they are write-only; for a Custom provider you can reveal
+                the saved key here.
               </p>
             )}
           </Form>
           <Button variant="primary" disabled={s.busy} onClick={this.saveSettings}>
             Save AI settings
           </Button>
+        </div>
+
+        <div>
+          <h2>Web search</h2>
+          <p className="text-muted" style={{ fontSize: 13 }}>
+            Let Vora look things up on the web to ground ideas in current information. Vora decides when to search based on each product&apos;s instructions
+            below — tell her when it helps (e.g. &quot;search for existing tools before proposing one&quot;). Enable it per product in the cards below.
+          </p>
+          <HStack spacing={2} align="center" className="mt-2">
+            <Toggle
+              active={s.webSearchEnabled}
+              onToggle={(webSearchEnabled) => this.setState({ webSearchEnabled })}
+              label={s.webSearchEnabled ? "On" : "Off"}
+            />
+            <span className="text-muted" style={{ fontSize: 12 }}>
+              master switch for web search
+            </span>
+          </HStack>
+          {s.webSearchEnabled && (
+            <>
+              <HStack spacing={2} className="mt-2">
+                {[
+                  { value: "serper", label: "Serper.dev" },
+                  { value: "searxng", label: "SearXNG (self-hosted)" },
+                ].map((p) => (
+                  <Button
+                    key={p.value}
+                    size="small"
+                    variant={s.webSearchProvider === p.value ? "primary" : "tertiary"}
+                    onClick={() => this.setState({ webSearchProvider: p.value })}
+                  >
+                    {p.label}
+                  </Button>
+                ))}
+              </HStack>
+              <Form className="mt-2">
+                {s.webSearchProvider === "serper" ? (
+                  <>
+                    <Input
+                      field="webSearchApiKey"
+                      label="Serper.dev API key"
+                      value={s.webSearchApiKey}
+                      onChange={(webSearchApiKey) => this.setState({ webSearchApiKey })}
+                      placeholder={s.webSearchHasKey ? "•••••••••••••••• enter a new key to replace the saved one" : "paste your Serper.dev API key"}
+                      autoComplete="off"
+                    />
+                    <p className="text-muted" style={{ fontSize: 12 }}>
+                      Get a free key at{" "}
+                      <a href="https://serper.dev" target="_blank" rel="noopener noreferrer" style={{ color: "var(--colors-primary-base)" }}>
+                        serper.dev
+                      </a>{" "}
+                      (2,500 free searches). {s.webSearchHasKey && <span style={{ color: "var(--colors-green-600)", fontWeight: 650 }}>● A key is saved.</span>}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Input
+                      field="webSearchBaseUrl"
+                      label="SearXNG instance URL"
+                      value={s.webSearchBaseUrl}
+                      onChange={(webSearchBaseUrl) => this.setState({ webSearchBaseUrl })}
+                      placeholder="https://searxng.example.com"
+                    />
+                    <p className="text-muted" style={{ fontSize: 12 }}>
+                      Free &amp; open-source — self-host{" "}
+                      <a href="https://docs.searxng.org" target="_blank" rel="noopener noreferrer" style={{ color: "var(--colors-primary-base)" }}>
+                        SearXNG
+                      </a>{" "}
+                      and point Vora at it. Enable its JSON format (<code>search.formats: [html, json]</code>). No API key or per-query cost.
+                    </p>
+                  </>
+                )}
+              </Form>
+              <Button variant="primary" disabled={s.busy} onClick={this.saveSettings}>
+                Save AI settings
+              </Button>
+            </>
+          )}
         </div>
 
         <div>
@@ -227,10 +365,20 @@ export default class ManageAIPage extends AdminBasePage<ManageAIPageProps, Manag
                     label="Instructions (how Vora interviews for this product)"
                     value={agent.instructions}
                     onChange={(instructions) => this.setAgent(idx, { instructions })}
-                    placeholder="Ask about the problem before solutions. Always cover workflow, owner, and success measure…"
+                    placeholder="Ask about the problem before solutions. Always cover workflow, owner, and success measure. Search the web when it helps ground the idea…"
                   />
                 </Form>
-                <Button size="small" variant="secondary" onClick={() => this.saveAgent(agent)}>
+                <HStack spacing={2} align="center" className="mt-2">
+                  <Toggle
+                    active={agent.webSearchEnabled}
+                    onToggle={(webSearchEnabled) => this.setAgent(idx, { webSearchEnabled })}
+                    disabled={!s.webSearchEnabled}
+                  />
+                  <span className="text-muted" style={{ fontSize: 12 }}>
+                    {s.webSearchEnabled ? "let Vora search the web for this product" : "web search off site-wide — enable it above first"}
+                  </span>
+                </HStack>
+                <Button size="small" variant="secondary" className="mt-2" onClick={() => this.saveAgent(agent)}>
                   Save agent
                 </Button>
               </div>
