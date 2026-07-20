@@ -13,6 +13,7 @@ import (
 var aiProviders = map[string]bool{"claude": true, "openai": true, "custom": true}
 var aiClaudeModels = map[string]bool{"haiku": true, "sonnet-5": true}
 var aiOpenAIModels = map[string]bool{"luna": true, "terra": true}
+var aiWebSearchProviders = map[string]bool{"serper": true, "searxng": true}
 
 // UpdateAISettings is the admin action behind the AI settings tab. An empty
 // APIKey keeps the stored key (the key is write-only from the client's view).
@@ -23,6 +24,12 @@ type UpdateAISettings struct {
 	Model         string `json:"model"`
 	CustomBaseURL string `json:"customBaseUrl"`
 	CustomModel   string `json:"customModel"`
+
+	// Web search — same write-only key convention.
+	WebSearchEnabled  bool   `json:"webSearchEnabled"`
+	WebSearchProvider string `json:"webSearchProvider"`
+	WebSearchAPIKey   string `json:"webSearchApiKey"`
+	WebSearchBaseURL  string `json:"webSearchBaseUrl"`
 }
 
 func (a *UpdateAISettings) IsAuthorized(ctx context.Context, user *entity.User) bool {
@@ -58,15 +65,27 @@ func (a *UpdateAISettings) Validate(ctx context.Context, user *entity.User) *val
 	if len(a.APIKey) > 500 {
 		result.AddFieldFailure("apiKey", "That doesn't look like an API key.")
 	}
+	if a.WebSearchEnabled {
+		if !aiWebSearchProviders[a.WebSearchProvider] {
+			result.AddFieldFailure("webSearchProvider", "Web search provider must be serper or searxng.")
+		}
+		if a.WebSearchProvider == "searxng" && !isAllowedCustomBaseURL(a.WebSearchBaseURL) {
+			result.AddFieldFailure("webSearchBaseUrl", "SearXNG URL must be https:// (plain http is allowed only for private-network hosts).")
+		}
+	}
+	if len(a.WebSearchAPIKey) > 500 {
+		result.AddFieldFailure("webSearchApiKey", "That doesn't look like an API key.")
+	}
 	return result
 }
 
 // UpsertAIAgentAction configures Vora for one product (or the default).
 type UpsertAIAgentAction struct {
-	ProductID    *int   `json:"productId"`
-	Description  string `json:"description"`
-	Instructions string `json:"instructions"`
-	Enabled      bool   `json:"enabled"`
+	ProductID        *int   `json:"productId"`
+	Description      string `json:"description"`
+	Instructions     string `json:"instructions"`
+	Enabled          bool   `json:"enabled"`
+	WebSearchEnabled bool   `json:"webSearchEnabled"`
 }
 
 func (a *UpsertAIAgentAction) IsAuthorized(ctx context.Context, user *entity.User) bool {

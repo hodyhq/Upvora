@@ -213,6 +213,7 @@ func routes(r *web.Engine) *web.Engine {
 
 		ui.Get("/admin/ai", handlers.ManageAIPage())
 		ui.Post("/_api/admin/settings/ai", handlers.UpdateAISettings())
+		ui.Get("/_api/admin/settings/ai/key", handlers.GetAIProviderKey())
 		ui.Post("/_api/admin/ai/agents", handlers.UpsertAIAgentHandler())
 		ui.Get("/_api/posts/:number/brief/download", handlers.DownloadIdeaBrief())
 		ui.Get("/_api/posts/:number/brief/transcript", handlers.GetBriefTranscript())

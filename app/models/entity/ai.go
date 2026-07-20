@@ -10,6 +10,9 @@ type AIAgent struct {
 	Description  string `json:"description"`
 	Instructions string `json:"instructions"`
 	Enabled      bool   `json:"enabled"`
+	// WebSearchEnabled lets this product's agent ground answers with web
+	// search (only when the site has web search configured).
+	WebSearchEnabled bool `json:"webSearchEnabled"`
 }
 
 // IdeaBrief is the markdown document Vora writes with the submitter. The

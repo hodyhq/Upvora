@@ -254,7 +254,8 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
           {voraAvailable && !voraOpen && !briefMarkdown && (
             <div className="mb-4">
               <button type="button" className="c-vora-cta" onClick={() => setVoraOpen(true)}>
-                ✦ Talk it through with Vora
+                <span className="c-vora-cta__title">✦ Talk it through with Vora</span>
+                <span className="c-vora-cta__sub">Not sure how to phrase it? Vora interviews you and drafts the whole idea.</span>
               </button>
             </div>
           )}

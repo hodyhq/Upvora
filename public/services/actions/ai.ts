@@ -31,10 +31,24 @@ export const updateAISettings = async (settings: {
   model: string
   customBaseUrl: string
   customModel: string
+  webSearchEnabled: boolean
+  webSearchProvider: string
+  webSearchApiKey: string
+  webSearchBaseUrl: string
 }): Promise<Result> => {
   return http.post(`/_api/admin/settings/ai`, settings)
 }
 
-export const upsertAIAgent = async (agent: { productId: number | null; description: string; instructions: string; enabled: boolean }): Promise<Result> => {
+export const getAIProviderKey = async (): Promise<Result<{ apiKey: string }>> => {
+  return http.get<{ apiKey: string }>(`/_api/admin/settings/ai/key`)
+}
+
+export const upsertAIAgent = async (agent: {
+  productId: number | null
+  description: string
+  instructions: string
+  enabled: boolean
+  webSearchEnabled: boolean
+}): Promise<Result> => {
   return http.post(`/_api/admin/ai/agents`, agent)
 }
