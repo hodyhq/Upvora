@@ -915,7 +915,30 @@
     }
   }
 
-  // admin variant — rows are not click-through
+  // admin variant — rows are not click-through.
+  // Fixed layout locks the catalogue table to the card width so it can NEVER
+  // overflow (auto layout rendered at content width and spilled off the right
+  // edge on narrower viewports — the scrollbar was gone but the columns still
+  // ran off-card). Structural columns get width hints; Question (2nd column)
+  // stays auto so it flexes with the available space; all cell text wraps
+  // (overflow-wrap below), so long content goes to a second line, never wider.
+  &__table--static {
+    table-layout: fixed;
+
+    th,
+    td {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+
+    th:nth-child(1) { width: 104px; } // Order (reorder arrows + number)
+    th:nth-child(3) { width: 84px; }  // Type
+    th:nth-child(4) { width: 172px; } // Group
+    th:nth-child(5) { width: 68px; }  // Weight
+    th:nth-child(6) { width: 144px; } // Usage
+    th:nth-child(7) { width: 116px; } // Actions
+  }
+
   &__table--static tbody tr {
     cursor: default;
 
