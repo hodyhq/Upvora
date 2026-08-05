@@ -406,7 +406,7 @@ export class ScorecardFieldsSection extends React.Component<ScorecardFieldsSecti
                           : "never answered"}
                       </td>
                       <td className="is-right">
-                        <HStack spacing={2}>
+                        <HStack spacing={2} className="c-scorecard__row-actions">
                           <Button variant="tertiary" size="small" onClick={() => this.openEdit(f)} disabled={!canEdit}>
                             Edit
                           </Button>

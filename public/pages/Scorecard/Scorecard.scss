@@ -848,20 +848,34 @@
   }
 
   &__table-wrap {
-    overflow-x: auto;
+    // Wrap-to-fit instead of scroll: cells wrap so the table never exceeds the
+    // card. Was overflow-x:auto, which hid long catalogues behind a sideways
+    // scrollbar and pushed the Actions column past the card edge.
+    overflow-x: visible;
   }
 
-  // Actions never clip: the cell hugs its buttons on one line and the wide
-  // Question column absorbs the flexible space instead (was pushing the
-  // Delete/Deactivate buttons past the card edge on long catalogues).
+  // Actions column hugs its buttons on the right; the wide Question column
+  // absorbs the flexible space. The buttons wrap to a second line (see
+  // &__row-actions) rather than widening the table.
+  &__table th:last-child {
+    white-space: nowrap;
+  }
   &__table th:last-child,
   &__table td:last-child {
-    white-space: nowrap;
     width: 1%;
+  }
+
+  // Actions buttons stack to a second line when the row gets cramped, instead
+  // of forcing horizontal scroll.
+  &__row-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: 6px;
   }
 
   &__table {
     width: 100%;
+    max-width: 100%;
     border-collapse: collapse;
 
     thead th {
@@ -908,6 +922,12 @@
     &:hover {
       background: transparent;
     }
+  }
+
+  // Admin catalogue: long field labels / keys / usage text wrap to a second
+  // line instead of widening the table past the card edge.
+  &__table--static td {
+    overflow-wrap: anywhere;
   }
 
   // status callout — the weight-sum banner and similar admin notices
