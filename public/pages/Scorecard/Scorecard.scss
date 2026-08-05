@@ -848,11 +848,18 @@
   }
 
   &__table-wrap {
-    // Scrollbar only as a last resort (public scorecard list / very narrow
-    // viewports). The admin catalogue avoids it by wrapping its own cells
-    // (see &__table--catalogue) rather than by removing overflow here — which
-    // previously let auto-layout tables spill off the card with no scrollbar.
+    // Scrollbar only as a last resort for tables that can't wrap (public
+    // scorecard list, statuses, products). The admin catalogue is exempted
+    // below — it must never scroll.
     overflow-x: auto;
+  }
+
+  // The catalogue fits by wrapping its cells (see &__table--catalogue), so it
+  // must NEVER show a horizontal scrollbar — that was the whole requirement.
+  // Force its wrapper to visible; if a browser lacks :has(), it falls back to
+  // the auto above, which still won't scroll because the table already fits.
+  &__table-wrap:has(.c-scorecard__table--catalogue) {
+    overflow-x: visible;
   }
 
   // Actions column hugs its buttons on the right; the wide Question column
