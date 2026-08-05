@@ -355,7 +355,7 @@ export class ScorecardFieldsSection extends React.Component<ScorecardFieldsSecti
             </div>
           </div>
           <div className="c-scorecard__table-wrap">
-            <table className="c-scorecard__table c-scorecard__table--static c-status-table">
+            <table className="c-scorecard__table c-scorecard__table--static c-status-table c-scorecard__table--catalogue">
               <thead>
                 <tr>
                   <th>Order</th>
