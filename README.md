@@ -84,7 +84,7 @@ Upvora is a friendly fork of [Fider](https://fider.io) (AGPL-3.0). The engine �
 | Feedback board, voting, discussion | ✅ | ✅ redesigned — dark-first, dense, inline voting |
 | Statuses | fixed set | ✅ fully custom (names, colors, home-page visibility) |
 | Multiple products per portal | — | ✅ chips, filters, `/p/slug` public boards |
-| Public roadmap | — | ✅ lanes, filters, drag-to-restatus |
+| Public roadmap | ✅ | ✅ lanes, filters, drag-to-restatus |
 | Prioritization scorecard | — | ✅ custom dimensions, fields, weighted ring |
 | Internal notes & team-only comments | — | ✅ |
 | Theming | custom CSS | ✅ token-based color system + custom CSS |
