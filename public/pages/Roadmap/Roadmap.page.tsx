@@ -59,6 +59,9 @@ const RoadmapPost = (props: {
   const isPending = isModerationEnabled && !props.post.isApproved
   // Anything in a closed-completed kind hides the upvote affordance.
   const isCompleted = props.kind === "closed-completed" || props.status === "completed"
+  // Simple `votes` identifier so the Plural macro's ICU variable name matches
+  // the shared label.votecount catalog ({votes, plural, ...}).
+  const votes = props.post.votesCount
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (props.onPostClick) {
@@ -131,8 +134,8 @@ const RoadmapPost = (props: {
             onClick={handleVote}
             title="Vote"
           >
-            ▲ <span className="text-semibold">{props.post.votesCount}</span>{" "}
-            <Plural id="label.votecount" value={props.post.votesCount} one="Vote" other="Votes" />
+            ▲ <span className="text-semibold">{votes}</span>{" "}
+            <Plural id="label.votecount" value={votes} one="Vote" other="Votes" />
           </button>
         )}
       </VStack>
