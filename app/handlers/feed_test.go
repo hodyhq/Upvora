@@ -286,7 +286,10 @@ func TestCommentFeedHandler_UnsafeSchemesFiltered(t *testing.T) {
 	// to the reader's HTML renderer. Unsafe destinations must not survive that far.
 	unsafeComment := &entity.Comment{
 		ID:        1,
-		Content:   "[click](javascript:alert(1)) ![x](javascript:alert(1)) ```a\"><img\fsrc=x\fonerror=alert(1)>\ncode\n```",
+		// The fenced block must start on its own line after a blank line, or
+		// goldmark parses it as an inline code span and safeCodeBlockInfo is
+		// never exercised (the "onerror" info string would then survive verbatim).
+		Content:   "[click](javascript:alert(1)) ![x](javascript:alert(1))\n\n```a\"><img\fsrc=x\fonerror=alert(1)>\ncode\n```",
 		CreatedAt: time.Date(2023, 1, 2, 10, 0, 0, 0, time.UTC),
 		User:      &entity.User{ID: 2, Name: "Arya Stark"},
 	}
