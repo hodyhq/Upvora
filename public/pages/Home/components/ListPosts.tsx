@@ -4,7 +4,7 @@ import { ShowTag, Markdown, Icon, ResponseLozenge, SignInModal } from "@fider/co
 import IconChatAlt2 from "@fider/assets/images/heroicons-chat-alt-2.svg"
 import { HStack, VStack } from "@fider/components/layout"
 import { useFider } from "@fider/hooks"
-import { Trans } from "@lingui/react/macro"
+import { Trans, Plural } from "@lingui/react/macro"
 
 interface ListPostsProps {
   posts?: Post[]
@@ -82,7 +82,9 @@ const ListPostItem = (props: {
           <path d="M5 12l5-5 5 5" />
         </svg>
         <span className="c-post__votes">{props.post.votesCount}</span>
-        <span className="c-post__voteslabel">{props.post.votesCount === 1 ? <Trans id="label.vote">Vote</Trans> : <Trans id="label.votes">Votes</Trans>}</span>
+        <span className="c-post__voteslabel">
+          <Plural id="label.votecount" value={props.post.votesCount} one="Vote" other="Votes" />
+        </span>
       </button>
       <div className="c-post__body">
         <div className="c-post__titlerow">

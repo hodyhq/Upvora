@@ -128,3 +128,93 @@ func TestSend_RetriesOn429(t *testing.T) {
 	Expect(keys[0]).Equals(keys[1])
 	Expect(keys[0]).ContainsSubstring("upvora-")
 }
+
+// A transient 5xx is retried the same way as a 429, so a momentary Resend
+// outage does not silently drop a notification.
+func TestSend_RetriesOn5xx(t *testing.T) {
+	RegisterT(t)
+	env.Config.HostMode = "multi"
+	env.Config.Email.Resend.APIKey = "re_test_key"
+	ctx = context.WithValue(context.Background(), app.TenantCtxKey, &entity.Tenant{Subdomain: "got"})
+
+	calls := 0
+	keys := []string{}
+	bus.Init(resend.Service{})
+	bus.AddHandler(func(_ context.Context, c *cmd.HTTPRequest) error {
+		calls++
+		keys = append(keys, c.Headers["Idempotency-Key"])
+		if calls == 1 {
+			c.ResponseStatusCode = http.StatusInternalServerError
+			c.ResponseBody = []byte("boom")
+			return nil
+		}
+		c.ResponseStatusCode = http.StatusOK
+		return nil
+	})
+
+	bus.Publish(ctx, &cmd.SendMail{
+		From:         dto.Recipient{Name: "Fider Test"},
+		To:           []dto.Recipient{{Name: "Jon Sow", Address: "jon.snow@got.com"}},
+		TemplateName: "echo_test",
+		Props:        dto.Props{"name": "Hello"},
+	})
+
+	Expect(calls).Equals(2)
+	Expect(keys[0]).Equals(keys[1])
+}
+
+// A 4xx (bad request / auth) is never retried — retrying an invalid request
+// just burns attempts and delays the failure.
+func TestSend_DoesNotRetryOn4xx(t *testing.T) {
+	RegisterT(t)
+	env.Config.HostMode = "multi"
+	env.Config.Email.Resend.APIKey = "re_test_key"
+	ctx = context.WithValue(context.Background(), app.TenantCtxKey, &entity.Tenant{Subdomain: "got"})
+
+	calls := 0
+	bus.Init(resend.Service{})
+	bus.AddHandler(func(_ context.Context, c *cmd.HTTPRequest) error {
+		calls++
+		c.ResponseStatusCode = http.StatusUnprocessableEntity
+		c.ResponseBody = []byte("invalid from address")
+		return nil
+	})
+
+	bus.Publish(ctx, &cmd.SendMail{
+		From:         dto.Recipient{Name: "Fider Test"},
+		To:           []dto.Recipient{{Name: "Jon Sow", Address: "jon.snow@got.com"}},
+		TemplateName: "echo_test",
+		Props:        dto.Props{"name": "Hello"},
+	})
+
+	Expect(calls).Equals(1)
+}
+
+// When Retry-After exceeds the synchronous wait budget, we stop rather than
+// retry before the window resets (which would just fail again). One attempt,
+// no busy-retry.
+func TestSend_BailsWhenRetryAfterExceedsBudget(t *testing.T) {
+	RegisterT(t)
+	env.Config.HostMode = "multi"
+	env.Config.Email.Resend.APIKey = "re_test_key"
+	ctx = context.WithValue(context.Background(), app.TenantCtxKey, &entity.Tenant{Subdomain: "got"})
+
+	calls := 0
+	bus.Init(resend.Service{})
+	bus.AddHandler(func(_ context.Context, c *cmd.HTTPRequest) error {
+		calls++
+		c.ResponseStatusCode = http.StatusTooManyRequests
+		c.ResponseHeader = http.Header{"Retry-After": []string{"30"}}
+		c.ResponseBody = []byte("rate limited")
+		return nil
+	})
+
+	bus.Publish(ctx, &cmd.SendMail{
+		From:         dto.Recipient{Name: "Fider Test"},
+		To:           []dto.Recipient{{Name: "Jon Sow", Address: "jon.snow@got.com"}},
+		TemplateName: "echo_test",
+		Props:        dto.Props{"name": "Hello"},
+	})
+
+	Expect(calls).Equals(1)
+}

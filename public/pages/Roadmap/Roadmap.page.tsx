@@ -10,7 +10,7 @@ import { VStack, HStack } from "@fider/components/layout"
 import { useFider, usePostOverlay } from "@fider/hooks"
 import { actions, notify, Fider } from "@fider/services"
 import { PostDetails } from "@fider/components/PostDetails"
-import { Trans } from "@lingui/react/macro"
+import { Trans, Plural } from "@lingui/react/macro"
 
 interface RoadmapColumnData {
   status: Status
@@ -132,7 +132,7 @@ const RoadmapPost = (props: {
             title="Vote"
           >
             ▲ <span className="text-semibold">{props.post.votesCount}</span>{" "}
-            {props.post.votesCount === 1 ? <Trans id="label.vote">Vote</Trans> : <Trans id="label.votes">Votes</Trans>}
+            <Plural id="label.votecount" value={props.post.votesCount} one="Vote" other="Votes" />
           </button>
         )}
       </VStack>

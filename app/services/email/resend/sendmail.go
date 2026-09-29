@@ -96,9 +96,12 @@ func sendMail(ctx context.Context, c *cmd.SendMail) {
 }
 
 // send POSTs one rendered message to the Resend API through Fider's shared
-// (SSRF-guarded, mockable) HTTP client. On HTTP 429 it retries up to
-// maxAttempts, honoring Retry-After; the Idempotency-Key is stable across
-// attempts so a retried request Resend already accepted is not delivered twice.
+// (SSRF-guarded, mockable) HTTP client. Transient failures — a transport
+// error, HTTP 429, or any 5xx — are retried up to maxAttempts; the
+// Idempotency-Key is stable across attempts so a request Resend already
+// accepted is not delivered twice. When a 429 asks for longer than we are
+// willing to wait synchronously, we stop rather than retry before the window
+// resets (which would just fail again).
 func send(ctx context.Context, payload resendPayload) error {
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -121,23 +124,39 @@ func send(ctx context.Context, payload resendPayload) error {
 			},
 		}
 
-		if err := bus.Dispatch(ctx, req); err != nil {
-			return err
-		}
+		dispatchErr := bus.Dispatch(ctx, req)
 
-		if req.ResponseStatusCode >= 200 && req.ResponseStatusCode < 300 {
+		var wait time.Duration
+		retryable := false
+		switch {
+		case dispatchErr != nil:
+			// Transport-level failure (timeout, connection reset) — transient.
+			lastErr = dispatchErr
+			retryable = true
+			wait = defaultRetryFor
+		case req.ResponseStatusCode >= 200 && req.ResponseStatusCode < 300:
 			return nil
+		case req.ResponseStatusCode == http.StatusTooManyRequests:
+			lastErr = fmt.Errorf("resend returned %d: %s", req.ResponseStatusCode, string(req.ResponseBody))
+			retryable = true
+			wait = retryAfter(req.ResponseHeader)
+		case req.ResponseStatusCode >= 500:
+			// Transient server error.
+			lastErr = fmt.Errorf("resend returned %d: %s", req.ResponseStatusCode, string(req.ResponseBody))
+			retryable = true
+			wait = defaultRetryFor
+		default:
+			// 4xx (bad request, auth, validation) — not retryable.
+			return fmt.Errorf("resend returned %d: %s", req.ResponseStatusCode, string(req.ResponseBody))
 		}
 
-		lastErr = fmt.Errorf("resend returned %d: %s", req.ResponseStatusCode, string(req.ResponseBody))
-
-		// Only 429 is retryable; other 4xx/5xx are returned immediately.
-		if req.ResponseStatusCode != http.StatusTooManyRequests || attempt == maxAttempts {
+		// Out of attempts, or the required wait exceeds what we will block on:
+		// retrying early would just fail again before the limit resets.
+		if !retryable || attempt == maxAttempts || wait > maxRetryWait {
 			return lastErr
 		}
 
-		wait := retryAfter(req.ResponseHeader)
-		log.Warnf(ctx, "Resend rate-limited (attempt @{Attempt}/@{Max}); retrying in @{Wait}.", dto.Props{
+		log.Warnf(ctx, "Resend transient failure (attempt @{Attempt}/@{Max}); retrying in @{Wait}.", dto.Props{
 			"Attempt": attempt, "Max": maxAttempts, "Wait": wait.String(),
 		})
 		select {
@@ -149,15 +168,13 @@ func send(ctx context.Context, payload resendPayload) error {
 	return lastErr
 }
 
-// retryAfter reads the Retry-After header (seconds), clamped to maxRetryWait.
+// retryAfter reads the Retry-After header (delay in seconds). It returns the
+// delay the server actually asked for — the caller decides whether that is
+// within its synchronous wait budget.
 func retryAfter(h http.Header) time.Duration {
 	if h != nil {
 		if secs, err := strconv.Atoi(h.Get("Retry-After")); err == nil && secs > 0 {
-			wait := time.Duration(secs) * time.Second
-			if wait > maxRetryWait {
-				return maxRetryWait
-			}
-			return wait
+			return time.Duration(secs) * time.Second
 		}
 	}
 	return defaultRetryFor

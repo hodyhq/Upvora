@@ -360,8 +360,21 @@ func addNewPost(ctx context.Context, c *cmd.AddNewPost) error {
 
 func setPostPrivacy(ctx context.Context, c *cmd.SetPostPrivacy) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, user *entity.User) error {
-		_, err := trx.Execute(
-			"UPDATE posts SET is_private = $1 WHERE id = $2 AND tenant_id = $3",
+		// Merging copies a duplicate's description/comments into its original, so
+		// a post and everything merged into or from it must share one privacy
+		// flag. markPostAsDuplicate enforces that at merge time; here we keep it
+		// on toggle by flipping the whole merged cluster (the root plus every
+		// duplicate pointing at it) in one statement. Otherwise flipping only the
+		// original to public would expose private content copied in from a
+		// still-private duplicate.
+		_, err := trx.Execute(`
+			WITH target AS (
+				SELECT COALESCE(original_id, id) AS root_id
+				FROM posts WHERE id = $2 AND tenant_id = $3
+			)
+			UPDATE posts SET is_private = $1
+			WHERE tenant_id = $3
+			  AND (id = (SELECT root_id FROM target) OR original_id = (SELECT root_id FROM target))`,
 			c.IsPrivate, c.Post.ID, tenant.ID)
 		if err != nil {
 			return errors.Wrap(err, "failed to set privacy for post %d", c.Post.ID)

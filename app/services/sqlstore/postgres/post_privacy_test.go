@@ -122,6 +122,61 @@ func TestSetPostPrivacy_TogglesVisibility(t *testing.T) {
 	Expect(visitorBack.Result.Slug).Equals(pub)
 }
 
+// Task 8 (security): merging copies a duplicate's content into its original,
+// so toggling the original's privacy must carry the whole merged cluster with
+// it. Otherwise flipping only the original to public would expose private
+// content copied in from a still-private duplicate.
+func TestSetPostPrivacy_PropagatesAcrossMergedCluster(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	now := time.Now()
+	_, err := trx.Execute("INSERT INTO posts (title, slug, number, description, created_at, tenant_id, user_id, status_slug, is_approved, is_private, language) VALUES ('Dup Secret', 'dup-secret', 9003, 'dup body', $1, 1, 1, 'open', true, true, 'english')", now)
+	Expect(err).IsNil()
+	_, err = trx.Execute("INSERT INTO posts (title, slug, number, description, created_at, tenant_id, user_id, status_slug, is_approved, is_private, language) VALUES ('Orig Secret', 'orig-secret', 9004, 'orig body', $1, 1, 1, 'open', true, true, 'english')", now)
+	Expect(err).IsNil()
+
+	dup := &query.GetPostByNumber{Number: 9003}
+	orig := &query.GetPostByNumber{Number: 9004}
+	Expect(bus.Dispatch(jonSnowCtx, dup)).IsNil()
+	Expect(bus.Dispatch(jonSnowCtx, orig)).IsNil()
+
+	// Both private → merge is allowed and copies dup's content into orig.
+	Expect(bus.Dispatch(jonSnowCtx, &cmd.MarkPostAsDuplicate{Post: dup.Result, Original: orig.Result})).IsNil()
+
+	// Toggle the original public.
+	Expect(bus.Dispatch(jonSnowCtx, &cmd.SetPostPrivacy{Post: orig.Result, IsPrivate: false})).IsNil()
+
+	// The duplicate must have been carried public too — no split cluster.
+	dupAfter := &query.GetPostByNumber{Number: 9003}
+	Expect(bus.Dispatch(jonSnowCtx, dupAfter)).IsNil()
+	Expect(dupAfter.Result.IsPrivate).IsFalse()
+}
+
+// Toggling a duplicate also flips its original (and siblings) — the invariant
+// holds regardless of which post in the cluster is targeted.
+func TestSetPostPrivacy_PropagatesFromDuplicateToRoot(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	now := time.Now()
+	_, err := trx.Execute("INSERT INTO posts (title, slug, number, description, created_at, tenant_id, user_id, status_slug, is_approved, is_private, language) VALUES ('Dup Two', 'dup-two', 9005, 'dup body', $1, 1, 1, 'open', true, false, 'english')", now)
+	Expect(err).IsNil()
+	_, err = trx.Execute("INSERT INTO posts (title, slug, number, description, created_at, tenant_id, user_id, status_slug, is_approved, is_private, language) VALUES ('Orig Two', 'orig-two', 9006, 'orig body', $1, 1, 1, 'open', true, false, 'english')", now)
+	Expect(err).IsNil()
+
+	dup := &query.GetPostByNumber{Number: 9005}
+	orig := &query.GetPostByNumber{Number: 9006}
+	Expect(bus.Dispatch(jonSnowCtx, dup)).IsNil()
+	Expect(bus.Dispatch(jonSnowCtx, orig)).IsNil()
+	Expect(bus.Dispatch(jonSnowCtx, &cmd.MarkPostAsDuplicate{Post: dup.Result, Original: orig.Result})).IsNil()
+
+	// Target the duplicate; the root must flip too.
+	Expect(bus.Dispatch(jonSnowCtx, &cmd.SetPostPrivacy{Post: dup.Result, IsPrivate: true})).IsNil()
+
+	origAfter := &query.GetPostByNumber{Number: 9006}
+	Expect(bus.Dispatch(jonSnowCtx, origAfter)).IsNil()
+	Expect(origAfter.Result.IsPrivate).IsTrue()
+}
+
 // Task 8: merging across a privacy boundary is refused.
 func TestMarkPostAsDuplicate_RefusesCrossPrivacy(t *testing.T) {
 	SetupDatabaseTest(t)
