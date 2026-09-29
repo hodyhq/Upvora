@@ -175,6 +175,7 @@ func routes(r *web.Engine) *web.Engine {
 		ui.Put("/_api/posts/:number/product", handlers.SetPostProduct())
 		ui.Get("/_api/posts/:number/internal-note", handlers.GetInternalNote())
 		ui.Put("/_api/posts/:number/internal-note", handlers.SetInternalNote())
+		ui.Post("/_api/posts/:number/privacy", handlers.SetPostPrivacy())
 		ui.Get("/scorecard", handlers.ScorecardPage())
 		ui.Get("/scorecard/:id", handlers.ScorecardCardPage())
 		ui.Post("/_api/scorecards", handlers.CreateScorecard())

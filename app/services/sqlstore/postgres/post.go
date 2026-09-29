@@ -103,7 +103,8 @@ var (
 																		pr.color AS product_color,
 																		COALESCE(agg_t.tags, ARRAY[]::text[]) AS tags,
 																COALESCE(%s, false) AS has_voted,
-																p.is_approved
+																p.is_approved,
+																p.is_private
 													FROM posts p
 													LEFT JOIN products pr
 													ON pr.id = p.product_id
@@ -193,6 +194,13 @@ func setPostResponse(ctx context.Context, c *cmd.SetPostResponse) error {
 
 func markPostAsDuplicate(ctx context.Context, c *cmd.MarkPostAsDuplicate) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, user *entity.User) error {
+		// Merging copies the duplicate's description/comments into the original.
+		// Refuse across a privacy boundary so private content can't leak into a
+		// public idea (or vice versa).
+		if c.Post.IsPrivate != c.Original.IsPrivate {
+			return errors.New("cannot merge a private idea with a public one; make both the same privacy first")
+		}
+
 		respondedAt := time.Now()
 		if c.Post.StatusSlug == "duplicate" && c.Post.Response != nil {
 			respondedAt = c.Post.Response.RespondedAt
@@ -294,10 +302,15 @@ func countPostPerStatus(ctx context.Context, q *query.CountPostPerStatus) error 
 
 		q.Result = make(map[string]int)
 		stats := []*dbStatusCount{}
-		sql := "SELECT status_slug, COUNT(*) AS count FROM posts WHERE tenant_id = $1 GROUP BY status_slug"
+		// Private ideas never contribute to counts a non-collaborator can see.
+		privacy := ""
+		if user == nil || !user.IsCollaborator() {
+			privacy = " AND is_private = false"
+		}
+		sql := "SELECT status_slug, COUNT(*) AS count FROM posts WHERE tenant_id = $1" + privacy + " GROUP BY status_slug"
 		args := []interface{}{tenant.ID}
 		if q.ProductID > 0 {
-			sql = "SELECT status_slug, COUNT(*) AS count FROM posts WHERE tenant_id = $1 AND product_id = $2 GROUP BY status_slug"
+			sql = "SELECT status_slug, COUNT(*) AS count FROM posts WHERE tenant_id = $1 AND product_id = $2" + privacy + " GROUP BY status_slug"
 			args = append(args, q.ProductID)
 		}
 		err := trx.Select(&stats, sql, args...)
@@ -324,9 +337,9 @@ func addNewPost(ctx context.Context, c *cmd.AddNewPost) error {
 			productID = c.ProductID
 		}
 		err := trx.Get(&id,
-			`INSERT INTO posts (title, slug, number, description, tenant_id, user_id, created_at, status_slug, is_approved, language, product_id)
-			 VALUES ($1, $2, (SELECT COALESCE(MAX(number), 0) + 1 FROM posts p WHERE p.tenant_id = $4), $3, $4, $5, $6, 'open', $7, $8, $9)
-			 RETURNING id`, c.Title, slug.Make(c.Title), c.Description, tenant.ID, user.ID, time.Now(), isApproved, lang, productID)
+			`INSERT INTO posts (title, slug, number, description, tenant_id, user_id, created_at, status_slug, is_approved, language, product_id, is_private)
+			 VALUES ($1, $2, (SELECT COALESCE(MAX(number), 0) + 1 FROM posts p WHERE p.tenant_id = $4), $3, $4, $5, $6, 'open', $7, $8, $9, $10)
+			 RETURNING id`, c.Title, slug.Make(c.Title), c.Description, tenant.ID, user.ID, time.Now(), isApproved, lang, productID, c.IsPrivate)
 		if err != nil {
 			return errors.Wrap(err, "failed add new post")
 		}
@@ -341,6 +354,19 @@ func addNewPost(ctx context.Context, c *cmd.AddNewPost) error {
 			return err
 		}
 
+		return nil
+	})
+}
+
+func setPostPrivacy(ctx context.Context, c *cmd.SetPostPrivacy) error {
+	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, user *entity.User) error {
+		_, err := trx.Execute(
+			"UPDATE posts SET is_private = $1 WHERE id = $2 AND tenant_id = $3",
+			c.IsPrivate, c.Post.ID, tenant.ID)
+		if err != nil {
+			return errors.Wrap(err, "failed to set privacy for post %d", c.Post.ID)
+		}
+		c.Post.IsPrivate = c.IsPrivate
 		return nil
 	})
 }
@@ -632,6 +658,16 @@ func querySinglePost(ctx context.Context, trx *dbx.Trx, query string, args ...an
 	return post.ToModel(ctx), nil
 }
 
+// visibilityFilter hides private ideas from anyone who is not a collaborator
+// or administrator. Only collaborators can create private ideas, so there is
+// no "own private post" case for a visitor.
+func visibilityFilter(user *entity.User) string {
+	if user != nil && user.IsCollaborator() {
+		return ""
+	}
+	return " AND p.is_private = false"
+}
+
 func buildPostQuery(user *entity.User, filter string, moderationFilter string) string {
 	tagCondition := `AND tags.is_public = true`
 	if user != nil && user.IsCollaborator() {
@@ -664,7 +700,7 @@ func buildPostQuery(user *entity.User, filter string, moderationFilter string) s
 		approvalFilter = " AND p.is_approved = true"
 	}
 
-	combinedFilter := filter + approvalFilter
+	combinedFilter := filter + approvalFilter + visibilityFilter(user)
 	return fmt.Sprintf(sqlSelectPostsWhere, tagCondition, hasVotedSubQuery, combinedFilter)
 }
 
@@ -693,6 +729,6 @@ func buildSinglePostQuery(user *entity.User, filter string) string {
 		approvalFilter = " AND p.is_approved = true"
 	}
 
-	combinedFilter := filter + approvalFilter
+	combinedFilter := filter + approvalFilter + visibilityFilter(user)
 	return fmt.Sprintf(sqlSelectPostsWhere, tagCondition, hasVotedSubQuery, combinedFilter)
 }

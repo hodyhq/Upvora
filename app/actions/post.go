@@ -30,6 +30,9 @@ type CreateNewPost struct {
 	BriefMarkdown string `json:"briefMarkdown"`
 	// VoraTranscript is the conversation that produced the brief; admin-viewable.
 	VoraTranscript []entity.AIMessage `json:"voraTranscript"`
+	// IsPrivate marks the idea visible only to collaborators/admins. Only a
+	// collaborator may set it (enforced in Validate).
+	IsPrivate bool `json:"isPrivate"`
 
 	Tags []*entity.Tag
 }
@@ -69,6 +72,10 @@ func (action *CreateNewPost) IsAuthorized(ctx context.Context, user *entity.User
 // Validate if current model is valid
 func (action *CreateNewPost) Validate(ctx context.Context, user *entity.User) *validate.Result {
 	result := validate.Success()
+
+	if action.IsPrivate && (user == nil || !user.IsCollaborator()) {
+		result.AddFieldFailure("isPrivate", "Only collaborators can create private ideas.")
+	}
 
 	if len(action.VoraTranscript) > 60 {
 		result.AddFieldFailure("voraTranscript", "The conversation is too long to store.")

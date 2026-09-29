@@ -5,11 +5,18 @@ import (
 )
 
 type AddNewPost struct {
-	ProductID int // 0 = General (unassigned)
+	ProductID   int // 0 = General (unassigned)
 	Title       string
 	Description string
+	IsPrivate   bool
 
 	Result *entity.Post
+}
+
+// SetPostPrivacy flips whether a post is visible only to collaborators/admins.
+type SetPostPrivacy struct {
+	Post      *entity.Post
+	IsPrivate bool
 }
 
 type UpdatePost struct {

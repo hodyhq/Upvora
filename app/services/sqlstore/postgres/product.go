@@ -69,13 +69,18 @@ func listAllProducts(ctx context.Context, q *query.ListAllProducts) error {
 }
 
 func countPostPerProduct(ctx context.Context, q *query.CountPostPerProduct) error {
-	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
+	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, user *entity.User) error {
 		type row struct {
 			ProductID dbx.NullInt `db:"product_id"`
 			Count     int         `db:"count"`
 		}
 		rows := []*row{}
-		err := trx.Select(&rows, "SELECT product_id, COUNT(*) AS count FROM posts WHERE tenant_id = $1 GROUP BY product_id", tenant.ID)
+		// Private ideas never contribute to counts a non-collaborator can see.
+		privacy := ""
+		if user == nil || !user.IsCollaborator() {
+			privacy = " AND is_private = false"
+		}
+		err := trx.Select(&rows, "SELECT product_id, COUNT(*) AS count FROM posts WHERE tenant_id = $1"+privacy+" GROUP BY product_id", tenant.ID)
 		if err != nil {
 			return errors.Wrap(err, "failed to count posts per product")
 		}
