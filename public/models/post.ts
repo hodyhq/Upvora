@@ -40,6 +40,7 @@ export interface Post {
   commentsCount: number
   tags: string[]
   isApproved: boolean
+  isPrivate: boolean
   product?: ProductInfo
 }
 

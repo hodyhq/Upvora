@@ -118,7 +118,8 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
       // Check if "pending" is in the statuses
       const hasPending = statuses.includes("pending")
       // Filter out "pending" from actual statuses to send to API
-      const actualStatuses = statuses.filter((s) => s !== "pending")
+      const actualStatuses = statuses.filter((s) => s !== "pending" && s !== "private")
+      const privateOnly = statuses.includes("private")
       // Determine moderation filter
       let moderation = ""
       if (hasPending) {
@@ -136,6 +137,7 @@ export class PostsContainer extends React.Component<PostsContainerProps, PostsCo
           myPosts,
           noTags,
           moderation,
+          privateOnly,
           product: this.props.product?.id,
           products,
         })

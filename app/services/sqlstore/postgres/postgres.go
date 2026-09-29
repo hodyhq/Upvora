@@ -59,6 +59,7 @@ func (s Service) Init() {
 
 	bus.AddHandler(addNewPost)
 	bus.AddHandler(updatePost)
+	bus.AddHandler(setPostPrivacy)
 	bus.AddHandler(getPostByID)
 	bus.AddHandler(getPostBySlug)
 	bus.AddHandler(getPostByNumber)

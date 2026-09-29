@@ -1,5 +1,5 @@
-# Builds and publishes the Upvora Docker image when a release tag lands on the
-# GitHub mirror (tags arrive via the GitLab push mirror; primary CI is GitLab).
+# Builds and publishes the Upvora Docker image when a release tag lands on
+# GitHub (primary CI is GitHub).
 # Self-hosters pull ghcr.io/hodyhq/upvora — no local build required.
 name: release-image
 

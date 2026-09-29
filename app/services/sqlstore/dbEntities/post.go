@@ -34,6 +34,7 @@ type Post struct {
 	OriginalStatusSlug dbx.NullString `db:"original_status_slug"`
 	Tags               pq.StringArray `db:"tags"`
 	IsApproved         bool           `db:"is_approved"`
+	IsPrivate          bool           `db:"is_private"`
 	ProductID          dbx.NullInt    `db:"product_id"`
 	ProductName        dbx.NullString `db:"product_name"`
 	ProductSlug        dbx.NullString `db:"product_slug"`
@@ -56,6 +57,7 @@ func (i *Post) ToModel(ctx context.Context) *entity.Post {
 		StatusKind:    i.StatusKind.String,
 		Tags:          i.Tags,
 		IsApproved:    i.IsApproved,
+		IsPrivate:     i.IsPrivate,
 	}
 
 	if i.Response.Valid {

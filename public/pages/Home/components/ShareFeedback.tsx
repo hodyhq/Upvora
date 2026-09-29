@@ -17,6 +17,7 @@ import CommentEditor from "@fider/components/common/form/CommentEditor"
 import {
   CACHE_KEYS,
   clearCache,
+  clearCachedDescription,
   getCachedDescription,
   getCachedTags,
   getCachedTitle,
@@ -42,7 +43,9 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
   const [productId, setProductId] = useState<number>(props.product?.id ?? tenantProducts[0]?.id ?? 0)
   const [briefMarkdown, setBriefMarkdown] = useState("")
   const [voraTranscript, setVoraTranscript] = useState<AIMessage[]>([])
+  const [isPrivate, setIsPrivate] = useState(false)
   const [voraOpen, setVoraOpen] = useState(false)
+  const canMakePrivate = fider.session.isAuthenticated && fider.session.user.isCollaborator
   // Vora is available when the feature is on and this product (or the
   // default) has an enabled agent — for signed-in users only.
   const voraAvailable =
@@ -71,7 +74,7 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
   const canEditTags = fider.settings.postWithTags && props.tags.length > 0
 
   const descriptionTemplate = fider.session.tenant.descriptionTemplate || ""
-  const hasCachedDraft = getCachedDescription() !== ""
+  const hasCachedDraft = getCachedDescription().trim() !== ""
   const prefillTemplate = !hasCachedDraft && descriptionTemplate !== ""
 
   const [title, setTitle] = useState(getCachedTitle())
@@ -157,10 +160,12 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
     setTitle(value)
     setCachedTitle(value)
     // If this is a manual edit (not auto-generated from description),
-    // mark the title as manually edited so we stop auto-populating
-    // If the user clears the title, we still want to allow auto-population
+    // mark the title as manually edited so we stop auto-populating.
+    // Once the user has touched the title we keep it manually edited even
+    // if they clear it, otherwise clearing would re-trigger auto-population
+    // from the description.
     if (isManualEdit) {
-      setTitleManuallyEdited(value !== "")
+      setTitleManuallyEdited(true)
     }
   }
 
@@ -176,7 +181,14 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
   }
 
   const handleDescriptionChange = (value: string) => {
-    setCachedDescription(value)
+    // If the description is emptied (e.g. the prefilled template is deleted),
+    // remove it from the cache so reopening the modal prefills the template again
+    // instead of restoring an empty draft.
+    if (value.trim() === "") {
+      clearCachedDescription()
+    } else {
+      setCachedDescription(value)
+    }
     setDescription(value)
   }
 
@@ -198,7 +210,8 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
           tags.map((tag) => tag.slug),
           productId,
           briefMarkdown,
-          voraTranscript
+          voraTranscript,
+          isPrivate
         ),
         minDelay,
       ])
@@ -333,6 +346,16 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
                   <div className={classSet({ "c-form-field": true })}>
                     <TagsSelect tags={props.tags} selectionChanged={handleTagsChanged} selected={tags} alwaysEditing={true} canEdit={true} />
                   </div>
+                </div>
+              )}
+              {canMakePrivate && (
+                <div className="c-form-field">
+                  <label className="flex flex-items-center" style={{ gap: 8, cursor: "pointer" }}>
+                    <input type="checkbox" checked={isPrivate} onChange={(e) => setIsPrivate(e.target.checked)} />
+                    <span>
+                      <Trans id="newpost.modal.private">Make private — only collaborators and admins can see this idea</Trans>
+                    </span>
+                  </label>
                 </div>
               )}
             </Form>

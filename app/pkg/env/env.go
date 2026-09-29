@@ -110,11 +110,14 @@ type config struct {
 		}
 	}
 	Email struct {
-		Type      string `env:"EMAIL"` // possible values: smtp, mailgun, awsses
+		Type      string `env:"EMAIL"` // possible values: smtp, mailgun, awsses, resend
 		NoReply   string `env:"EMAIL_NOREPLY,required"`
 		Allowlist string `env:"EMAIL_ALLOWLIST"`
 		Blocklist string `env:"EMAIL_BLOCKLIST"`
-		AWSSES    struct {
+		Resend    struct {
+			APIKey string `env:"EMAIL_RESEND_API_KEY"`
+		}
+		AWSSES struct {
 			Region          string `env:"EMAIL_AWSSES_REGION"`
 			AccessKeyID     string `env:"EMAIL_AWSSES_ACCESS_KEY_ID"`
 			SecretAccessKey string `env:"EMAIL_AWSSES_SECRET_ACCESS_KEY"`
@@ -192,6 +195,8 @@ func Reload() {
 			Config.Email.Type = "mailgun"
 		} else if Config.Email.AWSSES.AccessKeyID != "" {
 			Config.Email.Type = "awsses"
+		} else if Config.Email.Resend.APIKey != "" {
+			Config.Email.Type = "resend"
 		} else {
 			Config.Email.Type = "smtp"
 		}
@@ -201,6 +206,8 @@ func Reload() {
 	case "mailgun":
 		mustBeSet("EMAIL_MAILGUN_API")
 		mustBeSet("EMAIL_MAILGUN_DOMAIN")
+	case "resend":
+		mustBeSet("EMAIL_RESEND_API_KEY")
 	case "awsses":
 		mustBeSet("EMAIL_AWSSES_REGION")
 		mustBeSet("EMAIL_AWSSES_ACCESS_KEY_ID")

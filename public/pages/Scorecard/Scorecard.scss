@@ -848,9 +848,17 @@
   }
 
   &__table-wrap {
-    // Wrap-to-fit instead of scroll: cells wrap so the table never exceeds the
-    // card. Was overflow-x:auto, which hid long catalogues behind a sideways
-    // scrollbar and pushed the Actions column past the card edge.
+    // Scrollbar only as a last resort for tables that can't wrap (public
+    // scorecard list, statuses, products). The admin catalogue is exempted
+    // below — it must never scroll.
+    overflow-x: auto;
+  }
+
+  // The catalogue fits by wrapping its cells (see &__table--catalogue), so it
+  // must NEVER show a horizontal scrollbar — that was the whole requirement.
+  // Force its wrapper to visible; if a browser lacks :has(), it falls back to
+  // the auto above, which still won't scroll because the table already fits.
+  &__table-wrap:has(.c-scorecard__table--catalogue) {
     overflow-x: visible;
   }
 
@@ -924,10 +932,20 @@
     }
   }
 
-  // Admin catalogue: long field labels / keys / usage text wrap to a second
-  // line instead of widening the table past the card edge.
-  &__table--static td {
-    overflow-wrap: anywhere;
+  // Field catalogue only (ScorecardFieldsSection). The catalogue table also
+  // carries c-status-table, which forces `white-space: nowrap` on every cell —
+  // that is what made long Group/Usage text size the columns to their full
+  // width and run the table off the card (and, under table-layout:fixed,
+  // overrun into neighbouring columns). Re-enable wrapping here, scoped to the
+  // catalogue so ManageStatuses / ManageProducts keep their compact no-wrap
+  // layout, so auto table-layout shrinks the columns to fit the card and long
+  // content flows to a second line. Column widths stay content-driven.
+  &__table--catalogue {
+    th,
+    td {
+      white-space: normal !important; // beat .c-status-table th,td { white-space: nowrap }
+      overflow-wrap: anywhere;
+    }
   }
 
   // status callout — the weight-sum banner and similar admin notices

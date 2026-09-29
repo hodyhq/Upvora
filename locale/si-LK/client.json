@@ -236,7 +236,6 @@
   "home.postfilter.label.moderation": "මධ්‍යස්ථභාවය",
   "label.vote": "ඡන්දය දෙන්න",
   "label.votes": "ඡන්ද",
-  "listposts.label.showmore": "තවත් {0} පෙන්වන්න",
   "moderation.comment.delete.block.error": "අදහස මකා දමා පරිශීලකයා අවහිර කිරීමට අසමත් විය.",
   "moderation.comment.delete.error": "අදහස මැකීමට අසමත් විය.",
   "moderation.comment.deleted": "අදහස සාර්ථකව මකා දමන ලදී",

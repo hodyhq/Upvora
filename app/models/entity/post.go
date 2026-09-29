@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-//Post represents an post on a tenant board
+// Post represents an post on a tenant board
 type Post struct {
 	ID            int           `json:"id"`
 	Number        int           `json:"number"`
@@ -22,6 +22,7 @@ type Post struct {
 	Response      *PostResponse `json:"response,omitempty"`
 	Tags          []string      `json:"tags"`
 	IsApproved    bool          `json:"isApproved"`
+	IsPrivate     bool          `json:"isPrivate"`
 	Product       *ProductInfo  `json:"product,omitempty"`
 }
 
@@ -35,7 +36,7 @@ func (i *Post) Url(baseURL string) string {
 	return fmt.Sprintf("%s/posts/%d/%s", baseURL, i.Number, i.Slug)
 }
 
-//PostResponse is a staff response to a given post
+// PostResponse is a staff response to a given post
 type PostResponse struct {
 	Text        string        `json:"text"`
 	RespondedAt time.Time     `json:"respondedAt"`
@@ -43,7 +44,7 @@ type PostResponse struct {
 	Original    *OriginalPost `json:"original"`
 }
 
-//OriginalPost holds details of the original post of a duplicate
+// OriginalPost holds details of the original post of a duplicate
 type OriginalPost struct {
 	Number     int    `json:"number"`
 	Title      string `json:"title"`

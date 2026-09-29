@@ -100,7 +100,7 @@ func NotifyAboutStatusChange(post *entity.Post, prevStatusSlug string) worker.Ta
 			"title":       post.Title,
 			"postLink":    linkWithText(fmt.Sprintf("#%d", post.Number), baseURL, "/posts/%d/%s", post.Number, post.Slug),
 			"siteName":    tenant.Name,
-			"content":     markdown.Full(responseText, true),
+			"content":     markdown.Full(c, responseText, true),
 			"status":      statusForEmail,
 			"duplicate":   duplicate,
 			"view":        linkWithText(i18n.T(c, "email.subscription.view"), baseURL, "/posts/%d/%s", post.Number, post.Slug),

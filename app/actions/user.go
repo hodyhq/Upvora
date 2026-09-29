@@ -78,7 +78,7 @@ func (action *ChangeUserRole) Validate(ctx context.Context, user *entity.User) *
 		result.AddFieldFailure("userID", "It is not allowed to change your own Role.")
 	}
 
-	userByID := &query.GetUserByID{UserID: action.UserID}
+	userByID := &query.GetUserByID{UserID: action.UserID, TenantID: user.Tenant.ID}
 	err := bus.Dispatch(ctx, userByID)
 	if err != nil {
 		if errors.Cause(err) == app.ErrNotFound {

@@ -3,7 +3,7 @@ import { Post, PostStatus, postStatusValue } from "@fider/models"
 import { actions } from "@fider/services"
 import { SignInModal } from "@fider/components"
 import { useFider } from "@fider/hooks"
-import { Trans } from "@lingui/react/macro"
+import { Plural } from "@lingui/react/macro"
 
 interface VoteSectionProps {
   post: Post
@@ -60,7 +60,9 @@ export const VoteSection = (props: VoteSectionProps) => {
           <path d="M5 12l5-5 5 5" />
         </svg>
         <span className="c-post__votes">{votes}</span>
-        <span className="c-post__voteslabel">{votes === 1 ? <Trans id="label.vote">Vote</Trans> : <Trans id="label.votes">Votes</Trans>}</span>
+        <span className="c-post__voteslabel">
+          <Plural id="label.votecount" value={votes} one="Vote" other="Votes" />
+        </span>
       </button>
     </>
   )

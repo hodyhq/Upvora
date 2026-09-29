@@ -136,6 +136,15 @@ export const PostFilter = (props: PostFilterProps) => {
     })
   }
 
+  // Add Private filter for collaborators and admins
+  if (fider.session.isAuthenticated && fider.session.user.isCollaborator) {
+    options.push({
+      label: "Private",
+      value: "private",
+      type: "status",
+    })
+  }
+
   const tenantProducts = fider.session.tenant.products ?? []
   if (tenantProducts.length > 0 && !props.hideProducts) {
     tenantProducts.forEach((p) => {

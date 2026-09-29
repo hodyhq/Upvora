@@ -13,7 +13,48 @@ updates:
       minor-updates:
         update-types: ["minor"]
       # Major versions stay separate (likely breaking changes)
-    
+    ignore:
+      # Held back deliberately — bumping these breaks the build/e2e. One bad bump
+      # in a group poisons the whole grouped PR, so these are pinned until the
+      # blocking prerequisite is resolved. Patch updates within the held line are
+      # still allowed.
+      #
+      # @playwright/test: 1.49+ ships a newer Chromium that times out the
+      #   Cucumber e2e-ui steps. Held on the 1.48 line.
+      - dependency-name: "@playwright/test"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      # tiptap-markdown: 0.9+ requires @tiptap/core v3; project is on the tiptap v2 line.
+      - dependency-name: "tiptap-markdown"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      # @lingui/*: 5.9 breaks the build — <Trans> return type is ReactNode, not a
+      #   valid JSX element under the current @types/react. Needs a @types/react
+      #   upgrade first. Held on the 5.1 line.
+      - dependency-name: "@lingui/*"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      # Test/build toolchain majors — jest 30 and @babel/core 8 each require a
+      #   COORDINATED migration of the whole entangled stack (jest + jest-environment-jsdom
+      #   + babel-jest + @babel/* presets + jsdom), not a single bump. Bumping one alone
+      #   fails: jest 30 -> `clearMocksOnScope is not a function`; @babel/core 8 -> ERESOLVE
+      #   vs @babel/cli@7 / babel-jest@28. Held on the current majors until done as a
+      #   dedicated task; minor/patch within them still flow.
+      - dependency-name: "jest"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "jest-environment-jsdom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "babel-jest"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@babel/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "babel-loader"
+        update-types: ["version-update:semver-major"]
+      # marked: 5+ is ESM-only and rewrote the Renderer API. 4 -> 18 needs a rewrite of
+      #   public/services/markdown.ts (custom marked.Renderer() + synchronous marked()).
+      #   Held on the 4.x line until that migration is done.
+      - dependency-name: "marked"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/marked"
+        update-types: ["version-update:semver-major"]
+
   # Go modules - monthly, all grouped together
   - package-ecosystem: "gomod"
     directory: "/"
@@ -24,7 +65,13 @@ updates:
     groups:
       all-updates:
         patterns: ["*"]
-    
+    ignore:
+      # aws-sdk-go (v1) is deprecated upstream ("use aws-sdk-go-v2"). Any bump past
+      # the current pin trips staticcheck SA1019 on every import and fails lint-server.
+      # Held until the s3/ses code is migrated to aws-sdk-go-v2; don't remove this
+      # ignore before that migration lands.
+      - dependency-name: "github.com/aws/aws-sdk-go"
+
   # GitHub Actions - monthly, all grouped together
   - package-ecosystem: "github-actions"
     directory: "/"

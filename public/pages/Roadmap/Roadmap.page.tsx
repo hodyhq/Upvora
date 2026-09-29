@@ -10,7 +10,7 @@ import { VStack, HStack } from "@fider/components/layout"
 import { useFider, usePostOverlay } from "@fider/hooks"
 import { actions, notify, Fider } from "@fider/services"
 import { PostDetails } from "@fider/components/PostDetails"
-import { Trans } from "@lingui/react/macro"
+import { Trans, Plural } from "@lingui/react/macro"
 
 interface RoadmapColumnData {
   status: Status
@@ -96,6 +96,11 @@ const RoadmapPost = (props: {
               <Trans id="post.pending">pending</Trans>
             </span>
           )}
+          {props.post.isPrivate && (
+            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded flex-shrink-0">
+              <Trans id="post.private">Private · team only</Trans>
+            </span>
+          )}
         </HStack>
         {props.post.description && <Markdown className="c-roadmap-post__desc" maxLength={110} text={props.post.description} style="plainText" />}
         {props.post.product && (
@@ -127,7 +132,7 @@ const RoadmapPost = (props: {
             title="Vote"
           >
             ▲ <span className="text-semibold">{props.post.votesCount}</span>{" "}
-            {props.post.votesCount === 1 ? <Trans id="label.vote">Vote</Trans> : <Trans id="label.votes">Votes</Trans>}
+            <Plural id="label.votecount" value={props.post.votesCount} one="Vote" other="Votes" />
           </button>
         )}
       </VStack>

@@ -22,7 +22,7 @@ func TestUserStorage_GetByID(t *testing.T) {
 	ctx := SetupDatabaseTest(t)
 	defer TeardownDatabaseTest()
 
-	userByID := &query.GetUserByID{UserID: 1}
+	userByID := &query.GetUserByID{UserID: 1, TenantID: demoTenant.ID}
 	err := bus.Dispatch(ctx, userByID)
 	Expect(err).IsNil()
 	Expect(userByID.Result.ID).Equals(int(1))
@@ -33,6 +33,27 @@ func TestUserStorage_GetByID(t *testing.T) {
 	Expect(userByID.Result.Providers).HasLen(1)
 	Expect(userByID.Result.Providers[0].UID).Equals("FB1234")
 	Expect(userByID.Result.Providers[0].Name).Equals("facebook")
+}
+
+// TestUserStorage_GetByID_WrongTenant proves that a globally valid user ID paired with a
+// different tenant ID resolves to "not found". This is the database-predicate guard that
+// independently prevents cross-tenant user resolution.
+func TestUserStorage_GetByID_WrongTenant(t *testing.T) {
+	ctx := SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+
+	// Jon Snow (id 1) belongs to the demo tenant. Ask for him under the avengers tenant.
+	userByID := &query.GetUserByID{UserID: jonSnow.ID, TenantID: avengersTenant.ID}
+	err := bus.Dispatch(ctx, userByID)
+	Expect(errors.Cause(err)).Equals(app.ErrNotFound)
+	Expect(userByID.Result).IsNil()
+
+	// Sanity check: the same user resolves correctly under his own tenant.
+	userByID = &query.GetUserByID{UserID: jonSnow.ID, TenantID: demoTenant.ID}
+	err = bus.Dispatch(ctx, userByID)
+	Expect(err).IsNil()
+	Expect(userByID.Result.ID).Equals(jonSnow.ID)
+	Expect(userByID.Result.Tenant.ID).Equals(demoTenant.ID)
 }
 
 func TestUserStorage_GetByEmail_Error(t *testing.T) {
@@ -142,7 +163,7 @@ func TestUserStorage_Register_WhiteSpaceEmail(t *testing.T) {
 	err := bus.Dispatch(demoTenantCtx, &cmd.RegisterUser{User: user})
 	Expect(err).IsNil()
 
-	getUser := &query.GetUserByID{UserID: user.ID}
+	getUser := &query.GetUserByID{UserID: user.ID, TenantID: demoTenant.ID}
 	err = bus.Dispatch(demoTenantCtx, getUser)
 	Expect(err).IsNil()
 
@@ -201,7 +222,7 @@ func TestUserStorage_RegisterProvider(t *testing.T) {
 	})
 	Expect(err).IsNil()
 
-	getUser := &query.GetUserByID{UserID: 1}
+	getUser := &query.GetUserByID{UserID: 1, TenantID: demoTenant.ID}
 	err = bus.Dispatch(demoTenantCtx, getUser)
 	Expect(err).IsNil()
 
@@ -357,7 +378,7 @@ func TestUserStorage_Delete(t *testing.T) {
 	Expect(errors.Cause(err)).Equals(app.ErrNotFound)
 	Expect(getByEmail.Result).IsNil()
 
-	getByID := &query.GetUserByID{UserID: jonSnow.ID}
+	getByID := &query.GetUserByID{UserID: jonSnow.ID, TenantID: jonSnow.Tenant.ID}
 	err = bus.Dispatch(jonSnowCtx, getByID)
 	Expect(errors.Cause(err)).Equals(app.ErrNotFound)
 	Expect(getByID.Result).IsNil()
@@ -406,7 +427,7 @@ func TestUserStorage_BlockUser(t *testing.T) {
 	defer TeardownDatabaseTest()
 
 	userID := 1
-	getUser := &query.GetUserByID{UserID: userID}
+	getUser := &query.GetUserByID{UserID: userID, TenantID: demoTenant.ID}
 
 	err := bus.Dispatch(demoTenantCtx, getUser)
 	Expect(err).IsNil()

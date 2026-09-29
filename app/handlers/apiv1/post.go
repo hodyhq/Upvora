@@ -1,8 +1,8 @@
 package apiv1
 
 import (
-	"strconv"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/getfider/fider/app/actions"
@@ -62,6 +62,7 @@ func SearchPosts() web.HandlerFunc {
 			Limit:            c.QueryParam("limit"),
 			Tags:             c.QueryParamAsArray("tags"),
 			ModerationFilter: c.QueryParam("moderation"),
+			PrivateOnly:      c.QueryParam("private") == "true",
 		}
 		if productID, err := c.QueryParamAsInt("product"); err == nil && productID > 0 {
 			searchPosts.ProductIDs = append(searchPosts.ProductIDs, productID)
@@ -119,6 +120,7 @@ func CreatePost() web.HandlerFunc {
 			Title:       action.Title,
 			Description: appendUnreferencedAttachments(action.Description, action.Attachments),
 			ProductID:   action.ProductID,
+			IsPrivate:   action.IsPrivate,
 		}
 		err := bus.Dispatch(c, newPost)
 		if err != nil {
@@ -164,9 +166,9 @@ func CreatePost() web.HandlerFunc {
 
 		metrics.TotalPosts.Inc()
 		return c.Ok(web.Map{
-			"id":     newPost.Result.ID,
-			"number": newPost.Result.Number,
-			"title":  newPost.Result.Title,
+			"id":         newPost.Result.ID,
+			"number":     newPost.Result.Number,
+			"title":      newPost.Result.Title,
 			"slug":       newPost.Result.Slug,
 			"isApproved": newPost.Result.IsApproved,
 		})

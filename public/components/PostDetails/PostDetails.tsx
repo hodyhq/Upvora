@@ -275,6 +275,23 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
     }
   }
 
+  const handleTogglePrivacy = async () => {
+    if (!post) return
+    const result = await actions.setPostPrivacy(post.number, !post.isPrivate)
+    if (result.ok) {
+      notify.success(
+        post.isPrivate ? (
+          <Trans id="showpost.privacy.public">This idea is now public.</Trans>
+        ) : (
+          <Trans id="showpost.privacy.private">This idea is now private — only collaborators and admins can see it.</Trans>
+        )
+      )
+      setTimeout(() => location.reload(), 1000)
+    } else {
+      notify.error(<Trans id="showpost.privacy.error">Failed to change privacy.</Trans>)
+    }
+  }
+
   const handleDeclinePost = async () => {
     if (!post) return
     const result = await actions.declinePost(post.id)
@@ -384,6 +401,12 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
               </div>
             )}
           </VStack>
+
+          {!editMode && post.isPrivate && (
+            <div className="text-sm p-3 bg-yellow-100 text-yellow-800 rounded-md mt-2">
+              🔒 <Trans id="showpost.private.banner">Private idea — only collaborators and admins can see this.</Trans>
+            </div>
+          )}
 
           {/* Moderation status banner for unapproved posts */}
           {!editMode && !post.isApproved && (
@@ -539,6 +562,12 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
                     }}
                   >
                     <Trans id="action.scorecard">Score this idea</Trans>
+                  </ActionButton>
+                )}
+
+                {Fider.session.isAuthenticated && Fider.session.user.isCollaborator && (
+                  <ActionButton icon={IconChat} onClick={handleTogglePrivacy}>
+                    {post.isPrivate ? <Trans id="action.makepublic">Make public</Trans> : <Trans id="action.makeprivate">Make private</Trans>}
                   </ActionButton>
                 )}
 
