@@ -533,6 +533,13 @@ func searchPosts(ctx context.Context, q *query.SearchPosts) error {
 			q.Statuses = []string{}
 		}
 
+		// Collaborator "Private only" filter (visitors can never reach this;
+		// the visibility filter already removes private posts for them).
+		privateOnly := ""
+		if q.PrivateOnly {
+			privateOnly = " AND p.is_private = true"
+		}
+
 		if q.Limit != "all" {
 			if _, err := strconv.Atoi(q.Limit); err != nil {
 				q.Limit = "30"
@@ -561,7 +568,7 @@ func searchPosts(ctx context.Context, q *query.SearchPosts) error {
 
 			view := getViewData(*q, 4)
 			innerCondition, statusArray := buildStatusFilter(view)
-			innerQuery := buildPostQuery(user, "p.tenant_id = $1 AND "+innerCondition, q.ModerationFilter)
+			innerQuery := buildPostQuery(user, "p.tenant_id = $1 AND "+innerCondition+privateOnly, q.ModerationFilter)
 
 			condition := view.Condition
 			if q.MyPostsOnly && user != nil {
@@ -594,7 +601,7 @@ func searchPosts(ctx context.Context, q *query.SearchPosts) error {
 		} else {
 			view := getViewData(*q, 3)
 			innerCondition, statusArray := buildStatusFilter(view)
-			innerQuery := buildPostQuery(user, "p.tenant_id = $1 AND "+innerCondition, q.ModerationFilter)
+			innerQuery := buildPostQuery(user, "p.tenant_id = $1 AND "+innerCondition+privateOnly, q.ModerationFilter)
 
 			condition := view.Condition
 			if q.MyPostsOnly && user != nil {

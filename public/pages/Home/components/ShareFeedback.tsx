@@ -43,7 +43,9 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
   const [productId, setProductId] = useState<number>(props.product?.id ?? tenantProducts[0]?.id ?? 0)
   const [briefMarkdown, setBriefMarkdown] = useState("")
   const [voraTranscript, setVoraTranscript] = useState<AIMessage[]>([])
+  const [isPrivate, setIsPrivate] = useState(false)
   const [voraOpen, setVoraOpen] = useState(false)
+  const canMakePrivate = fider.session.isAuthenticated && fider.session.user.isCollaborator
   // Vora is available when the feature is on and this product (or the
   // default) has an enabled agent — for signed-in users only.
   const voraAvailable =
@@ -208,7 +210,8 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
           tags.map((tag) => tag.slug),
           productId,
           briefMarkdown,
-          voraTranscript
+          voraTranscript,
+          isPrivate
         ),
         minDelay,
       ])
@@ -343,6 +346,16 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
                   <div className={classSet({ "c-form-field": true })}>
                     <TagsSelect tags={props.tags} selectionChanged={handleTagsChanged} selected={tags} alwaysEditing={true} canEdit={true} />
                   </div>
+                </div>
+              )}
+              {canMakePrivate && (
+                <div className="c-form-field">
+                  <label className="flex flex-items-center" style={{ gap: 8, cursor: "pointer" }}>
+                    <input type="checkbox" checked={isPrivate} onChange={(e) => setIsPrivate(e.target.checked)} />
+                    <span>
+                      <Trans id="newpost.modal.private">Make private — only collaborators and admins can see this idea</Trans>
+                    </span>
+                  </label>
                 </div>
               )}
             </Form>

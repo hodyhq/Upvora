@@ -96,6 +96,11 @@ const RoadmapPost = (props: {
               <Trans id="post.pending">pending</Trans>
             </span>
           )}
+          {props.post.isPrivate && (
+            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded flex-shrink-0">
+              <Trans id="post.private">Private · team only</Trans>
+            </span>
+          )}
         </HStack>
         {props.post.description && <Markdown className="c-roadmap-post__desc" maxLength={110} text={props.post.description} style="plainText" />}
         {props.post.product && (

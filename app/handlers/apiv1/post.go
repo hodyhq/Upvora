@@ -62,6 +62,7 @@ func SearchPosts() web.HandlerFunc {
 			Limit:            c.QueryParam("limit"),
 			Tags:             c.QueryParamAsArray("tags"),
 			ModerationFilter: c.QueryParam("moderation"),
+			PrivateOnly:      c.QueryParam("private") == "true",
 		}
 		if productID, err := c.QueryParamAsInt("product"); err == nil && productID > 0 {
 			searchPosts.ProductIDs = append(searchPosts.ProductIDs, productID)

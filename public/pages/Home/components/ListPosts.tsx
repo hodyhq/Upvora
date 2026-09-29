@@ -96,6 +96,11 @@ const ListPostItem = (props: {
               <Trans id="post.pending">pending</Trans>
             </span>
           )}
+          {props.post.isPrivate && (
+            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded" title="Only collaborators and admins can see this idea">
+              <Trans id="post.private">Private · team only</Trans>
+            </span>
+          )}
         </div>
         <Markdown className="c-post__desc" maxLength={140} text={props.post.description} style="plainText" />
         <div className="c-post__meta">
@@ -147,6 +152,7 @@ const MinimalListPostItem = (props: { post: Post; tags: Tag[]; onPostClick?: (po
             {props.post.title}
           </a>
           {isPending && <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">pending</span>}
+          {props.post.isPrivate && <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Private · team only</span>}
         </HStack>
         {postStatusValue(props.post) !== "open" ? (
           <div>

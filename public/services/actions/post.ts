@@ -23,6 +23,7 @@ export interface SearchPostsParams {
   myPosts?: boolean
   statuses?: string[]
   moderation?: string
+  privateOnly?: boolean
   product?: number
   products?: number[]
 }
@@ -46,6 +47,9 @@ export const searchPosts = async (params: SearchPostsParams): Promise<Result<Pos
   }
   if (params.myPosts) {
     qsParams += `&myposts=true`
+  }
+  if (params.privateOnly) {
+    qsParams += `&private=true`
   }
   return await http.get<Post[]>(`/api/v1/posts${qsParams}`)
 }
@@ -141,11 +145,16 @@ export const createPost = async (
   tags: string[],
   productId = 0,
   briefMarkdown = "",
-  voraTranscript: AIMessage[] = []
+  voraTranscript: AIMessage[] = [],
+  isPrivate = false
 ): Promise<Result<CreatePostResponse>> => {
   return http
-    .post<CreatePostResponse>(`/api/v1/posts`, { title, description, attachments, tags, productId, briefMarkdown, voraTranscript })
+    .post<CreatePostResponse>(`/api/v1/posts`, { title, description, attachments, tags, productId, briefMarkdown, voraTranscript, isPrivate })
     .then(http.event("post", "create"))
+}
+
+export const setPostPrivacy = async (postNumber: number, isPrivate: boolean): Promise<Result> => {
+  return http.post(`/_api/posts/${postNumber}/privacy`, { isPrivate }).then(http.event("post", "privacy"))
 }
 
 export const updatePost = async (postNumber: number, title: string, description: string, attachments: ImageUpload[]): Promise<Result> => {

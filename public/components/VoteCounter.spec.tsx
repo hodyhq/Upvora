@@ -33,6 +33,7 @@ beforeEach(() => {
     commentsCount: 2,
     tags: [],
     isApproved: true,
+    isPrivate: false,
   }
 })
 
