@@ -87,7 +87,7 @@ func TestCommentFeedHandler(t *testing.T) {
 		Description: "Description of the post",
 		CreatedAt:   time.Date(2023, 1, 1, 10, 0, 0, 0, time.UTC),
 		User:        &entity.User{ID: 1, Name: "Jon Snow"},
-		StatusSlug:      "open",
+		StatusSlug:  "open",
 	}
 
 	comment1 := &entity.Comment{
@@ -197,7 +197,7 @@ func TestCommentFeedHandler_HTMLEscaped(t *testing.T) {
 		Description: "Description of the post",
 		CreatedAt:   time.Date(2023, 1, 1, 10, 0, 0, 0, time.UTC),
 		User:        &entity.User{ID: 1, Name: "Jon Snow"},
-		StatusSlug:      "open",
+		StatusSlug:  "open",
 	}
 
 	xssComment := &entity.Comment{
@@ -279,7 +279,7 @@ func TestCommentFeedHandler_UnsafeSchemesFiltered(t *testing.T) {
 		Description: "[desc](javascript:alert(1))",
 		CreatedAt:   time.Date(2023, 1, 1, 10, 0, 0, 0, time.UTC),
 		User:        &entity.User{ID: 1, Name: "Jon Snow"},
-		Status:      enum.PostOpen,
+		StatusSlug:  "open",
 	}
 
 	// Atom content is declared type="html", so whatever the renderer produces is handed

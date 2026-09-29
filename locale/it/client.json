@@ -144,7 +144,7 @@
   "label.tags": "Etichette",
   "label.unread": "Non letto",
   "label.unsubscribe": "Disiscriversi",
-  "label.votecount": "{votes, plural, one {Votare} other {Voti}}",
+  "label.votecount": "{votes, plural, one {Voto} other {Voti}}",
   "label.voters": "Votanti",
   "labels.notagsavailable": "Nessun tag disponibile",
   "legal.agreement": "Ho letto e accetto le <0/> e <1/>.",
