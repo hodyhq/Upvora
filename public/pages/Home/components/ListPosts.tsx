@@ -32,6 +32,10 @@ const ListPostItem = (props: {
   const [isSignInModalOpen, setIsSignInModalOpen] = useState(false)
   const isModerationEnabled = fider.session.tenant.isModerationEnabled
   const isPending = isModerationEnabled && !props.post.isApproved
+  // Bind to a simple `votes` identifier: the Plural macro derives the ICU
+  // variable name from this expression, and it must match the shared
+  // label.votecount catalog ({votes, plural, ...}) across every consumer.
+  const votes = props.post.votesCount
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.stopPropagation()
@@ -83,7 +87,7 @@ const ListPostItem = (props: {
         </svg>
         <span className="c-post__votes">{props.post.votesCount}</span>
         <span className="c-post__voteslabel">
-          <Plural id="label.votecount" value={props.post.votesCount} one="Vote" other="Votes" />
+          <Plural id="label.votecount" value={votes} one="Vote" other="Votes" />
         </span>
       </button>
       <div className="c-post__body">
