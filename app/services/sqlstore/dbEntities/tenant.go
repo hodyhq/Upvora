@@ -63,6 +63,7 @@ type Tenant struct {
 	AIWebSearchAPIKey          string         `db:"ai_web_search_api_key"`
 	AIWebSearchBaseURL         string         `db:"ai_web_search_base_url"`
 	ScorecardTriggerStatusSlug sql.NullString `db:"scorecard_trigger_status_slug"`
+	DeletionCancelKey          sql.NullString `db:"deletion_cancel_key"`
 }
 
 func (t *Tenant) ToModel() *entity.Tenant {
@@ -142,5 +143,10 @@ func (t *Tenant) ToModel() *entity.Tenant {
 			tenant.ThemeAccents = accents
 		}
 	}
+
+	if t.DeletionCancelKey.Valid {
+		tenant.DeletionCancelKey = t.DeletionCancelKey.String
+	}
+
 	return tenant
 }

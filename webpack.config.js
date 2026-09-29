@@ -4,7 +4,7 @@ const path = require("path")
 const glob = require("glob")
 
 const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin")
-const PurgecssPlugin = require("purgecss-webpack-plugin")
+const { PurgeCSSPlugin } = require("purgecss-webpack-plugin")
 const MiniCssExtractPlugin = require("mini-css-extract-plugin")
 const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin
 const publicFolder = path.resolve(__dirname, "public")
@@ -35,7 +35,7 @@ const plugins = [
 
 if (isProduction) {
   plugins.push(
-    new PurgecssPlugin({
+    new PurgeCSSPlugin({
       paths: [...glob.sync(`./public/**/*.{html,tsx}`, { nodir: true })],
       defaultExtractor: (content) => content.match(/[^<>"'`\s]*[^<>"'`\s:]/g) || [],
       safelist: [/--/, /__/, /data-/, /tiptap/],

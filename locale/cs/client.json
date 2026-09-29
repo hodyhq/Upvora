@@ -235,7 +235,6 @@
   "home.postfilter.label.moderation": "Umírněnost",
   "label.vote": "Hlasování",
   "label.votes": "Hlasy",
-  "listposts.label.showmore": "Zobrazit další {0}",
   "moderation.comment.delete.block.error": "Nepodařilo se smazat komentář a zablokovat uživatele",
   "moderation.comment.delete.error": "Komentář se nepodařilo smazat",
   "moderation.comment.deleted": "Komentář byl úspěšně smazán",

@@ -290,7 +290,7 @@ func updateCurrentUser(ctx context.Context, c *cmd.UpdateCurrentUser) error {
 
 func getUserByID(ctx context.Context, q *query.GetUserByID) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, user *entity.User) error {
-		u, err := queryUser(ctx, trx, "id = $1", q.UserID)
+		u, err := queryUser(ctx, trx, "id = $1 AND tenant_id = $2", q.UserID, q.TenantID)
 		if err != nil {
 			return errors.Wrap(err, "failed to get user with id '%d'", q.UserID)
 		}
@@ -326,7 +326,7 @@ func getUserByProvider(ctx context.Context, q *query.GetUserByProvider) error {
 			return errors.Wrap(err, "failed to get user by provider '%s' and uid '%s'", q.Provider, q.UID)
 		}
 
-		byID := &query.GetUserByID{UserID: userID}
+		byID := &query.GetUserByID{UserID: userID, TenantID: tenant.ID}
 		err := getUserByID(ctx, byID)
 		q.Result = byID.Result
 		return err

@@ -74,5 +74,7 @@
   "email.delete_account_requested.scheduled": "삭제 작업은 <strong>{scheduledAt}</strong>에 예약되어 있습니다. 일단 실행되면 되돌릴 수 없습니다.",
   "email.delete_account_requested.cancel": "삭제를 요청하지 않았거나 마음이 바뀌셨나요? 아래 링크를 사용하여 삭제를 취소하세요.",
   "email.delete_account_completed.subject": "귀하의 Fider 사이트 {tenantName}이 삭제되었습니다.",
-  "email.delete_account_completed.text": "귀하의 Fider 사이트 <strong>{tenantName}</strong> ({subdomain}) 및 모든 데이터가 영구적으로 삭제되었습니다. 이 작업은 복구할 수 없습니다."
+  "email.delete_account_completed.text": "귀하의 Fider 사이트 <strong>{tenantName}</strong> ({subdomain}) 및 모든 데이터가 영구적으로 삭제되었습니다. 이 작업은 복구할 수 없습니다.",
+  "feed.global.title": "{count, plural, other {(투표 {count}) {title}}}",
+  "feed.post.title": "# {title}\n{votes, plural, other {투표 #}}, {comments, plural, other {댓글 #}}"
 }
