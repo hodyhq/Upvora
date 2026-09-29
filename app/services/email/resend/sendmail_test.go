@@ -65,6 +65,34 @@ func TestSend_Success(t *testing.T) {
 	Expect(to[0]).Equals(`"Jon Sow" <jon.snow@got.com>`)
 }
 
+// Resend rejects "<email@x>" (Go's rendering of a nameless address) with a
+// 422; a recipient without a display name must be sent as a bare address.
+// This is the shape of most transactional mail (sign-in codes, notifications).
+func TestSend_BareAddressWhenNoRecipientName(t *testing.T) {
+	RegisterT(t)
+	env.Config.HostMode = "multi"
+	env.Config.Email.Resend.APIKey = "re_test_key"
+	reset()
+
+	bus.Publish(ctx, &cmd.SendMail{
+		From: dto.Recipient{Name: "Upvora", Address: "noreply@got.com"},
+		To: []dto.Recipient{
+			{Address: "hody@hody.dev"}, // no Name
+		},
+		TemplateName: "echo_test",
+		Props:        dto.Props{"name": "Hello"},
+	})
+
+	Expect(httpclientmock.RequestsHistory).HasLen(1)
+	body, err := io.ReadAll(httpclientmock.RequestsHistory[0].Body)
+	Expect(err).IsNil()
+	var payload map[string]interface{}
+	Expect(json.Unmarshal(body, &payload)).IsNil()
+	to := payload["to"].([]interface{})
+	Expect(to[0]).Equals("hody@hody.dev")   // bare, not "<hody@hody.dev>"
+	Expect(payload["from"]).Equals(`"Upvora" <noreply@got.com>`) // named form kept
+}
+
 // A recipient that can't be sent to (empty or blocklisted) is skipped without
 // blocking the rest — the reason the loop uses continue, not return.
 func TestSend_SkipsUnsendableRecipient(t *testing.T) {

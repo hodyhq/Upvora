@@ -77,8 +77,8 @@ func sendMail(ctx context.Context, c *cmd.SendMail) {
 		message := email.RenderMessage(ctx, c.TemplateName, c.From.Address, c.Props.Merge(to.Props))
 
 		payload := resendPayload{
-			From:    c.From.String(),
-			To:      []string{to.String()},
+			From:    resendAddress(c.From),
+			To:      []string{resendAddress(to)},
 			ReplyTo: c.From.Address,
 			Subject: email.EncodeSubject(message.Subject),
 			HTML:    message.Body,
@@ -93,6 +93,18 @@ func sendMail(ctx context.Context, c *cmd.SendMail) {
 			continue
 		}
 	}
+}
+
+// resendAddress renders a recipient the way Resend's API accepts it: a bare
+// "email@example.com" when there is no display name, or "Name <email@…>" when
+// there is. Go's net/mail renders an empty-name address as "<email@…>", which
+// Resend rejects with a 422 validation_error — and most transactional mail
+// (sign-in codes, notifications) goes to a bare address with no name.
+func resendAddress(r dto.Recipient) string {
+	if r.Name == "" {
+		return r.Address
+	}
+	return r.String()
 }
 
 // send POSTs one rendered message to the Resend API through Fider's shared
