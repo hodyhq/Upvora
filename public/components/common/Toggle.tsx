@@ -11,6 +11,9 @@ interface ToggleProps {
   active: boolean
   disabled?: boolean
   onToggle?: (active: boolean) => void
+  ariaLabel?: string
+  ariaLabelledby?: string
+  ariaDescribedby?: string
 }
 
 export const Toggle: React.FC<ToggleProps> = (props) => {
@@ -43,7 +46,16 @@ export const Toggle: React.FC<ToggleProps> = (props) => {
       {(ctx) => (
         <>
           <HStack spacing={2}>
-            <button onClick={toggle} type="button" className={className} role="switch">
+            <button
+              onClick={toggle}
+              type="button"
+              className={className}
+              role="switch"
+              aria-checked={active}
+              aria-label={props.ariaLabel}
+              aria-labelledby={props.ariaLabelledby}
+              aria-describedby={props.ariaDescribedby}
+            >
               <span aria-hidden="true" className="shadow"></span>
             </button>
             {props.label && <span className="text-sm">{props.label}</span>}

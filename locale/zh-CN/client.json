@@ -232,6 +232,8 @@
   "mysettings.page.title": "设置",
   "newpost.modal.description.placeholder": "告诉我们吧。请完整解释，不要隐瞒，信息越多越好。",
   "newpost.modal.private": "",
+  "newpost.modal.private.hint": "",
+  "newpost.modal.private.label": "",
   "newpost.modal.product.label": "",
   "newpost.modal.submit": "提交您的想法",
   "newpost.modal.title": "分享你的想法...",

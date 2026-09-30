@@ -3,7 +3,7 @@ import "./ShareFeedback.scss"
 import React, { useEffect, useRef, useState } from "react"
 import { VoraChat } from "@fider/components/VoraChat"
 import { SignInControl } from "@fider/components/common/SignInControl"
-import { Modal, CloseIcon, Form, Button, Input, Select, LegalFooter } from "@fider/components/common"
+import { Modal, CloseIcon, Form, Button, Input, Select, LegalFooter, Toggle } from "@fider/components/common"
 import { Markdown } from "@fider/components/common/Markdown"
 import { useFider } from "@fider/hooks"
 import { Trans } from "@lingui/react/macro"
@@ -350,12 +350,17 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
               )}
               {canMakePrivate && (
                 <div className="c-form-field">
-                  <label className="flex flex-items-center" style={{ gap: 8, cursor: "pointer" }}>
-                    <input type="checkbox" checked={isPrivate} onChange={(e) => setIsPrivate(e.target.checked)} />
-                    <span>
-                      <Trans id="newpost.modal.private">Make private — only collaborators and admins can see this idea</Trans>
-                    </span>
-                  </label>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                    <Toggle active={isPrivate} onToggle={setIsPrivate} ariaLabelledby="make-private-label" ariaDescribedby="make-private-hint" />
+                    <div>
+                      <div id="make-private-label" className="text-medium">
+                        <Trans id="newpost.modal.private.label">Make private</Trans>
+                      </div>
+                      <p id="make-private-hint" className="text-muted text-xs" style={{ margin: "2px 0 0" }}>
+                        <Trans id="newpost.modal.private.hint">Only collaborators and admins can see this idea.</Trans>
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </Form>

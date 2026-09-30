@@ -232,6 +232,8 @@
   "mysettings.page.title": "Ayarlar",
   "newpost.modal.description.placeholder": "Bize anlatın. Tam olarak açıklayın, saklamayın, ne kadar çok bilgi o kadar iyi.",
   "newpost.modal.private": "",
+  "newpost.modal.private.hint": "",
+  "newpost.modal.private.label": "",
   "newpost.modal.product.label": "",
   "newpost.modal.submit": "Fikrinizi gönderin",
   "newpost.modal.title": "Fikrinizi paylaşın...",

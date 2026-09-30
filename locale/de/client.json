@@ -232,6 +232,8 @@
   "mysettings.page.title": "Einstellungen",
   "newpost.modal.description.placeholder": "Erzähl uns von deiner Idee. Erkläre sie ausführlich, halte dich nicht zurück, je mehr Informationen, umso besser.",
   "newpost.modal.private": "",
+  "newpost.modal.private.hint": "",
+  "newpost.modal.private.label": "",
   "newpost.modal.product.label": "",
   "newpost.modal.submit": "Reiche deine Idee ein",
   "newpost.modal.title": "Teile deine Idee ...",
