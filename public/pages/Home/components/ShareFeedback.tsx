@@ -351,12 +351,12 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
               {canMakePrivate && (
                 <div className="c-form-field">
                   <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                    <Toggle active={isPrivate} onToggle={setIsPrivate} />
+                    <Toggle active={isPrivate} onToggle={setIsPrivate} ariaLabelledby="make-private-label" ariaDescribedby="make-private-hint" />
                     <div>
-                      <div className="text-medium">
+                      <div id="make-private-label" className="text-medium">
                         <Trans id="newpost.modal.private.label">Make private</Trans>
                       </div>
-                      <p className="text-muted text-xs" style={{ margin: "2px 0 0" }}>
+                      <p id="make-private-hint" className="text-muted text-xs" style={{ margin: "2px 0 0" }}>
                         <Trans id="newpost.modal.private.hint">Only collaborators and admins can see this idea.</Trans>
                       </p>
                     </div>
