@@ -232,6 +232,8 @@
   "mysettings.page.title": "Configurações",
   "newpost.modal.description.placeholder": "Conte-nos sobre isso. Explique tudo detalhadamente, não se esconda, quanto mais informações, melhor.",
   "newpost.modal.private": "",
+  "newpost.modal.private.hint": "",
+  "newpost.modal.private.label": "",
   "newpost.modal.product.label": "",
   "newpost.modal.submit": "Envie sua ideia",
   "newpost.modal.title": "Compartilhe sua ideia...",

@@ -232,6 +232,8 @@
   "mysettings.page.title": "تنظیمات",
   "newpost.modal.description.placeholder": "در موردش به ما بگو. کامل توضیح بده، دریغ نکن، هر چه اطلاعات بیشتر، بهتر.",
   "newpost.modal.private": "",
+  "newpost.modal.private.hint": "",
+  "newpost.modal.private.label": "",
   "newpost.modal.product.label": "",
   "newpost.modal.submit": "ایده خود را ثبت کنید",
   "newpost.modal.title": "ایده خود را به اشتراک بگذارید...",

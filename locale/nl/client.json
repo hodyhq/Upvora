@@ -232,6 +232,8 @@
   "mysettings.page.title": "Instellingen",
   "newpost.modal.description.placeholder": "Vertel het ons. Leg het volledig uit, houd je niet in, hoe meer informatie hoe beter.",
   "newpost.modal.private": "",
+  "newpost.modal.private.hint": "",
+  "newpost.modal.private.label": "",
   "newpost.modal.product.label": "",
   "newpost.modal.submit": "Dien uw idee in",
   "newpost.modal.title": "Deel uw idee...",

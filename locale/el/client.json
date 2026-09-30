@@ -232,6 +232,8 @@
   "mysettings.page.title": "Ρυθμίσεις",
   "newpost.modal.description.placeholder": "Πείτε μας γι' αυτό. Εξηγήστε το πλήρως, μην διστάζετε, όσο περισσότερες πληροφορίες τόσο το καλύτερο.",
   "newpost.modal.private": "",
+  "newpost.modal.private.hint": "",
+  "newpost.modal.private.label": "",
   "newpost.modal.product.label": "",
   "newpost.modal.submit": "Υποβάλετε την ιδέα σας",
   "newpost.modal.title": "Μοιραστείτε την ιδέα σας...",

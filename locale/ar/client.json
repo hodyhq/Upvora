@@ -232,6 +232,8 @@
   "mysettings.page.title": "إعدادات",
   "newpost.modal.description.placeholder": "أخبرنا عنها. اشرحها بالتفصيل، لا تتردد، فكلما زادت المعلومات كان ذلك أفضل.",
   "newpost.modal.private": "",
+  "newpost.modal.private.hint": "",
+  "newpost.modal.private.label": "",
   "newpost.modal.product.label": "",
   "newpost.modal.submit": "أرسل فكرتك",
   "newpost.modal.title": "شارك بفكرتك...",

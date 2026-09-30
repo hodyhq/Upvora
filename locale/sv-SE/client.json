@@ -232,6 +232,8 @@
   "mysettings.page.title": "Inställningar",
   "newpost.modal.description.placeholder": "Berätta om det. Förklara det utförligt, tveka inte, ju mer information desto bättre.",
   "newpost.modal.private": "",
+  "newpost.modal.private.hint": "",
+  "newpost.modal.private.label": "",
   "newpost.modal.product.label": "",
   "newpost.modal.submit": "Skicka in din idé",
   "newpost.modal.title": "Dela din idé...",

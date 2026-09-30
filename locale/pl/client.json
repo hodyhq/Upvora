@@ -232,6 +232,8 @@
   "mysettings.page.title": "Ustawienia",
   "newpost.modal.description.placeholder": "Opowiedz nam o tym. Wyjaśnij to dokładnie, nie powstrzymuj się, im więcej informacji, tym lepiej.",
   "newpost.modal.private": "",
+  "newpost.modal.private.hint": "",
+  "newpost.modal.private.label": "",
   "newpost.modal.product.label": "",
   "newpost.modal.submit": "Prześlij swój pomysł",
   "newpost.modal.title": "Podziel się swoim pomysłem...",

@@ -232,6 +232,8 @@
   "mysettings.page.title": "Nastavenie",
   "newpost.modal.description.placeholder": "Povedzte nám o tom. Vysvetlite to podrobne, nezdržujte sa, čím viac informácií, tým lepšie.",
   "newpost.modal.private": "",
+  "newpost.modal.private.hint": "",
+  "newpost.modal.private.label": "",
   "newpost.modal.product.label": "",
   "newpost.modal.submit": "Odošlite svoj nápad",
   "newpost.modal.title": "Podeľte sa o svoj nápad...",
