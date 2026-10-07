@@ -54,8 +54,8 @@ A committee-style scoring workspace visitors never see: define your own scoring 
 ### 🔒 Internal notes & comments
 The deliberation layer feedback tools forget: internal comments sit inline in the discussion but are visible only to collaborators, excluded from public counts, never emailed to voters. Plus one shared internal note per idea, live-synced between the idea page and the scorecard. Amber-flagged everywhere so nobody mistakes private for public.
 
-### 🕶️ Private ideas (team-only)
-Sometimes an idea shouldn't be public. Collaborators and admins can mark any idea **private** (at creation, or with a one-click toggle on an existing one) and it disappears for everyone else on *every* surface: the board, all lists, search, the roadmap, the RSS feed, the REST API, status/product counts, and notifications. Flip it back to public just as easily. Your team sees an amber "Private · team only" badge wherever it appears, and a filter to show only private ideas.
+### 🕶️ Private ideas
+Sometimes an idea shouldn't be public. Collaborators and admins can mark any idea **private** (at creation, or with a one-click toggle on an existing one) and it disappears for everyone else on *every* surface: the board, all lists, search, the roadmap, the RSS feed, the REST API, status/product counts, and notifications. Optionally let **members** submit private ideas too: only the author and your team can see them, and the author can publish one later (never the reverse). Your team sees an amber "Private" badge wherever one appears, and a filter to show only private ideas.
 
 ### 🎨 Theme studio
 Your brand color and four per-function accents (buttons, votes, links, header) applied as **design tokens** across light and dark mode: set once in the admin, survives every redesign. Default appearance per site (light / dark / follow system), per-product colors, and raw custom CSS still available for everything else.
@@ -66,6 +66,9 @@ A System panel under the admin menu shows your installed version against the lat
 ### ✦ Vora: an AI ideation agent (optional)
 Turn rough thoughts into well-planned ideas: Vora interviews the submitter in chat, then drafts the title, a summary description, suggested tags, and a full **Idea Brief**, a structured plan saved with the post. Everything is reviewed and editable before submitting. Bring your own provider (Anthropic, OpenAI, or any OpenAI-compatible endpoint including a local LLM on your own network) with per-product interview instructions, admin-viewable conversation transcripts, and strict email privacy (the submitter's address is stored only as a token, never rendered to any browser). Optionally give Vora **web search** (Serper.dev or a self-hosted SearXNG) so it grounds ideas in current information when your instructions call for it. Off by default; one switch to enable.
 
+### 🤖 Works with Claude and other AI assistants (MCP)
+Upvora speaks the **Model Context Protocol** at `https://your-board/mcp`. Point Claude (or any MCP client) at it: people sign in with your board's own sign-in, approve the connection, and the assistant can then search and post ideas, vote, comment and, for your team, run the whole board, with **exactly that person's permissions** (every tool replays the same REST endpoint the UI uses). Submitting an idea follows Vora's interview and attaches the same Idea Brief. Off by default; you choose who may connect (admins, team, or any member), per-person and per-app rate limits, an audit line for every tool call, and one switch to turn it all off.
+
 ### 🔐 Sign-in your users already have
 Passwordless email magic links out of the box, plus Google, GitHub, and any OAuth2/OIDC provider (Microsoft, Authentik, Keycloak…). Visitors bring an account they already own.
 
@@ -73,7 +76,7 @@ Passwordless email magic links out of the box, plus Google, GitHub, and any OAut
 Send transactional mail through **SMTP**, **Mailgun**, **Amazon SES**, or **Resend**: pick one with a single env var. Magic-link sign-in, notifications, and invites all flow through it.
 
 ### ⚙️ And the whole engine underneath
-Web + email notifications, webhooks, a REST API with per-user API keys, CSV export, team invitations, post moderation, GDPR-friendly privacy controls, 30+ languages, single-binary Docker image, migrations on boot. Built on Fider's proven core, kept current with upstream (tracking **Fider v0.38.1**, security releases included).
+Web + email notifications, webhooks, a REST API covering every board and admin action (per-user API keys), CSV export, team invitations, post moderation, GDPR-friendly privacy controls, 30+ languages, single-binary Docker image, migrations on boot. Built on Fider's proven core, kept current with upstream (tracking **Fider v0.38.2**, security releases included).
 
 ## Screenshots
 
@@ -93,7 +96,9 @@ Upvora is a friendly fork of [Fider](https://fider.io) (AGPL-3.0). The engine (d
 | Public roadmap | ✅ | ✅ lanes, filters, drag-to-restatus |
 | Prioritization scorecard | No | ✅ custom dimensions, fields, weighted ring |
 | Internal notes & team-only comments | No | ✅ |
-| Private (team-only) ideas | No | ✅ hidden on every surface, one-click toggle |
+| Private ideas | No | ✅ hidden on every surface; optional member-private ideas |
+| AI assistants (MCP) | No | ✅ OAuth sign-in per person, every action as a tool |
+| REST API | core actions | ✅ every board and admin action |
 | Theming | custom CSS | ✅ token-based color system + custom CSS |
 | AI ideation agent (Vora) | No | ✅ optional; BYO provider incl. local LLMs, web search, Idea Briefs, transcripts |
 | Email delivery | SMTP · Mailgun · SES | ✅ + Resend |
