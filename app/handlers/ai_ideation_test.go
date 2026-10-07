@@ -123,3 +123,19 @@ func TestComposeBriefContent_Provenance(t *testing.T) {
 	Expect(strings.Contains(mcp, "Prepared with Vora")).IsFalse()
 	Expect(mcp).ContainsSubstring("Prepared with an AI assistant (Claude) over MCP")
 }
+
+func TestAISiteLimit_ConcurrentSetAndAllowIsRaceFree(t *testing.T) {
+	RegisterT(t)
+	defer handlers.SetAISiteLimit(handlers.DefaultAISiteLimit)
+	done := make(chan struct{})
+	go func() {
+		for i := 0; i < 200; i++ {
+			handlers.SetAISiteLimit(1000)
+		}
+		close(done)
+	}()
+	for i := 0; i < 200; i++ {
+		handlers.AISiteRateAllow(1)
+	}
+	<-done
+}

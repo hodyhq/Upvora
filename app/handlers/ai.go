@@ -50,14 +50,26 @@ var aiRate = struct {
 // accounts make them (the provider key is the site admin's).
 const DefaultAISiteLimit = 300
 
-var aiSiteRate = ratelimit.New(DefaultAISiteLimit, time.Hour)
+var (
+	aiSiteMu   sync.Mutex
+	aiSiteRate = ratelimit.New(DefaultAISiteLimit, time.Hour)
+)
 
 // SetAISiteLimit replaces the per-site budget (tests and tuning).
-func SetAISiteLimit(n int) { aiSiteRate = ratelimit.New(n, time.Hour) }
+func SetAISiteLimit(n int) {
+	aiSiteMu.Lock()
+	defer aiSiteMu.Unlock()
+	aiSiteRate = ratelimit.New(n, time.Hour)
+}
 
 // AISiteRateAllow records a Vora model call for the site and reports whether
 // it is within the site's hourly budget.
-func AISiteRateAllow(tenantID int) bool { return aiSiteRate.Allow(strconv.Itoa(tenantID)) }
+func AISiteRateAllow(tenantID int) bool {
+	aiSiteMu.Lock()
+	limiter := aiSiteRate
+	aiSiteMu.Unlock()
+	return limiter.Allow(strconv.Itoa(tenantID))
+}
 
 func aiRateAllow(userID int) bool {
 	aiRate.Lock()
