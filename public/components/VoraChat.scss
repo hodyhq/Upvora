@@ -237,7 +237,10 @@
   padding: 13px 20px;
   cursor: pointer;
   box-shadow: 0 8px 22px -10px var(--brand-glow);
-  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    filter 0.12s ease;
 
   &__title {
     display: inline-flex;

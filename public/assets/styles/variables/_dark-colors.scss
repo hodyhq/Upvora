@@ -3,17 +3,17 @@ $dark-colors: (
   // hairline borders, cool light-gray text ramp. Depth comes from cards being
   // LIGHTER than the page, never from drop shadows alone.
   "gray": (
-    "100": #0b0d10,
-    "200": #191e28,
-    "300": #23272f,
-    "400": #2f3540,
-    "500": #5e6672,
-    "600": #98a0ac,
-    "700": #a8b0bc,
-    "800": #cbd2db,
-    "900": #f3f5f8,
-    "50": #090b0e,
-  ),
+      "100": #0b0d10,
+      "200": #191e28,
+      "300": #23272f,
+      "400": #2f3540,
+      "500": #5e6672,
+      "600": #98a0ac,
+      "700": #a8b0bc,
+      "800": #cbd2db,
+      "900": #f3f5f8,
+      "50": #090b0e,
+    ),
   "green": (
     "100": #0a3d1a,
     "200": #14532d,
@@ -63,10 +63,10 @@ $dark-colors: (
     "50": #4a1a1a,
   ),
   "primary": (
-    "light": var(--primary-color-light, #FF6A1A),
-    "base": var(--primary-color, #F97316),
-    "dark": var(--primary-color-dark, #E94A00),
+    "light": var(--primary-color-light, #ff6a1a),
+    "base": var(--primary-color, #f97316),
+    "dark": var(--primary-color-dark, #e94a00),
   ),
   "white": #151922,
-  "black": #e5e8ec,
+  "black": #e5e8ec
 );

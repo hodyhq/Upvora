@@ -1,4 +1,4 @@
-@use "~@fider/assets/styles/variables.scss" as *;
+@use "@fider/assets/styles/variables.scss" as *;
 
 .c-posts-container {
   &__header {
@@ -92,7 +92,9 @@
     border-radius: 8px;
     cursor: pointer;
     white-space: nowrap;
-    transition: color 0.12s ease, background-color 0.12s ease;
+    transition:
+      color 0.12s ease,
+      background-color 0.12s ease;
 
     &:hover {
       color: var(--colors-gray-900);
@@ -120,7 +122,10 @@
   border: 1px solid var(--colors-gray-200);
   border-radius: get("border.radius.large");
   padding: 14px 18px;
-  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
 
   @include dark-mode {
     // Raised card above the near-black page + the prototype's top sheen.
@@ -182,7 +187,9 @@
     border: 1px solid var(--colors-gray-400);
     border-radius: 13px;
     background-color: var(--colors-gray-100);
-    transition: border-color 0.16s ease, background 0.16s ease;
+    transition:
+      border-color 0.16s ease,
+      background 0.16s ease;
 
     @include dark-mode {
       // darker inset well against the raised card (prototype surface-2)

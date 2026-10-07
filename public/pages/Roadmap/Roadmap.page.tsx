@@ -134,8 +134,7 @@ const RoadmapPost = (props: {
             onClick={handleVote}
             title="Vote"
           >
-            ▲ <span className="text-semibold">{votes}</span>{" "}
-            <Plural id="label.votecount" value={votes} one="Vote" other="Votes" />
+            ▲ <span className="text-semibold">{votes}</span> <Plural id="label.votecount" value={votes} one="Vote" other="Votes" />
           </button>
         )}
       </VStack>

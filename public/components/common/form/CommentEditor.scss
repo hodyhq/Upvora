@@ -1,4 +1,4 @@
-@use "~@fider/assets/styles/variables.scss" as *;
+@use "@fider/assets/styles/variables.scss" as *;
 
 /* Styling for content elements */
 .fider-tiptap-editor .ProseMirror {
@@ -63,7 +63,9 @@
   border: none;
   color: var(--colors-gray-600);
   cursor: pointer;
-  transition: background-color 0.12s ease, color 0.12s ease;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
 
   &:hover {
     background-color: color-mix(in srgb, var(--colors-gray-900) 7%, transparent);
@@ -106,7 +108,9 @@
   border-radius: 10px;
   overflow: hidden;
   background-color: var(--colors-white);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 
   @include dark-mode {
     background-color: var(--colors-gray-100);

@@ -72,6 +72,7 @@ func (action *CreateNewPost) IsAuthorized(ctx context.Context, user *entity.User
 // Validate if current model is valid
 func (action *CreateNewPost) Validate(ctx context.Context, user *entity.User) *validate.Result {
 	result := validate.Success()
+	action.Attachments = withoutNilUploads(action.Attachments)
 
 	if action.IsPrivate && (user == nil || !user.IsCollaborator()) {
 		result.AddFieldFailure("isPrivate", "Only collaborators can create private ideas.")
@@ -170,6 +171,7 @@ func (input *UpdatePost) IsAuthorized(ctx context.Context, user *entity.User) bo
 // Validate if current model is valid
 func (action *UpdatePost) Validate(ctx context.Context, user *entity.User) *validate.Result {
 	result := validate.Success()
+	action.Attachments = withoutNilUploads(action.Attachments)
 
 	if action.Title == "" {
 		result.AddFieldFailure("title", propertyIsRequired(ctx, "title"))
@@ -256,6 +258,7 @@ func (action *AddNewComment) IsAuthorized(ctx context.Context, user *entity.User
 // Validate if current model is valid
 func (action *AddNewComment) Validate(ctx context.Context, user *entity.User) *validate.Result {
 	result := validate.Success()
+	action.Attachments = withoutNilUploads(action.Attachments)
 
 	if action.IsInternal && !user.IsCollaborator() {
 		result.AddFieldFailure("isInternal", "Only collaborators can post internal comments.")
@@ -390,8 +393,12 @@ type EditComment struct {
 // IsAuthorized returns true if current user is authorized to perform this action
 func (action *EditComment) IsAuthorized(ctx context.Context, user *entity.User) bool {
 	postByNumber := &query.GetPostByNumber{Number: action.PostNumber}
-	commentByID := &query.GetCommentByID{CommentID: action.ID}
-	if err := bus.Dispatch(ctx, postByNumber, commentByID); err != nil {
+	if err := bus.Dispatch(ctx, postByNumber); err != nil {
+		return false
+	}
+
+	commentByID := &query.GetCommentByID{CommentID: action.ID, PostID: postByNumber.Result.ID}
+	if err := bus.Dispatch(ctx, commentByID); err != nil {
 		return false
 	}
 
@@ -403,6 +410,7 @@ func (action *EditComment) IsAuthorized(ctx context.Context, user *entity.User) 
 // Validate if current model is valid
 func (action *EditComment) Validate(ctx context.Context, user *entity.User) *validate.Result {
 	result := validate.Success()
+	action.Attachments = withoutNilUploads(action.Attachments)
 
 	if action.Content == "" {
 		result.AddFieldFailure("content", propertyIsRequired(ctx, "comment"))
@@ -423,6 +431,20 @@ func (action *EditComment) Validate(ctx context.Context, user *entity.User) *val
 			result.AddFieldFailure("content", i18n.T(ctx, "validation.custom.maxattachments", i18n.Params{"number": 2}))
 		}
 
+		getAttachments := &query.GetAttachments{Post: action.Post, Comment: action.Comment}
+		if err := bus.Dispatch(ctx, getAttachments); err != nil {
+			return validate.Error(err)
+		}
+
+		messages, err := validate.MultiImageUpload(ctx, getAttachments.Result, action.Attachments, validate.MultiImageUploadOpts{
+			MaxUploads:   2,
+			MaxKilobytes: 5120,
+			ExactRatio:   false,
+		})
+		if err != nil {
+			return validate.Error(err)
+		}
+		result.AddFieldFailure("attachments", messages...)
 	}
 
 	return result
@@ -436,7 +458,12 @@ type DeleteComment struct {
 
 // IsAuthorized returns true if current user is authorized to perform this action
 func (action *DeleteComment) IsAuthorized(ctx context.Context, user *entity.User) bool {
-	commentByID := &query.GetCommentByID{CommentID: action.CommentID}
+	postByNumber := &query.GetPostByNumber{Number: action.PostNumber}
+	if err := bus.Dispatch(ctx, postByNumber); err != nil {
+		return false
+	}
+
+	commentByID := &query.GetCommentByID{CommentID: action.CommentID, PostID: postByNumber.Result.ID}
 	if err := bus.Dispatch(ctx, commentByID); err != nil {
 		return false
 	}
@@ -447,4 +474,19 @@ func (action *DeleteComment) IsAuthorized(ctx context.Context, user *entity.User
 // Validate if current model is valid
 func (action *DeleteComment) Validate(ctx context.Context, user *entity.User) *validate.Result {
 	return validate.Success()
+}
+
+// withoutNilUploads drops null entries, e.g. from "attachments": [null], which would otherwise
+// be dereferenced when the attachments are validated and stored
+func withoutNilUploads(uploads []*dto.ImageUpload) []*dto.ImageUpload {
+	if uploads == nil {
+		return nil
+	}
+	result := make([]*dto.ImageUpload, 0, len(uploads))
+	for _, upload := range uploads {
+		if upload != nil {
+			result = append(result, upload)
+		}
+	}
+	return result
 }

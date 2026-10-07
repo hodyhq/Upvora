@@ -1,4 +1,4 @@
-@import "~@fider/assets/styles/variables.scss";
+@use "@fider/assets/styles/variables.scss" as *;
 
 .c-share-feedback {
   // The fullscreen modal backdrop — brand glow washed over a deep ground.
@@ -57,7 +57,9 @@
       border: 1px solid var(--colors-gray-200);
       border-radius: 9px;
       padding: 9px 12px;
-      transition: border-color 0.12s ease, box-shadow 0.12s ease;
+      transition:
+        border-color 0.12s ease,
+        box-shadow 0.12s ease;
 
       &:focus {
         outline: none;
@@ -72,7 +74,9 @@
       border-radius: 10px;
       background-color: var(--colors-gray-50);
       overflow: hidden;
-      transition: border-color 0.12s ease, box-shadow 0.12s ease;
+      transition:
+        border-color 0.12s ease,
+        box-shadow 0.12s ease;
 
       &:focus-within {
         border-color: var(--colors-primary-base);

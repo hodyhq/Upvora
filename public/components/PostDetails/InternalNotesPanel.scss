@@ -52,7 +52,9 @@
     font-size: 13px;
     line-height: 1.5;
     padding: 6px 10px;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
 
     @include dark-mode {
       background-color: var(--colors-gray-100);

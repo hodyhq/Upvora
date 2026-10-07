@@ -1,4 +1,4 @@
-@use "~@fider/assets/styles/variables.scss" as *;
+@use "@fider/assets/styles/variables.scss" as *;
 
 // Single source of truth for the post-detail UI. PostDetails renders both on
 // the standalone /posts page AND inside PostDetailsOverlay (board/roadmap
@@ -127,7 +127,9 @@
     border: 1px solid var(--colors-gray-400);
     border-radius: 12px;
     background-color: var(--colors-gray-100);
-    transition: border-color 0.16s ease, background 0.16s ease;
+    transition:
+      border-color 0.16s ease,
+      background 0.16s ease;
 
     @include dark-mode {
       background-color: var(--colors-gray-50);
@@ -402,14 +404,19 @@
   border-radius: 999px;
   padding: 5px 11px;
   cursor: pointer;
-  transition: color 0.14s ease, border-color 0.14s ease, background-color 0.14s ease;
+  transition:
+    color 0.14s ease,
+    border-color 0.14s ease,
+    background-color 0.14s ease;
 
   &__dot {
     width: 7px;
     height: 7px;
     border-radius: 50%;
     background: var(--colors-gray-500);
-    transition: background 0.14s ease, box-shadow 0.14s ease;
+    transition:
+      background 0.14s ease,
+      box-shadow 0.14s ease;
   }
 
   &:hover {
