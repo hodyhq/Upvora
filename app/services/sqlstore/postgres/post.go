@@ -302,11 +302,8 @@ func countPostPerStatus(ctx context.Context, q *query.CountPostPerStatus) error 
 
 		q.Result = make(map[string]int)
 		stats := []*dbStatusCount{}
-		// Private ideas never contribute to counts a non-collaborator can see.
-		privacy := ""
-		if user == nil || !user.IsCollaborator() {
-			privacy = " AND is_private = false"
-		}
+		// Private ideas only count for the people who can see them.
+		privacy := privacyClause(user, "")
 		sql := "SELECT status_slug, COUNT(*) AS count FROM posts WHERE tenant_id = $1" + privacy + " GROUP BY status_slug"
 		args := []interface{}{tenant.ID}
 		if q.ProductID > 0 {
@@ -678,14 +675,23 @@ func querySinglePost(ctx context.Context, trx *dbx.Trx, query string, args ...an
 	return post.ToModel(ctx), nil
 }
 
-// visibilityFilter hides private ideas from anyone who is not a collaborator
-// or administrator. Only collaborators can create private ideas, so there is
-// no "own private post" case for a visitor.
+// visibilityFilter hides private ideas from anyone who cannot see them, for
+// queries that alias posts as "p".
 func visibilityFilter(user *entity.User) string {
+	return privacyClause(user, "p.")
+}
+
+// privacyClause: collaborators see every idea; a signed-in member also sees
+// their own private ideas; anonymous visitors see public ideas only.
+// user.ID is the server-resolved user id (an int), never request input.
+func privacyClause(user *entity.User, col string) string {
 	if user != nil && user.IsCollaborator() {
 		return ""
 	}
-	return " AND p.is_private = false"
+	if user != nil {
+		return fmt.Sprintf(" AND (%sis_private = false OR %suser_id = %d)", col, col, user.ID)
+	}
+	return " AND " + col + "is_private = false"
 }
 
 func buildPostQuery(user *entity.User, filter string, moderationFilter string) string {

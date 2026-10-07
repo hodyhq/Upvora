@@ -193,3 +193,78 @@ func TestMarkPostAsDuplicate_RefusesCrossPrivacy(t *testing.T) {
 	Expect(err).IsNotNil()
 	Expect(err.Error()).ContainsSubstring("private")
 }
+
+// seedMemberPrivate inserts one private idea authored by Arya (id 2) and one by
+// Sansa (id 3), both members (visitors).
+func seedMemberPrivate(t *testing.T) {
+	now := time.Now()
+	_, err := trx.Execute("INSERT INTO posts (title, slug, number, description, created_at, tenant_id, user_id, status_slug, is_approved, is_private, language) VALUES ('Arya Secret', 'arya-secret', 9101, 'arya only', $1, 1, 2, 'open', true, true, 'english')", now)
+	Expect(err).IsNil()
+	_, err = trx.Execute("INSERT INTO posts (title, slug, number, description, created_at, tenant_id, user_id, status_slug, is_approved, is_private, language) VALUES ('Sansa Secret', 'sansa-secret', 9102, 'sansa only', $1, 1, 3, 'open', true, true, 'english')", now)
+	Expect(err).IsNil()
+}
+
+// A member sees their own private ideas, never another member's.
+func TestMemberPrivate_AuthorSeesOwnOnly(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	seedMemberPrivate(t)
+
+	arya := &query.SearchPosts{Limit: "50"}
+	sansa := &query.SearchPosts{Limit: "50"}
+	anon := &query.SearchPosts{Limit: "50"}
+	admin := &query.SearchPosts{Limit: "50"}
+	Expect(bus.Dispatch(aryaStarkCtx, arya)).IsNil()
+	Expect(bus.Dispatch(sansaStarkCtx, sansa)).IsNil()
+	Expect(bus.Dispatch(demoTenantCtx, anon)).IsNil()
+	Expect(bus.Dispatch(jonSnowCtx, admin)).IsNil()
+
+	a, s, n, ad := slugsFrom(arya.Result), slugsFrom(sansa.Result), slugsFrom(anon.Result), slugsFrom(admin.Result)
+	Expect(a["arya-secret"]).IsTrue()
+	Expect(a["sansa-secret"]).IsFalse()
+	Expect(s["sansa-secret"]).IsTrue()
+	Expect(s["arya-secret"]).IsFalse()
+	Expect(n["arya-secret"]).IsFalse()
+	Expect(n["sansa-secret"]).IsFalse()
+	Expect(ad["arya-secret"]).IsTrue()
+	Expect(ad["sansa-secret"]).IsTrue()
+}
+
+func TestMemberPrivate_SinglePostFetch(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	seedMemberPrivate(t)
+
+	own := &query.GetPostByNumber{Number: 9101}
+	Expect(bus.Dispatch(aryaStarkCtx, own)).IsNil()
+	Expect(own.Result.Slug).Equals("arya-secret")
+
+	other := &query.GetPostByNumber{Number: 9101}
+	Expect(errors.Cause(bus.Dispatch(sansaStarkCtx, other))).Equals(app.ErrNotFound)
+
+	anon := &query.GetPostByNumber{Number: 9101}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, anon))).Equals(app.ErrNotFound)
+}
+
+// A member's own private idea counts for them only.
+func TestMemberPrivate_CountsIncludeOnlyOwn(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+
+	base := &query.CountPostPerStatus{}
+	Expect(bus.Dispatch(aryaStarkCtx, base)).IsNil()
+	seedMemberPrivate(t)
+
+	arya := &query.CountPostPerStatus{}
+	sansa := &query.CountPostPerStatus{}
+	Expect(bus.Dispatch(aryaStarkCtx, arya)).IsNil()
+	Expect(bus.Dispatch(sansaStarkCtx, sansa)).IsNil()
+	Expect(arya.Result["open"] - base.Result["open"]).Equals(1)
+	Expect(sansa.Result["open"] - base.Result["open"]).Equals(1)
+
+	aryaProd := &query.CountPostPerProduct{}
+	anonProd := &query.CountPostPerProduct{}
+	Expect(bus.Dispatch(aryaStarkCtx, aryaProd)).IsNil()
+	Expect(bus.Dispatch(demoTenantCtx, anonProd)).IsNil()
+	Expect(aryaProd.Result[0] - anonProd.Result[0]).Equals(1)
+}
