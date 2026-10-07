@@ -153,9 +153,17 @@ const maxSearchRounds = 2
 // runVoraTurn calls the model and, when web search is enabled, honors up to
 // maxSearchRounds [[search: ...]] requests, injecting results as untrusted
 // context each time before asking the model to continue.
+// errSiteBudget means the site's hourly Vora budget ran out mid-turn.
+var errSiteBudget = errors.New("site AI budget exhausted")
+
 func runVoraTurn(c *web.Context, system string, messages []entity.AIMessage, canSearch bool) (string, error) {
 	convo := append([]entity.AIMessage{}, messages...)
 	for round := 0; ; round++ {
+		// The first call was charged by the handler; every search round is
+		// another provider call and is charged too.
+		if round > 0 && !AISiteRateAllow(c.Tenant().ID) {
+			return "", errSiteBudget
+		}
 		chat := &cmd.AIChatCompletion{System: system, Messages: convo, MaxTokens: 1200}
 		if err := bus.Dispatch(c, chat); err != nil {
 			return "", err
@@ -224,6 +232,9 @@ func AIIdeate() web.HandlerFunc {
 		extendWriteDeadline(c)
 
 		result, err := runVoraTurn(c, buildSystemPrompt(c, agent, action.ProductID), action.Messages, webSearchAvailable(c, agent))
+		if err == errSiteBudget {
+			return c.BadRequest(web.Map{"message": "Vora is busy right now; give it a minute and try again."})
+		}
 		if err != nil {
 			return c.Failure(err)
 		}
