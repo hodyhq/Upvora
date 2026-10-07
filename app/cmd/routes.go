@@ -295,6 +295,7 @@ func routes(r *web.Engine) *web.Engine {
 		publicApi.Get("/api/v1/posts/:number/comments/:id", apiv1.GetComment())
 		publicApi.Get("/api/v1/taggable-users", apiv1.ListTaggableUsers())
 		publicApi.Get("/api/v1/posts/:number/votes", apiv1.ListVotes())
+		publicApi.Get("/api/v1/tenant", apiv1.GetTenant())
 	}
 
 	// Operations used to manage the content of a site
@@ -347,6 +348,9 @@ func routes(r *web.Engine) *web.Engine {
 		staffApi.Get("/api/v1/posts/:number/internal-note", handlers.GetInternalNote())
 		staffApi.Get("/api/v1/admin/scorecard-fields", handlers.ListScorecardFields())
 		staffApi.Get("/api/v1/admin/products", handlers.ListProducts())
+		staffApi.Get("/api/v1/scorecards", apiv1.ListScorecards())
+		staffApi.Get("/api/v1/scorecards/:id", apiv1.GetScorecard())
+		staffApi.Get("/api/v1/admin/scorecard-settings", apiv1.GetScorecardSettings())
 
 		staffApi.Use(middlewares.BlockLockedTenants())
 		staffApi.Post("/api/v1/posts/:number/tags/:slug", apiv1.AssignTag())
@@ -385,10 +389,15 @@ func routes(r *web.Engine) *web.Engine {
 		adminApi.Get("/api/v1/admin/statuses", handlers.ListStatuses())
 		adminApi.Get("/api/v1/admin/webhooks/props/:type", handlers.GetWebhookProps())
 		adminApi.Get("/api/v1/admin/oauth/:provider", handlers.GetOAuthConfig())
+		adminApi.Get("/api/v1/admin/oauth", apiv1.ListOAuthProviders())
+		adminApi.Get("/api/v1/admin/settings/advanced", apiv1.GetAdvancedSettings())
+		adminApi.Get("/api/v1/admin/settings/ai", apiv1.GetAISettings())
+		adminApi.Get("/api/v1/admin/webhooks", apiv1.ListWebhooks())
 
 		// Billing and site deletion stay reachable on a locked tenant, as in the UI.
 		if env.IsBillingEnabled() {
 			adminApi.Post("/api/v1/admin/billing/portal", handlers.CreateStripePortalSession())
+			adminApi.Get("/api/v1/admin/billing", apiv1.GetBillingState())
 			adminApi.Post("/api/v1/admin/billing/checkout", handlers.CreateStripeCheckoutSession())
 			adminApi.Post("/api/v1/admin/billing/checkout/annual", handlers.CreateStripeAnnualCheckoutSession())
 		}
