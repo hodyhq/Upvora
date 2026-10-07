@@ -7,11 +7,14 @@ import (
 	"github.com/getfider/fider/app/pkg/web"
 )
 
-// SetPostPrivacy toggles whether an idea is private (collaborators/admins
-// only). Visitors never reach this — the check is here, not just in the UI.
+// SetPostPrivacy changes whether an idea is private. Staff may change any idea
+// in either direction. A member may only make their own private idea public,
+// and only when the tenant allows it; a member can never make an
+// already-submitted idea private. Enforced here, not just in the UI.
 func SetPostPrivacy() web.HandlerFunc {
 	return func(c *web.Context) error {
-		if c.User() == nil || !c.User().IsCollaborator() {
+		user := c.User()
+		if user == nil {
 			return c.NotFound()
 		}
 		number, err := c.ParamAsInt("number")
@@ -28,7 +31,18 @@ func SetPostPrivacy() web.HandlerFunc {
 		if err := bus.Dispatch(c, getPost); err != nil {
 			return c.Failure(err)
 		}
-		set := &cmd.SetPostPrivacy{Post: getPost.Result, IsPrivate: input.IsPrivate}
+		post := getPost.Result
+
+		if !user.IsCollaborator() {
+			if post.User == nil || post.User.ID != user.ID {
+				return c.NotFound()
+			}
+			if input.IsPrivate || !post.IsPrivate || !c.Tenant().MembersCanPublishPrivate {
+				return c.Forbidden()
+			}
+		}
+
+		set := &cmd.SetPostPrivacy{Post: post, IsPrivate: input.IsPrivate}
 		if err := bus.Dispatch(c, set); err != nil {
 			return c.Failure(err)
 		}

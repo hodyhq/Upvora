@@ -161,6 +161,8 @@ func routes(r *web.Engine) *web.Engine {
 		ui.Post("/_api/user/change-email", handlers.ChangeUserEmail())
 		ui.Post("/_api/notifications/read-all", handlers.ReadAllNotifications())
 		ui.Get("/_api/notifications/unread/total", handlers.TotalUnreadNotifications())
+		// Members may publish their own private idea; the handler enforces the rules.
+		ui.Post("/_api/posts/:number/privacy", handlers.SetPostPrivacy())
 
 		// From this step, only Collaborators and Administrators are allowed
 		ui.Use(middlewares.IsAuthorized(enum.RoleCollaborator, enum.RoleAdministrator))
@@ -175,7 +177,6 @@ func routes(r *web.Engine) *web.Engine {
 		ui.Put("/_api/posts/:number/product", handlers.SetPostProduct())
 		ui.Get("/_api/posts/:number/internal-note", handlers.GetInternalNote())
 		ui.Put("/_api/posts/:number/internal-note", handlers.SetInternalNote())
-		ui.Post("/_api/posts/:number/privacy", handlers.SetPostPrivacy())
 		ui.Get("/scorecard", handlers.ScorecardPage())
 		ui.Get("/scorecard/:id", handlers.ScorecardCardPage())
 		ui.Post("/_api/scorecards", handlers.CreateScorecard())
