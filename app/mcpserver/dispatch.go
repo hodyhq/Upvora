@@ -198,6 +198,8 @@ func Dispatch(engine http.Handler, orig *http.Request, t Tool, args map[string]a
 		return errResult("Request could not be built.")
 	}
 	req.Host = orig.Host
+	// Fider reads the path from RequestURI, which only an HTTP server sets.
+	req.RequestURI = req.URL.RequestURI()
 	for _, h := range []string{"Authorization", "X-Forwarded-Proto", "X-Forwarded-For", "CF-Connecting-IP"} {
 		if v := orig.Header.Get(h); v != "" {
 			req.Header.Set(h, v)

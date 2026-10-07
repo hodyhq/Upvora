@@ -26,7 +26,7 @@ func (e echoEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(map[string]string{
 		"method": r.Method, "path": r.URL.EscapedPath(), "query": r.URL.RawQuery, "body": string(body),
-		"auth": r.Header.Get("Authorization"), "host": r.Host, "proto": r.Header.Get("X-Forwarded-Proto"),
+		"auth": r.Header.Get("Authorization"), "requestURI": r.RequestURI, "host": r.Host, "proto": r.Header.Get("X-Forwarded-Proto"),
 	})
 }
 
@@ -66,6 +66,7 @@ func TestDispatch_PathAndBody(t *testing.T) {
 	Expect(got["auth"]).Equals("Bearer tok")
 	Expect(got["host"]).Equals("demo.test")
 	Expect(got["proto"]).Equals("https")
+	Expect(got["requestURI"]).Equals("/api/v1/posts/12/comments/5") // Fider routes on RequestURI
 }
 
 func TestDispatch_QueryForGetWithLimitCap(t *testing.T) {
