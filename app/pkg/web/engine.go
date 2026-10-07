@@ -265,6 +265,13 @@ func (e *Engine) register(method, path string, middlewares []MiddlewareFunc, han
 	e.mux.Handle(method, path, e.handle(middlewares, handler))
 }
 
+// ServeHTTP serves a request through the router (and so every middleware), so
+// the engine can be used as an http.Handler: in tests, and to replay MCP tool
+// calls in-process against /api/v1.
+func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	e.mux.ServeHTTP(w, r)
+}
+
 // Routes returns every registered route as "METHOD path".
 func (e *Engine) Routes() []string {
 	return e.routes

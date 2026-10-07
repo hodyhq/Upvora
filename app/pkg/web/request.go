@@ -80,6 +80,11 @@ func (r *Request) ClientIP() string {
 	return r.instance.RemoteAddr
 }
 
+// Raw returns the underlying *http.Request (e.g. to hand it to a library handler).
+func (r *Request) Raw() *http.Request {
+	return r.instance
+}
+
 // GetHeader returns the value of HTTP header from given key
 func (r *Request) GetHeader(key string) string {
 	return r.instance.Header.Get(key)
