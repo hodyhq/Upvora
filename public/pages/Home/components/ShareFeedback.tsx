@@ -45,7 +45,8 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
   const [voraTranscript, setVoraTranscript] = useState<AIMessage[]>([])
   const [isPrivate, setIsPrivate] = useState(false)
   const [voraOpen, setVoraOpen] = useState(false)
-  const canMakePrivate = fider.session.isAuthenticated && fider.session.user.isCollaborator
+  const isStaff = fider.session.isAuthenticated && fider.session.user.isCollaborator
+  const canMakePrivate = isStaff || (fider.session.isAuthenticated && fider.session.tenant.membersPrivateIdeas)
   // Vora is available when the feature is on and this product (or the
   // default) has an enabled agent — for signed-in users only.
   const voraAvailable =
@@ -357,7 +358,11 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
                         <Trans id="newpost.modal.private.label">Make private</Trans>
                       </div>
                       <p id="make-private-hint" className="text-muted text-xs" style={{ margin: "2px 0 0" }}>
-                        <Trans id="newpost.modal.private.hint">Only collaborators and admins can see this idea.</Trans>
+                        {isStaff ? (
+                          <Trans id="newpost.modal.private.hint">Only collaborators and admins can see this idea.</Trans>
+                        ) : (
+                          <Trans id="newpost.modal.private.hint.member">Only you, collaborators and admins can see this idea.</Trans>
+                        )}
                       </p>
                     </div>
                   </div>

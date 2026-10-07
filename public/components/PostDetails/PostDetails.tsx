@@ -565,11 +565,14 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
                   </ActionButton>
                 )}
 
-                {Fider.session.isAuthenticated && Fider.session.user.isCollaborator && (
-                  <ActionButton icon={IconChat} onClick={handleTogglePrivacy}>
-                    {post.isPrivate ? <Trans id="action.makepublic">Make public</Trans> : <Trans id="action.makeprivate">Make private</Trans>}
-                  </ActionButton>
-                )}
+                {/* Staff toggle either way; an author may only publish their own private idea when allowed. */}
+                {Fider.session.isAuthenticated &&
+                  (Fider.session.user.isCollaborator ||
+                    (post.isPrivate && post.user?.id === Fider.session.user.id && Fider.session.tenant.membersCanPublishPrivate)) && (
+                    <ActionButton icon={IconChat} onClick={handleTogglePrivacy}>
+                      {post.isPrivate ? <Trans id="action.makepublic">Make public</Trans> : <Trans id="action.makeprivate">Make private</Trans>}
+                    </ActionButton>
+                  )}
 
                 {Fider.session.tenant.isFeedEnabled && (
                   <ActionButton icon={IconRSS} onClick={onActionSelected("feed")}>

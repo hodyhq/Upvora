@@ -237,6 +237,7 @@
   "newpost.modal.description.placeholder": "Tell us about it. Explain it fully, don't hold back, the more information the better.",
   "newpost.modal.private": "Make private — only collaborators and admins can see this idea",
   "newpost.modal.private.hint": "Only collaborators and admins can see this idea.",
+  "newpost.modal.private.hint.member": "Only you, collaborators and admins can see this idea.",
   "newpost.modal.private.label": "Make private",
   "newpost.modal.product.label": "Product",
   "newpost.modal.submit": "Submit your idea",

@@ -24,6 +24,8 @@ export interface Tenant {
   isEmailAuthAllowed: boolean
   isFeedEnabled: boolean
   isModerationEnabled: boolean
+  membersPrivateIdeas: boolean
+  membersCanPublishPrivate: boolean
   isPro: boolean
   // Custom status catalogue for this tenant; populated by the server on every
   // request. Undefined for old Fider builds / unmigrated tenants — runtime
