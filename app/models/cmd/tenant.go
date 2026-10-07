@@ -117,3 +117,10 @@ type SetTenantTheme struct {
 	Accents      map[string]string
 	DefaultTheme string
 }
+
+// UpdateTenantMCPSettings changes who may use MCP on this site.
+type UpdateTenantMCPSettings struct {
+	Enabled    bool
+	MinRole    enum.Role
+	DCREnabled bool
+}

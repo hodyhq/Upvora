@@ -47,6 +47,18 @@ func isSubdomainAvailable(ctx context.Context, q *query.IsSubdomainAvailable) er
 	})
 }
 
+func updateTenantMCPSettings(ctx context.Context, c *cmd.UpdateTenantMCPSettings) error {
+	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, user *entity.User) error {
+		_, err := trx.Execute(
+			"UPDATE tenants SET mcp_enabled = $1, mcp_min_role = $2, mcp_dcr_enabled = $3 WHERE id = $4",
+			c.Enabled, int(c.MinRole), c.DCREnabled, tenant.ID)
+		if err != nil {
+			return errors.Wrap(err, "failed update tenant MCP settings")
+		}
+		return nil
+	})
+}
+
 func updateTenantPrivacySettings(ctx context.Context, c *cmd.UpdateTenantPrivacySettings) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, user *entity.User) error {
 		_, err := trx.Execute("UPDATE tenants SET is_private = $1 WHERE id = $2", c.IsPrivate, tenant.ID)
@@ -287,7 +299,7 @@ func getFirstTenant(ctx context.Context, q *query.GetFirstTenant) error {
 		tenant := dbEntities.Tenant{}
 
 	err := trx.Get(&tenant, `
-		SELECT t.id, t.name, t.subdomain, t.cname, t.invitation, t.locale, t.welcome_message, t.welcome_header, t.description_template, t.status, t.is_private, t.logo_bkey, t.custom_css, t.allowed_schemes, t.is_email_auth_allowed, t.is_feed_enabled, t.is_moderation_enabled, t.members_private_ideas, t.members_can_publish_private, t.prevent_indexing, t.is_pro, t.scheduled_deletion_at, t.deletion_cancel_key,
+		SELECT t.id, t.name, t.subdomain, t.cname, t.invitation, t.locale, t.welcome_message, t.welcome_header, t.description_template, t.status, t.is_private, t.logo_bkey, t.custom_css, t.allowed_schemes, t.is_email_auth_allowed, t.is_feed_enabled, t.is_moderation_enabled, t.members_private_ideas, t.members_can_publish_private, t.mcp_enabled, t.mcp_min_role, t.mcp_dcr_enabled, t.prevent_indexing, t.is_pro, t.scheduled_deletion_at, t.deletion_cancel_key,
 			t.share_idea_instructions, t.rail_cta_heading, t.rail_cta_text, t.rail_cta_button, t.default_theme, t.theme_primary, t.theme_accents::text AS theme_accents, t.site_banner_enabled, t.site_banner_message, t.site_banner_variant,
 			t.is_scorecard_enabled, t.scorecard_band_strong, t.scorecard_band_good, t.scorecard_band_refine, t.scorecard_band_low, t.scorecard_trigger_status_slug,
 			t.scorecard_band_strong_label, t.scorecard_band_good_label, t.scorecard_band_refine_label, t.scorecard_band_low_label, t.scorecard_band_none_label,
@@ -312,7 +324,7 @@ func getTenantByDomain(ctx context.Context, q *query.GetTenantByDomain) error {
 		tenant := dbEntities.Tenant{}
 
 	err := trx.Get(&tenant, `
-		SELECT t.id, t.name, t.subdomain, t.cname, t.invitation, t.locale, t.welcome_message, t.welcome_header, t.description_template, t.status, t.is_private, t.logo_bkey, t.custom_css, t.allowed_schemes, t.is_email_auth_allowed, t.is_feed_enabled, t.is_moderation_enabled, t.members_private_ideas, t.members_can_publish_private, t.prevent_indexing, t.is_pro, t.scheduled_deletion_at, t.deletion_cancel_key,
+		SELECT t.id, t.name, t.subdomain, t.cname, t.invitation, t.locale, t.welcome_message, t.welcome_header, t.description_template, t.status, t.is_private, t.logo_bkey, t.custom_css, t.allowed_schemes, t.is_email_auth_allowed, t.is_feed_enabled, t.is_moderation_enabled, t.members_private_ideas, t.members_can_publish_private, t.mcp_enabled, t.mcp_min_role, t.mcp_dcr_enabled, t.prevent_indexing, t.is_pro, t.scheduled_deletion_at, t.deletion_cancel_key,
 			t.share_idea_instructions, t.rail_cta_heading, t.rail_cta_text, t.rail_cta_button, t.default_theme, t.theme_primary, t.theme_accents::text AS theme_accents, t.site_banner_enabled, t.site_banner_message, t.site_banner_variant,
 			t.is_scorecard_enabled, t.scorecard_band_strong, t.scorecard_band_good, t.scorecard_band_refine, t.scorecard_band_low, t.scorecard_trigger_status_slug,
 			t.scorecard_band_strong_label, t.scorecard_band_good_label, t.scorecard_band_refine_label, t.scorecard_band_low_label, t.scorecard_band_none_label,

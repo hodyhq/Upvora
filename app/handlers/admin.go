@@ -292,3 +292,21 @@ func SetSystemProviderStatus() web.HandlerFunc {
 		return c.Ok(web.Map{})
 	}
 }
+
+// UpdateMCPSettings saves who may use MCP on this site.
+func UpdateMCPSettings() web.HandlerFunc {
+	return func(c *web.Context) error {
+		action := new(actions.UpdateTenantMCPSettings)
+		if result := c.BindTo(action); !result.Ok {
+			return c.HandleValidation(result)
+		}
+		if err := bus.Dispatch(c, &cmd.UpdateTenantMCPSettings{
+			Enabled:    action.Enabled,
+			MinRole:    action.MinRole,
+			DCREnabled: action.DCREnabled,
+		}); err != nil {
+			return c.Failure(err)
+		}
+		return c.Ok(web.Map{})
+	}
+}

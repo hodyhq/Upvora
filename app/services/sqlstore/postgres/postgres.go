@@ -131,6 +131,7 @@ func (s Service) Init() {
 	bus.AddHandler(isCNAMEAvailable)
 	bus.AddHandler(updateTenantSettings)
 	bus.AddHandler(updateTenantPrivacySettings)
+	bus.AddHandler(updateTenantMCPSettings)
 	bus.AddHandler(updateTenantEmailAuthAllowedSettings)
 	bus.AddHandler(updateTenantAdvancedSettings)
 	bus.AddHandler(updateTenantSiteBanner)

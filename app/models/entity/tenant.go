@@ -28,6 +28,9 @@ type Tenant struct {
 	IsModerationEnabled        bool              `json:"isModerationEnabled"`
 	MembersPrivateIdeas        bool              `json:"membersPrivateIdeas"`      // members may mark an idea private at submission (visible to them and staff)
 	MembersCanPublishPrivate   bool              `json:"membersCanPublishPrivate"` // members may later make their own private idea public (never the reverse)
+	MCPEnabled                 bool              `json:"mcpEnabled"`               // MCP and its OAuth server are on for this site
+	MCPMinRole                 enum.Role         `json:"mcpMinRole"`               // lowest role allowed to authorize an MCP client
+	MCPDCREnabled              bool              `json:"mcpDcrEnabled"`            // MCP clients may self-register (RFC 7591)
 	IsPro                      bool              `json:"isPro"`
 	ShareIdeaInstructions      string            `json:"shareIdeaInstructions"`
 	RailCtaHeading             string            `json:"railCtaHeading"`

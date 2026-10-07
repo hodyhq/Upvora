@@ -399,3 +399,24 @@ func (action *UpdateTenantEmailAuthAllowed) Validate(ctx context.Context, user *
 
 	return result
 }
+
+// UpdateTenantMCPSettings is the input model for the MCP admin settings
+type UpdateTenantMCPSettings struct {
+	Enabled    bool      `json:"enabled"`
+	MinRole    enum.Role `json:"minRole"`
+	DCREnabled bool      `json:"dcrEnabled"`
+}
+
+// IsAuthorized returns true if current user is authorized to perform this action
+func (action *UpdateTenantMCPSettings) IsAuthorized(ctx context.Context, user *entity.User) bool {
+	return user != nil && user.IsAdministrator()
+}
+
+// Validate if current model is valid
+func (action *UpdateTenantMCPSettings) Validate(ctx context.Context, user *entity.User) *validate.Result {
+	result := validate.Success()
+	if action.MinRole < enum.RoleVisitor || action.MinRole > enum.RoleAdministrator {
+		result.AddFieldFailure("minRole", "Minimum role must be visitor, collaborator or administrator.")
+	}
+	return result
+}

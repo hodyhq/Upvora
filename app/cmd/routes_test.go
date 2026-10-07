@@ -58,7 +58,7 @@ var apiV1Surface = []string{
 	"GET /api/v1/admin/settings/ai", "POST /api/v1/admin/settings/ai", "POST /api/v1/admin/ai/agents",
 	"GET /api/v1/posts/:number/brief/transcript",
 	"GET /api/v1/admin/system/status", "POST /api/v1/admin/system/update",
-	"POST /api/v1/admin/settings/general", "POST /api/v1/admin/settings/advanced", "POST /api/v1/admin/settings/privacy",
+	"POST /api/v1/admin/settings/general", "POST /api/v1/admin/settings/advanced", "POST /api/v1/admin/settings/privacy", "POST /api/v1/admin/settings/mcp",
 	"POST /api/v1/admin/settings/emailauth", "POST /api/v1/admin/settings/site-banner",
 	"GET /api/v1/admin/statuses", "POST /api/v1/admin/statuses",
 	"PUT /api/v1/admin/statuses/:id", "DELETE /api/v1/admin/statuses/:id",

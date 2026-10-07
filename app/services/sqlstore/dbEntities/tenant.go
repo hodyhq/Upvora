@@ -31,6 +31,9 @@ type Tenant struct {
 	IsModerationEnabled        bool           `db:"is_moderation_enabled"`
 	MembersPrivateIdeas        bool           `db:"members_private_ideas"`
 	MembersCanPublishPrivate   bool           `db:"members_can_publish_private"`
+	MCPEnabled                 bool           `db:"mcp_enabled"`
+	MCPMinRole                 int            `db:"mcp_min_role"`
+	MCPDCREnabled              bool           `db:"mcp_dcr_enabled"`
 	IsPro                      bool           `db:"is_pro"`
 	HasPaddleSubscription      bool           `db:"has_paddle_subscription"`
 	ScheduledDeletionAt        dbx.NullTime   `db:"scheduled_deletion_at"`
@@ -101,6 +104,9 @@ func (t *Tenant) ToModel() *entity.Tenant {
 		IsModerationEnabled:      isPro && t.IsModerationEnabled,
 		MembersPrivateIdeas:      t.MembersPrivateIdeas,
 		MembersCanPublishPrivate: t.MembersCanPublishPrivate,
+		MCPEnabled:               t.MCPEnabled,
+		MCPMinRole:               enum.Role(t.MCPMinRole),
+		MCPDCREnabled:            t.MCPDCREnabled,
 		IsPro:                    isPro,
 		ShareIdeaInstructions:    t.ShareIdeaInstructions,
 		RailCtaHeading:           t.RailCtaHeading,
