@@ -152,3 +152,23 @@ func TestOAuth_SecurityStampRotationRevokes(t *testing.T) {
 	Expect(trx.Scalar(&revoked, "SELECT COUNT(*) FROM oauth_refresh_tokens WHERE family_id = 'fam-stamp' AND revoked_at IS NOT NULL")).IsNil()
 	Expect(revoked).Equals(1)
 }
+
+// OAuth 2.1: a reused authorization code revokes what that code already issued.
+func TestOAuthCodes_ReplayRevokesIssuedFamily(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	clientID := registerClient(t)
+	saveCode(t, clientID, "replay-code", time.Now().Add(10*time.Minute))
+
+	first := &cmd.ConsumeOAuthCode{CodeHash: "replay-code", ClientID: clientID}
+	Expect(bus.Dispatch(demoTenantCtx, first)).IsNil()
+	Expect(bus.Dispatch(demoTenantCtx, &cmd.SaveOAuthRefreshToken{TokenHash: "replay-rt", ClientID: clientID, UserID: aryaStark.ID,
+		Scope: "upvora", FamilyID: "fam-replay", FromCodeHash: "replay-code", ExpiresAt: time.Now().Add(time.Hour)})).IsNil()
+
+	again := &cmd.ConsumeOAuthCode{CodeHash: "replay-code", ClientID: clientID}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, again))).Equals(app.ErrNotFound)
+
+	var revoked int
+	Expect(trx.Scalar(&revoked, "SELECT COUNT(*) FROM oauth_refresh_tokens WHERE family_id = 'fam-replay' AND revoked_at IS NOT NULL")).IsNil()
+	Expect(revoked).Equals(1)
+}

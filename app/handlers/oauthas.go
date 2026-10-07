@@ -395,6 +395,7 @@ func OAuthTokenEndpoint() web.HandlerFunc {
 				Scope:         grant.Scope,
 				FamilyID:      familyID,
 				SecurityStamp: user.SecurityStamp,
+				FromCodeHash:  oauthas.HashToken(form.Get("code")),
 				ExpiresAt:     time.Now().Add(refreshTokenTTL),
 			}); err != nil {
 				return c.Failure(err)

@@ -148,6 +148,18 @@ func consumeOAuthCode(ctx context.Context, c *cmd.ConsumeOAuthCode) error {
 			  AND security_stamp = (SELECT COALESCE(security_stamp, '') FROM users WHERE id = oauth_codes.user_id AND tenant_id = $2)
 			RETURNING user_id, client_id, scope, redirect_uri, code_challenge, '' AS family_id, security_stamp`,
 			c.CodeHash, tenant.ID, c.ClientID)
+		if errors.Cause(err) == app.ErrNotFound {
+			// A used code presented again: revoke what it already issued.
+			if _, rerr := trx.Execute(`
+				UPDATE oauth_refresh_tokens SET revoked_at = now()
+				WHERE tenant_id = $1 AND revoked_at IS NULL AND family_id = (
+					SELECT family_id FROM oauth_codes
+					WHERE code_hash = $2 AND tenant_id = $1 AND client_id = $3 AND used_at IS NOT NULL
+				)`, tenant.ID, c.CodeHash, c.ClientID); rerr != nil {
+				return errors.Wrap(rerr, "failed to revoke tokens issued from a replayed code")
+			}
+			return app.ErrNotFound
+		}
 		if err != nil {
 			return errors.Wrap(err, "failed to consume OAuth code")
 		}
@@ -164,6 +176,12 @@ func saveOAuthRefreshToken(ctx context.Context, c *cmd.SaveOAuthRefreshToken) er
 			c.TokenHash, tenant.ID, c.ClientID, c.UserID, c.Scope, c.FamilyID, c.SecurityStamp, c.ExpiresAt)
 		if err != nil {
 			return errors.Wrap(err, "failed to save OAuth refresh token")
+		}
+		if c.FromCodeHash != "" {
+			if _, err := trx.Execute("UPDATE oauth_codes SET family_id = $1 WHERE code_hash = $2 AND tenant_id = $3",
+				c.FamilyID, c.FromCodeHash, tenant.ID); err != nil {
+				return errors.Wrap(err, "failed to link OAuth code to its refresh family")
+			}
 		}
 		return nil
 	})
