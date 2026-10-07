@@ -783,3 +783,38 @@ func TestUser_SecurityStamp_EmptyInToken(t *testing.T) {
 	Expect(response.Body.String()).Equals("Jon Snow")
 }
 
+
+// An admin key may impersonate members and collaborators, never another
+// administrator: owner-only actions and key rotation trust c.User().
+func TestUser_Impersonation_AdministratorRefused(t *testing.T) {
+	RegisterT(t)
+	otherAdmin := &entity.User{ID: 77, Name: "Other Admin", Role: enum.RoleAdministrator, Tenant: mock.DemoTenant}
+
+	bus.AddHandler(func(ctx context.Context, q *query.GetUserByID) error {
+		if q.UserID == otherAdmin.ID {
+			q.Result = otherAdmin
+			return nil
+		}
+		return app.ErrNotFound
+	})
+	bus.AddHandler(func(ctx context.Context, q *query.GetUserByAPIKey) error {
+		if q.APIKey == "1234567890" {
+			q.Result = mock.JonSnow
+			return nil
+		}
+		return app.ErrNotFound
+	})
+
+	server := mock.NewServer()
+	server.Use(middlewares.User())
+	status, _ := server.
+		OnTenant(mock.DemoTenant).
+		WithURL("http://example.com/api/v1").
+		AddHeader("Authorization", "Bearer 1234567890").
+		AddHeader("X-Fider-UserID", strconv.Itoa(otherAdmin.ID)).
+		Execute(func(c *web.Context) error {
+			return c.String(http.StatusOK, c.User().Name)
+		})
+
+	Expect(status).Equals(http.StatusBadRequest)
+}

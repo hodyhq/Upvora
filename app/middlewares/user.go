@@ -121,6 +121,12 @@ func User() web.MiddlewareFunc {
 							}
 							return err
 						}
+						// Never act as another administrator: owner-only actions (site
+						// deletion) and key rotation trust c.User(), so impersonating an
+						// admin would let one admin act as the owner or mint their key.
+						if user.IsAdministrator() {
+							return c.HandleValidation(validate.Failed("Administrators cannot be impersonated"))
+						}
 					}
 				}
 			}
