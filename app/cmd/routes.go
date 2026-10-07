@@ -324,6 +324,7 @@ func routes(r *web.Engine) *web.Engine {
 		membersApi.Get("/api/v1/notifications", handlers.GetAllNotifications())
 		membersApi.Get("/api/v1/notifications/unread/total", handlers.TotalUnreadNotifications())
 		membersApi.Post("/api/v1/notifications/read-all", handlers.ReadAllNotifications())
+		membersApi.Get("/api/v1/user/settings", apiv1.GetUserSettings())
 		membersApi.Post("/api/v1/user/settings", handlers.UpdateUserSettings())
 		membersApi.Post("/api/v1/user/change-email", handlers.ChangeUserEmail())
 		// Members may publish their own private idea; the handler enforces the rules.

@@ -156,3 +156,18 @@ func TestGetBillingStateHandler(t *testing.T) {
 
 	Expect(code).Equals(http.StatusOK)
 }
+
+func TestGetUserSettingsHandler(t *testing.T) {
+	RegisterT(t)
+	bus.AddHandler(func(ctx context.Context, q *query.GetCurrentUserSettings) error {
+		q.Result = map[string]string{"event_notification_new_comment": "1"}
+		return nil
+	})
+
+	code, res := mock.NewServer().OnTenant(mock.DemoTenant).AsUser(mock.AryaStark).ExecuteAsJSON(apiv1.GetUserSettings())
+
+	Expect(code).Equals(http.StatusOK)
+	Expect(res.String("name")).Equals(mock.AryaStark.Name)
+	Expect(res.String("avatarType")).Equals(mock.AryaStark.AvatarType.String())
+	Expect(res.String("settings.event_notification_new_comment")).Equals("1")
+}

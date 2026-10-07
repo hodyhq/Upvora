@@ -129,3 +129,20 @@ func GetBillingState() web.HandlerFunc {
 		return c.Ok(q.Result)
 	}
 }
+
+// GetUserSettings returns the signed-in user's editable settings, the same
+// fields POST /api/v1/user/settings accepts.
+func GetUserSettings() web.HandlerFunc {
+	return func(c *web.Context) error {
+		settings := &query.GetCurrentUserSettings{}
+		if err := bus.Dispatch(c, settings); err != nil {
+			return c.Failure(err)
+		}
+		user := c.User()
+		return c.Ok(web.Map{
+			"name":       user.Name,
+			"avatarType": user.AvatarType,
+			"settings":   settings.Result,
+		})
+	}
+}
