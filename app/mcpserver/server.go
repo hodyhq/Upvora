@@ -87,19 +87,22 @@ func registerTools(server *sdk.Server, c *web.Context, engine http.Handler, orig
 			Name:        tool.Name,
 			Description: tool.Description,
 			InputSchema: tool.InputSchema(),
+			Annotations: tool.Annotations(),
 		}, func(ctx context.Context, req *sdk.CallToolRequest) (*sdk.CallToolResult, error) {
-			args := map[string]any{}
-			if len(req.Params.Arguments) > 0 {
-				if err := json.Unmarshal(req.Params.Arguments, &args); err != nil {
-					return &sdk.CallToolResult{IsError: true, Content: []sdk.Content{&sdk.TextContent{Text: "Arguments must be a JSON object."}}}, nil
-				}
-			}
 			start := time.Now()
 			entry := AuditEntry{TenantID: tenantID, UserID: userID, ClientID: clientID, Tool: tool.Name}
 			if !CallAllowed(tenantID, userID, clientID) {
 				entry.Status = http.StatusTooManyRequests
 				audit(ctx, entry)
 				return &sdk.CallToolResult{IsError: true, Content: []sdk.Content{&sdk.TextContent{Text: "Too many tool calls; slow down and try again in a few minutes."}}}, nil
+			}
+			args := map[string]any{}
+			if len(req.Params.Arguments) > 0 {
+				if err := json.Unmarshal(req.Params.Arguments, &args); err != nil {
+					entry.Status = http.StatusBadRequest
+					audit(ctx, entry)
+					return &sdk.CallToolResult{IsError: true, Content: []sdk.Content{&sdk.TextContent{Text: "Arguments must be a JSON object."}}}, nil
+				}
 			}
 			res := DispatchContext(ctx, engine, orig, tool, args)
 			entry.Status, entry.DurationMs = res.Status, time.Since(start).Milliseconds()

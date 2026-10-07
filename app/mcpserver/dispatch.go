@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	sdk "github.com/modelcontextprotocol/go-sdk/mcp"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -48,6 +49,23 @@ type Tool struct {
 	Pro         bool // requires a pro (or self-hosted) site
 	Billing     bool // only when billing is enabled
 	MultiTenant bool // only on hosted multi-tenant installs
+	Destructive bool // changes or removes something hard to undo (DELETE tools are always)
+	OpenWorld   bool // reaches outside the site (webhooks, email, the site's LLM)
+}
+
+// IsDestructive reports whether the tool removes or changes something hard to undo.
+func (t Tool) IsDestructive() bool {
+	return t.Method == http.MethodDelete || t.Destructive
+}
+
+// Annotations are the MCP hints clients use to decide which calls need the
+// user's confirmation.
+func (t Tool) Annotations() *sdk.ToolAnnotations {
+	if t.Method == http.MethodGet {
+		return &sdk.ToolAnnotations{ReadOnlyHint: true, IdempotentHint: true}
+	}
+	destructive, openWorld := t.IsDestructive(), t.OpenWorld
+	return &sdk.ToolAnnotations{DestructiveHint: &destructive, OpenWorldHint: &openWorld}
 }
 
 // Visible reports whether user may see tool on tenant with a token of scope.

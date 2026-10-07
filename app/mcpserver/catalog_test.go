@@ -64,3 +64,33 @@ func TestCatalogHighImpactWording(t *testing.T) {
 		}
 	}
 }
+
+// Clients use annotations to decide which calls need the user's OK.
+func TestCatalogAnnotations(t *testing.T) {
+	RegisterT(t)
+	destructiveNonDelete := map[string]bool{
+		"upvora_users_set_role": true, "upvora_users_block": true, "upvora_oauth_providers_set": true,
+		"upvora_oauth_providers_set_status": true, "upvora_settings_privacy_set": true, "upvora_settings_mcp_set": true,
+		"upvora_settings_advanced_set": true, "upvora_settings_emailauth_set": true, "upvora_settings_general_set": true,
+		"upvora_tenant_update": true, "upvora_system_update": true, "upvora_webhooks_create": true, "upvora_webhooks_update": true,
+		"upvora_ai_settings_set": true,
+	}
+	openWorld := map[string]bool{
+		"upvora_webhooks_create": true, "upvora_webhooks_update": true, "upvora_webhooks_test": true,
+		"upvora_users_invite": true, "upvora_users_invite_sample": true, "upvora_ai_ideate": true, "upvora_ai_finalize": true,
+	}
+	for _, tool := range mcpserver.Catalog {
+		a := tool.Annotations()
+		if tool.Method == "GET" {
+			Expect(a.ReadOnlyHint).IsTrue()
+			continue
+		}
+		Expect(a.ReadOnlyHint).IsFalse()
+		destructive := tool.Method == "DELETE" || destructiveNonDelete[tool.Name]
+		Expect(a.DestructiveHint != nil && *a.DestructiveHint == destructive).IsTrue()
+		if destructive {
+			Expect(strings.Contains(tool.Description, "Confirm with the user")).IsTrue()
+		}
+		Expect(a.OpenWorldHint != nil && *a.OpenWorldHint == openWorld[tool.Name]).IsTrue()
+	}
+}
