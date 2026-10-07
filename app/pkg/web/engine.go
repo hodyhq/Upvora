@@ -79,6 +79,7 @@ type Engine struct {
 	webServer     *http.Server
 	metricsServer *http.Server
 	cache         *cache.Cache
+	routes        []string
 }
 
 // New creates a new Engine
@@ -240,22 +241,33 @@ func (e *Engine) Use(middleware MiddlewareFunc) {
 
 // Get handles HTTP GET requests
 func (e *Engine) Get(path string, handler HandlerFunc) {
-	e.mux.Handle("GET", path, e.handle(e.middlewares, handler))
+	e.register("GET", path, e.middlewares, handler)
 }
 
 // Post handles HTTP POST requests
 func (e *Engine) Post(path string, handler HandlerFunc) {
-	e.mux.Handle("POST", path, e.handle(e.middlewares, handler))
+	e.register("POST", path, e.middlewares, handler)
 }
 
 // Put handles HTTP PUT requests
 func (e *Engine) Put(path string, handler HandlerFunc) {
-	e.mux.Handle("PUT", path, e.handle(e.middlewares, handler))
+	e.register("PUT", path, e.middlewares, handler)
 }
 
 // Delete handles HTTP DELETE requests
 func (e *Engine) Delete(path string, handler HandlerFunc) {
-	e.mux.Handle("DELETE", path, e.handle(e.middlewares, handler))
+	e.register("DELETE", path, e.middlewares, handler)
+}
+
+// register adds a route and records it, so tests can assert the route table.
+func (e *Engine) register(method, path string, middlewares []MiddlewareFunc, handler HandlerFunc) {
+	e.routes = append(e.routes, method+" "+path)
+	e.mux.Handle(method, path, e.handle(middlewares, handler))
+}
+
+// Routes returns every registered route as "METHOD path".
+func (e *Engine) Routes() []string {
+	return e.routes
 }
 
 // NotFound register how to handle routes that are not found
@@ -328,22 +340,22 @@ func (g *Group) Use(middleware MiddlewareFunc) {
 
 // Get handles HTTP GET requests
 func (g *Group) Get(path string, handler HandlerFunc) {
-	g.engine.mux.Handle("GET", path, g.engine.handle(g.middlewares, handler))
+	g.engine.register("GET", path, g.middlewares, handler)
 }
 
 // Post handles HTTP POST requests
 func (g *Group) Post(path string, handler HandlerFunc) {
-	g.engine.mux.Handle("POST", path, g.engine.handle(g.middlewares, handler))
+	g.engine.register("POST", path, g.middlewares, handler)
 }
 
 // Put handles HTTP PUT requests
 func (g *Group) Put(path string, handler HandlerFunc) {
-	g.engine.mux.Handle("PUT", path, g.engine.handle(g.middlewares, handler))
+	g.engine.register("PUT", path, g.middlewares, handler)
 }
 
 // Delete handles HTTP DELETE requests
 func (g *Group) Delete(path string, handler HandlerFunc) {
-	g.engine.mux.Handle("DELETE", path, g.engine.handle(g.middlewares, handler))
+	g.engine.register("DELETE", path, g.middlewares, handler)
 }
 
 // Static return files from given folder
