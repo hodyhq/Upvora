@@ -235,6 +235,7 @@
   "newpost.modal.description.placeholder": "Raccontacelo. Spiegalo in dettaglio, non esitare, più informazioni hai, meglio è.",
   "newpost.modal.private": "",
   "newpost.modal.private.hint": "",
+  "newpost.modal.private.hint.member": "",
   "newpost.modal.private.label": "",
   "newpost.modal.product.label": "",
   "newpost.modal.submit": "Invia la tua idea",

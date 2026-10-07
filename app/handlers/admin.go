@@ -130,9 +130,11 @@ func UpdatePrivacySettings() web.HandlerFunc {
 		}
 
 		updateSettings := &cmd.UpdateTenantPrivacySettings{
-			IsPrivate:           action.IsPrivate,
-			IsFeedEnabled:       action.IsFeedEnabled,
-			IsModerationEnabled: action.IsModerationEnabled,
+			IsPrivate:                action.IsPrivate,
+			IsFeedEnabled:            action.IsFeedEnabled,
+			IsModerationEnabled:      action.IsModerationEnabled,
+			MembersPrivateIdeas:      action.MembersPrivateIdeas,
+			MembersCanPublishPrivate: action.MembersCanPublishPrivate,
 		}
 		if err := bus.Dispatch(c, updateSettings); err != nil {
 			return c.Failure(err)

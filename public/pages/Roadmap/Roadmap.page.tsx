@@ -101,7 +101,7 @@ const RoadmapPost = (props: {
           )}
           {props.post.isPrivate && (
             <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded flex-shrink-0">
-              <Trans id="post.private">Private · team only</Trans>
+              <Trans id="post.private">Private</Trans>
             </span>
           )}
         </HStack>

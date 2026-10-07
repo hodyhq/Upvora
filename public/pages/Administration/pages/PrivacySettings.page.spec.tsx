@@ -1,0 +1,110 @@
+import { http, notify } from "@fider/services"
+import { fiderMock } from "@fider/services/testing"
+import PrivacySettingsPage from "./PrivacySettings.page"
+
+type Deferred = { resolve: (ok: boolean) => void }
+
+// Each http.post call waits until the test resolves it, so saves can finish out of order.
+const queuePosts = () => {
+  const pending: Deferred[] = []
+  http.post = jest.fn(
+    () =>
+      new Promise((resolve) => {
+        pending.push({ resolve: (ok) => resolve({ ok, data: null as any }) })
+      })
+  ) as any
+  return pending
+}
+
+// Instance with setState applied synchronously (no DOM needed for the save logic).
+const newPage = () => {
+  const page = new PrivacySettingsPage({})
+  page.setState = ((s: any, cb?: () => void) => {
+    page.state = { ...page.state, ...s }
+    if (cb) cb()
+  }) as any
+  return page
+}
+
+const update = (page: PrivacySettingsPage, patch: object) => (page as any).updatePrivacy(patch)
+const flush = () => new Promise((r) => setTimeout(r, 0))
+
+beforeEach(() => {
+  fiderMock.authenticated()
+  jest.spyOn(notify, "success").mockResolvedValue(undefined) // toastify pulls in CSS jest cannot parse
+})
+
+describe("PrivacySettings save", () => {
+  test("a failed save rolls back to the last confirmed settings", async () => {
+    const pending = queuePosts()
+    const page = newPage()
+
+    update(page, { membersPrivateIdeas: true })
+    await flush()
+    pending[0].resolve(false)
+    await flush()
+
+    expect(page.state.membersPrivateIdeas).toBeFalsy()
+  })
+
+  test("a failed older save does not undo a newer successful save", async () => {
+    const pending = queuePosts()
+    const page = newPage()
+
+    update(page, { membersPrivateIdeas: true }) // save A
+    update(page, { isModerationEnabled: true }) // save B, includes A's change
+    await flush()
+    pending[0].resolve(false)
+    await flush()
+    pending[1].resolve(true)
+    await flush()
+
+    expect(page.state.membersPrivateIdeas).toBe(true)
+    expect(page.state.isModerationEnabled).toBe(true)
+  })
+
+  test("after overlapping saves settle, the toggles match what the server accepted", async () => {
+    let server: any = null
+    const pending: { resolve: (ok: boolean) => void }[] = []
+    http.post = jest.fn(
+      (_url: string, body: any) =>
+        new Promise((resolve) => {
+          pending.push({
+            resolve: (ok) => {
+              if (ok) server = body
+              resolve({ ok, data: null as any })
+            },
+          })
+        })
+    ) as any
+    const page = newPage()
+
+    update(page, { membersPrivateIdeas: true }) // save A: will succeed
+    update(page, { isModerationEnabled: true }) // save B: will fail
+    // Fail B as early as possible (before A where both are in flight), then succeed A.
+    if (pending[1]) pending[1].resolve(false)
+    await flush()
+    pending[0].resolve(true)
+    await flush()
+    if (pending.length > 1) pending[1].resolve(false)
+    await flush()
+
+    expect(page.state.membersPrivateIdeas).toBe(server.membersPrivateIdeas)
+    expect(page.state.isModerationEnabled).toBe(server.isModerationEnabled)
+  })
+
+  test("a network error rolls back and does not block later saves", async () => {
+    let calls = 0
+    http.post = jest.fn(() => (++calls === 1 ? Promise.reject(new Error("offline")) : Promise.resolve({ ok: true, data: null as any }))) as any
+    const page = newPage()
+
+    update(page, { membersPrivateIdeas: true })
+    await flush()
+    expect(page.state.membersPrivateIdeas).toBeFalsy()
+
+    update(page, { isModerationEnabled: true })
+    await flush()
+    expect(calls).toBe(2)
+    expect(page.state.isModerationEnabled).toBe(true)
+  })
+})

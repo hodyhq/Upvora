@@ -283,7 +283,7 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
         post.isPrivate ? (
           <Trans id="showpost.privacy.public">This idea is now public.</Trans>
         ) : (
-          <Trans id="showpost.privacy.private">This idea is now private — only collaborators and admins can see it.</Trans>
+          <Trans id="showpost.privacy.private">This idea is now private. Only its author, collaborators and admins can see it.</Trans>
         )
       )
       setTimeout(() => location.reload(), 1000)
@@ -404,7 +404,7 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
 
           {!editMode && post.isPrivate && (
             <div className="text-sm p-3 bg-yellow-100 text-yellow-800 rounded-md mt-2">
-              🔒 <Trans id="showpost.private.banner">Private idea — only collaborators and admins can see this.</Trans>
+              🔒 <Trans id="showpost.private.banner">Private idea: only its author, collaborators and admins can see this.</Trans>
             </div>
           )}
 
@@ -565,11 +565,14 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
                   </ActionButton>
                 )}
 
-                {Fider.session.isAuthenticated && Fider.session.user.isCollaborator && (
-                  <ActionButton icon={IconChat} onClick={handleTogglePrivacy}>
-                    {post.isPrivate ? <Trans id="action.makepublic">Make public</Trans> : <Trans id="action.makeprivate">Make private</Trans>}
-                  </ActionButton>
-                )}
+                {/* Staff toggle either way; an author may only publish their own private idea when allowed. */}
+                {Fider.session.isAuthenticated &&
+                  (Fider.session.user.isCollaborator ||
+                    (post.isPrivate && post.user?.id === Fider.session.user.id && Fider.session.tenant.membersCanPublishPrivate)) && (
+                    <ActionButton icon={IconChat} onClick={handleTogglePrivacy}>
+                      {post.isPrivate ? <Trans id="action.makepublic">Make public</Trans> : <Trans id="action.makeprivate">Make private</Trans>}
+                    </ActionButton>
+                  )}
 
                 {Fider.session.tenant.isFeedEnabled && (
                   <ActionButton icon={IconRSS} onClick={onActionSelected("feed")}>

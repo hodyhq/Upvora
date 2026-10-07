@@ -235,6 +235,7 @@
   "newpost.modal.description.placeholder": "教えてください。遠慮せずに、詳しく説明してください。情報が多ければ多いほど良いです。",
   "newpost.modal.private": "",
   "newpost.modal.private.hint": "",
+  "newpost.modal.private.hint.member": "",
   "newpost.modal.private.label": "",
   "newpost.modal.product.label": "",
   "newpost.modal.submit": "アイデアを提出する",

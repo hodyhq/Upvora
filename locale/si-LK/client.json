@@ -285,5 +285,8 @@
   "showpost.moderation.postsuccess": "ඔබේ අදහස මධ්‍යස්ථකරණය බලාපොරොත්තුවෙන් සිටී 📝",
   "showpost.postedby": "පළ කරන ලද්දේ",
   "showpost.save.success": "පළ කිරීම සාර්ථකව යාවත්කාලීන කරන ලදී",
-  "signin.code.locked": "වැරදි උත්සාහයන් වැඩි ගණනක් හේතුවෙන් ඔබේ කේතය කල් ඉකුත් වී ඇත. කරුණාකර අලුත් එකක් ඉල්ලන්න."
+  "signin.code.locked": "වැරදි උත්සාහයන් වැඩි ගණනක් හේතුවෙන් ඔබේ කේතය කල් ඉකුත් වී ඇත. කරුණාකර අලුත් එකක් ඉල්ලන්න.",
+  "post.private": "",
+  "showpost.privacy.private": "",
+  "showpost.private.banner": ""
 }

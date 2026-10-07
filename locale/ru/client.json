@@ -235,6 +235,7 @@
   "newpost.modal.description.placeholder": "Расскажите нам об этом. Объясните подробно, не сдерживайтесь, чем больше информации, тем лучше.",
   "newpost.modal.private": "",
   "newpost.modal.private.hint": "",
+  "newpost.modal.private.hint.member": "",
   "newpost.modal.private.label": "",
   "newpost.modal.product.label": "",
   "newpost.modal.submit": "Предложите свою идею",

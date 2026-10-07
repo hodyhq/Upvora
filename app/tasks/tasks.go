@@ -44,18 +44,22 @@ func getActiveSubscribers(ctx context.Context, post *entity.Post, channel enum.N
 	// A private idea must never notify anyone who cannot see it. This is the
 	// single choke point for every notification event (new post, new comment,
 	// status change, delete), so it also covers a public idea flipped private
-	// while non-collaborators are still subscribed.
+	// while other members are still subscribed.
 	if post.IsPrivate {
-		return collaboratorsOnly(q.Result), nil
+		return privateAudience(post, q.Result), nil
 	}
 	return q.Result, nil
 }
 
-// collaboratorsOnly keeps only collaborators/administrators.
-func collaboratorsOnly(users []*entity.User) []*entity.User {
+// privateAudience keeps only the people allowed to see a private idea:
+// collaborators/administrators and the idea's own author.
+func privateAudience(post *entity.Post, users []*entity.User) []*entity.User {
 	out := make([]*entity.User, 0, len(users))
 	for _, u := range users {
-		if u != nil && u.IsCollaborator() {
+		if u == nil {
+			continue
+		}
+		if u.IsCollaborator() || (post.User != nil && u.ID == post.User.ID) {
 			out = append(out, u)
 		}
 	}

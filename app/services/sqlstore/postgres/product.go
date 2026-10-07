@@ -75,11 +75,8 @@ func countPostPerProduct(ctx context.Context, q *query.CountPostPerProduct) erro
 			Count     int         `db:"count"`
 		}
 		rows := []*row{}
-		// Private ideas never contribute to counts a non-collaborator can see.
-		privacy := ""
-		if user == nil || !user.IsCollaborator() {
-			privacy = " AND is_private = false"
-		}
+		// Private ideas only count for the people who can see them.
+		privacy := privacyClause(user, "")
 		err := trx.Select(&rows, "SELECT product_id, COUNT(*) AS count FROM posts WHERE tenant_id = $1"+privacy+" GROUP BY product_id", tenant.ID)
 		if err != nil {
 			return errors.Wrap(err, "failed to count posts per product")
