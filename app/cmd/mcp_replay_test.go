@@ -35,6 +35,8 @@ func TestMCPReplay_AuthenticatesThroughRealEngine(t *testing.T) {
 	Expect(err).IsNil()
 	_, err = trx.Execute("UPDATE tenants SET mcp_enabled = true, mcp_min_role = 1 WHERE id = 1")
 	Expect(err).IsNil()
+	_, err = trx.Execute("INSERT INTO oauth_clients (tenant_id, client_id, name, redirect_uris) VALUES (1, 'cid', 'test', '{https://x.example/cb}')")
+	Expect(err).IsNil()
 	var stamp string
 	Expect(trx.Scalar(&stamp, "SELECT COALESCE(security_stamp, '') FROM users WHERE id = 2")).IsNil()
 	Expect(trx.Commit()).IsNil()
@@ -45,13 +47,13 @@ func TestMCPReplay_AuthenticatesThroughRealEngine(t *testing.T) {
 	})
 	engine := routes(web.New())
 
-	// direct REST call with the token
+	// the token is for /mcp: sent straight to the REST API it is refused
 	direct, _ := http.NewRequest("GET", "http://demo.test.fider.io/api/v1/notifications", nil)
 	direct.Header.Set("Authorization", "Bearer "+token)
 	direct.RequestURI = direct.URL.RequestURI()
 	rec := httptest.NewRecorder()
 	engine.ServeHTTP(rec, direct)
-	Expect(rec.Code).Equals(http.StatusOK)
+	Expect(rec.Code).Equals(http.StatusUnauthorized)
 
 	// the same call replayed as an MCP tool
 	orig, _ := http.NewRequest("POST", "http://demo.test.fider.io/mcp", nil)
@@ -82,6 +84,7 @@ func TestMCPReplay_ConcurrentCallsDoNotExhaustThePool(t *testing.T) {
 	ctx := context.Background()
 	trx, _ := dbx.BeginTx(ctx)
 	_, _ = trx.Execute("UPDATE tenants SET mcp_enabled = true, mcp_min_role = 1 WHERE id = 1")
+	_, _ = trx.Execute("INSERT INTO oauth_clients (tenant_id, client_id, name, redirect_uris) VALUES (1, 'cid', 'test', '{https://x.example/cb}')")
 	var stamp string
 	_ = trx.Scalar(&stamp, "SELECT COALESCE(security_stamp, '') FROM users WHERE id = 2")
 	Expect(trx.Commit()).IsNil()

@@ -1,6 +1,9 @@
 package apiv1
 
 import (
+	"net/url"
+
+	"github.com/getfider/fider/app/models/entity"
 	"github.com/getfider/fider/app/models/query"
 	"github.com/getfider/fider/app/pkg/bus"
 	"github.com/getfider/fider/app/pkg/web"
@@ -55,15 +58,40 @@ func GetAISettings() web.HandlerFunc {
 	}
 }
 
-// ListWebhooks returns every webhook, as the admin Webhooks page shows them.
+// ListWebhooks returns every webhook with its secrets masked. Webhook URLs
+// (Slack, Discord) and headers usually carry credentials; API and MCP clients
+// get scheme and host only and masked header values. The admin page keeps the
+// full values for editing.
 func ListWebhooks() web.HandlerFunc {
 	return func(c *web.Context) error {
 		q := &query.ListAllWebhooks{}
 		if err := bus.Dispatch(c, q); err != nil {
 			return c.Failure(err)
 		}
-		return c.Ok(q.Result)
+		masked := make([]*entity.Webhook, len(q.Result))
+		for i, w := range q.Result {
+			m := *w
+			m.Url = maskURL(w.Url)
+			m.HttpHeaders = entity.HttpHeaders{}
+			for name := range w.HttpHeaders {
+				m.HttpHeaders[name] = "***"
+			}
+			masked[i] = &m
+		}
+		return c.Ok(masked)
 	}
+}
+
+func maskURL(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil || u.Host == "" {
+		return "***"
+	}
+	masked := u.Scheme + "://" + u.Host + "/"
+	if (u.Path != "" && u.Path != "/") || u.RawQuery != "" {
+		masked += "***"
+	}
+	return masked
 }
 
 // ListOAuthProviders returns the configured sign-in providers (no secrets).

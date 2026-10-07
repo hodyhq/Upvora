@@ -50,7 +50,10 @@ type SaveOAuthRefreshToken struct {
 	FamilyID  string
 	// SecurityStamp is the user's stamp at issue; rotating it revokes the family.
 	SecurityStamp string
-	ExpiresAt     time.Time
+	// FromCodeHash links the family to the code that started it, so a replay
+	// of that code revokes it.
+	FromCodeHash string
+	ExpiresAt    time.Time
 }
 
 // RotateOAuthRefreshToken exchanges a live refresh token for a new one in the
@@ -63,4 +66,10 @@ type RotateOAuthRefreshToken struct {
 	NewExpiresAt time.Time
 
 	Result *entity.OAuthGrant
+}
+
+// PurgeStaleOAuthData deletes old codes, dead refresh tokens and
+// self-registered clients that were never used (all tenants).
+type PurgeStaleOAuthData struct {
+	Deleted int
 }

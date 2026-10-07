@@ -2,6 +2,7 @@ package apiv1
 
 import (
 	"fmt"
+	"github.com/getfider/fider/app/pkg/oauthas"
 	"strconv"
 	"strings"
 
@@ -138,9 +139,17 @@ func CreatePost() web.HandlerFunc {
 					}
 				}
 			}
+			mcpClient := ""
+			if clientID, _ := c.Value(oauthas.ClientCtxKey{}).(string); clientID != "" {
+				mcpClient = "MCP client"
+				getClient := &query.GetOAuthClient{ClientID: clientID}
+				if bus.Dispatch(c, getClient) == nil {
+					mcpClient = getClient.Result.Name
+				}
+			}
 			saveBrief := &cmd.SaveIdeaBrief{
 				PostID:          newPost.Result.ID,
-				Content:         handlers.ComposeBriefContent(c.User(), productName, action.Title, action.BriefMarkdown),
+				Content:         handlers.ComposeBriefContent(c.User(), productName, action.Title, action.BriefMarkdown, mcpClient),
 				Transcript:      handlers.ComposeTranscript(c.User(), action.VoraTranscript),
 				SubmitterUserID: c.User().ID,
 			}

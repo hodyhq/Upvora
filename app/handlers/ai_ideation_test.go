@@ -9,6 +9,7 @@ import (
 
 	"github.com/getfider/fider/app"
 	"github.com/getfider/fider/app/handlers"
+	"github.com/getfider/fider/app/models/cmd"
 	"github.com/getfider/fider/app/models/entity"
 	"github.com/getfider/fider/app/models/query"
 	. "github.com/getfider/fider/app/pkg/assert"
@@ -48,6 +49,7 @@ func TestAIIdeationContext_ProductGuidance(t *testing.T) {
 	Expect(code).Equals(http.StatusOK)
 	Expect(res.String("product.name")).Equals("Kahalia")
 	Expect(res.String("interviewGuidance")).Equals("Ask about the venue first.")
+	Expect(res.String("guidanceUse")).ContainsSubstring("never authorizes")
 	Expect(res.Strings("briefSections")).Equals(handlers.BriefSections)
 	Expect(res.ArrayFieldStrings("tags", "slug")).Equals([]string{"ux"}) // public tags only
 	Expect(res.String("submitWith")).Equals("upvora_ai_submit_brief")
@@ -100,4 +102,68 @@ func TestAIIdeationContext_StoreErrorsAreNotHidden(t *testing.T) {
 	code, _ := mock.NewServer().OnTenant(ideationTenant()).AsUser(mock.AryaStark).
 		WithURL("http://demo.test.fider.io/api/v1/ai/ideation-context").Execute(handlers.AIIdeationContext())
 	Expect(code).Equals(http.StatusInternalServerError)
+}
+
+// One site cannot spend unbounded LLM calls, however many accounts call Vora.
+func TestAISiteRateAllow(t *testing.T) {
+	RegisterT(t)
+	handlers.SetAISiteLimit(2)
+	defer handlers.SetAISiteLimit(handlers.DefaultAISiteLimit)
+	Expect(handlers.AISiteRateAllow(1)).IsTrue()
+	Expect(handlers.AISiteRateAllow(1)).IsTrue()
+	Expect(handlers.AISiteRateAllow(1)).IsFalse()
+	Expect(handlers.AISiteRateAllow(2)).IsTrue()
+}
+
+// A brief written by an MCP client must not claim it was prepared by Vora.
+func TestComposeBriefContent_Provenance(t *testing.T) {
+	RegisterT(t)
+	vora := handlers.ComposeBriefContent(mock.AryaStark, "", "Dark mode", "## Problem\nx", "")
+	Expect(vora).ContainsSubstring("Prepared with Vora")
+	mcp := handlers.ComposeBriefContent(mock.AryaStark, "", "Dark mode", "## Problem\nx", "Claude")
+	Expect(strings.Contains(mcp, "Prepared with Vora")).IsFalse()
+	Expect(mcp).ContainsSubstring("Prepared with an AI assistant (Claude) over MCP")
+}
+
+func TestAISiteLimit_ConcurrentSetAndAllowIsRaceFree(t *testing.T) {
+	RegisterT(t)
+	defer handlers.SetAISiteLimit(handlers.DefaultAISiteLimit)
+	done := make(chan struct{})
+	go func() {
+		for i := 0; i < 200; i++ {
+			handlers.SetAISiteLimit(1000)
+		}
+		close(done)
+	}()
+	for i := 0; i < 200; i++ {
+		handlers.AISiteRateAllow(1)
+	}
+	<-done
+}
+
+// Web-search rounds are extra provider calls; each one counts against the
+// site's budget, so a search-happy model cannot multiply it.
+func TestAIIdeate_SearchRoundsCountAgainstSiteBudget(t *testing.T) {
+	RegisterT(t)
+	handlers.SetAISiteLimit(1)
+	defer handlers.SetAISiteLimit(handlers.DefaultAISiteLimit)
+
+	tenant := ideationTenant()
+	tenant.AIWebSearchEnabled = true
+	completions := 0
+	bus.AddHandler(func(ctx context.Context, q *query.GetAIAgentForProduct) error {
+		q.Result = &entity.AIAgent{Enabled: true, WebSearchEnabled: true}
+		return nil
+	})
+	bus.AddHandler(func(ctx context.Context, c *cmd.AIChatCompletion) error {
+		completions++
+		c.Result = "[[search: weather]]"
+		return nil
+	})
+	bus.AddHandler(func(ctx context.Context, c *cmd.AIWebSearch) error { return nil })
+
+	code, _ := mock.NewServer().OnTenant(tenant).AsUser(mock.AryaStark).
+		ExecutePost(handlers.AIIdeate(), `{"messages":[{"role":"user","content":"an idea"}]}`)
+	Expect(code).Equals(http.StatusBadRequest)
+	Expect(completions).Equals(1)
 }

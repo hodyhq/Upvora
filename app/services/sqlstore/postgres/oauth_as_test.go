@@ -152,3 +152,60 @@ func TestOAuth_SecurityStampRotationRevokes(t *testing.T) {
 	Expect(trx.Scalar(&revoked, "SELECT COUNT(*) FROM oauth_refresh_tokens WHERE family_id = 'fam-stamp' AND revoked_at IS NOT NULL")).IsNil()
 	Expect(revoked).Equals(1)
 }
+
+// OAuth 2.1: a reused authorization code revokes what that code already issued.
+func TestOAuthCodes_ReplayRevokesIssuedFamily(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	clientID := registerClient(t)
+	saveCode(t, clientID, "replay-code", time.Now().Add(10*time.Minute))
+
+	first := &cmd.ConsumeOAuthCode{CodeHash: "replay-code", ClientID: clientID}
+	Expect(bus.Dispatch(demoTenantCtx, first)).IsNil()
+	Expect(bus.Dispatch(demoTenantCtx, &cmd.SaveOAuthRefreshToken{TokenHash: "replay-rt", ClientID: clientID, UserID: aryaStark.ID,
+		Scope: "upvora", FamilyID: "fam-replay", FromCodeHash: "replay-code", ExpiresAt: time.Now().Add(time.Hour)})).IsNil()
+
+	again := &cmd.ConsumeOAuthCode{CodeHash: "replay-code", ClientID: clientID}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, again))).Equals(app.ErrNotFound)
+
+	var revoked int
+	Expect(trx.Scalar(&revoked, "SELECT COUNT(*) FROM oauth_refresh_tokens WHERE family_id = 'fam-replay' AND revoked_at IS NOT NULL")).IsNil()
+	Expect(revoked).Equals(1)
+}
+
+// Housekeeping removes stale codes, dead refresh tokens and self-registered
+// clients nobody ever used, and keeps everything still in play.
+func TestOAuth_PurgeStaleData(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	used := registerClient(t)
+	saveCode(t, used, "old-code", time.Now().Add(-48*time.Hour))
+	saveCode(t, used, "fresh-code", time.Now().Add(10*time.Minute))
+	saveRefresh(t, used, "live-rt", "fam-live")
+	saveRefresh(t, used, "dead-rt", "fam-dead")
+	_, err := trx.Execute("UPDATE oauth_refresh_tokens SET revoked_at = now() - interval '8 days' WHERE token_hash = 'dead-rt'")
+	Expect(err).IsNil()
+
+	stale := &cmd.RegisterOAuthClient{Name: "never used", RedirectURIs: []string{"https://x.example/cb"}}
+	Expect(bus.Dispatch(demoTenantCtx, stale)).IsNil()
+	admin := &cmd.RegisterOAuthClient{Name: "admin made", RedirectURIs: []string{"https://x.example/cb"}, CreatedByAdmin: true}
+	Expect(bus.Dispatch(demoTenantCtx, admin)).IsNil()
+	_, err = trx.Execute("UPDATE oauth_clients SET created_at = now() - interval '8 days'")
+	Expect(err).IsNil()
+
+	purge := &cmd.PurgeStaleOAuthData{}
+	Expect(bus.Dispatch(demoTenantCtx, purge)).IsNil()
+
+	count := func(sql string) int {
+		var n int
+		Expect(trx.Scalar(&n, sql)).IsNil()
+		return n
+	}
+	Expect(count("SELECT COUNT(*) FROM oauth_codes WHERE code_hash = 'old-code'")).Equals(0)
+	Expect(count("SELECT COUNT(*) FROM oauth_codes WHERE code_hash = 'fresh-code'")).Equals(1)
+	Expect(count("SELECT COUNT(*) FROM oauth_refresh_tokens WHERE token_hash = 'dead-rt'")).Equals(0)
+	Expect(count("SELECT COUNT(*) FROM oauth_refresh_tokens WHERE token_hash = 'live-rt'")).Equals(1)
+	Expect(count("SELECT COUNT(*) FROM oauth_clients WHERE client_id = '" + stale.Result.ClientID + "'")).Equals(0)
+	Expect(count("SELECT COUNT(*) FROM oauth_clients WHERE client_id = '" + admin.Result.ClientID + "'")).Equals(1)
+	Expect(count("SELECT COUNT(*) FROM oauth_clients WHERE client_id = '" + used + "'")).Equals(1) // has tokens
+}

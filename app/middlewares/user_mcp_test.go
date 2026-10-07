@@ -15,6 +15,7 @@ import (
 	"github.com/getfider/fider/app/pkg/bus"
 	"github.com/getfider/fider/app/pkg/jwt"
 	"github.com/getfider/fider/app/pkg/mock"
+	"github.com/getfider/fider/app/pkg/oauthas"
 	"github.com/getfider/fider/app/pkg/web"
 	jwtgo "github.com/golang-jwt/jwt/v4"
 )
@@ -39,6 +40,13 @@ func accessToken(user *entity.User, tenantID int, scope, aud, stamp string) stri
 func mcpUser() *entity.User {
 	u := *mock.AryaStark
 	u.SecurityStamp = "stamp-1"
+	bus.AddHandler(func(ctx context.Context, q *query.GetOAuthClient) error {
+		if q.ClientID != "cid" {
+			return app.ErrNotFound
+		}
+		q.Result = &entity.OAuthClient{ClientID: "cid"}
+		return nil
+	})
 	bus.AddHandler(func(ctx context.Context, q *query.GetUserByID) error {
 		if q.UserID != u.ID {
 			return app.ErrNotFound
@@ -49,8 +57,28 @@ func mcpUser() *entity.User {
 	return &u
 }
 
+// asReplay marks the request as an in-process MCP tool replay, as the
+// dispatcher does (a context value no external caller can set).
+func asReplay(next web.HandlerFunc) web.HandlerFunc {
+	return func(c *web.Context) error {
+		c.Set(oauthas.ReplayCtxKey{}, true)
+		return next(c)
+	}
+}
+
 func runAs(tenant *entity.Tenant, method, url, bearer string, headers ...string) (int, http.Header, string) {
+	return run(true, tenant, method, url, bearer, headers...)
+}
+
+func runDirect(tenant *entity.Tenant, method, url, bearer string, headers ...string) (int, http.Header, string) {
+	return run(false, tenant, method, url, bearer, headers...)
+}
+
+func run(replay bool, tenant *entity.Tenant, method, url, bearer string, headers ...string) (int, http.Header, string) {
 	server := mock.NewServer()
+	if replay {
+		server.Use(asReplay)
+	}
 	server.Use(middlewares.User())
 	s := server.OnTenant(tenant).WithURL(url)
 	if bearer != "" {
@@ -170,5 +198,28 @@ func TestUser_MCPEndpoint_RefusesCookieSessions(t *testing.T) {
 	RegisterT(t)
 	mcpUser()
 	code, _, _ := runAs(mcpSite(true, enum.RoleVisitor), "POST", "http://demo.test.fider.io/mcp", "", "Cookie", "auth=whatever")
+	Expect(code).Equals(http.StatusUnauthorized)
+}
+
+// An MCP token is for /mcp only: sent straight to /api/v1 it would skip the
+// MCP budgets and audit, so it is refused there.
+func TestUser_MCPAccessToken_RefusedOnDirectAPI(t *testing.T) {
+	RegisterT(t)
+	u := mcpUser()
+	tok := accessToken(u, mock.DemoTenant.ID, "upvora", mcpAudience, "stamp-1")
+	code, _, body := runDirect(mcpSite(true, enum.RoleVisitor), "GET", "http://demo.test.fider.io/api/v1/posts", tok)
+	Expect(code).Equals(http.StatusUnauthorized)
+	Expect(body == u.Name).IsFalse()
+}
+
+// Removing a client cuts off its access tokens at once, not after their hour.
+func TestUser_MCPAccessToken_RemovedClientRefused(t *testing.T) {
+	RegisterT(t)
+	u := mcpUser()
+	tok, _ := jwt.Encode(&jwt.MCPAccessClaims{
+		UserID: u.ID, TenantID: mock.DemoTenant.ID, ClientID: "removed-client", Scope: "upvora", SecurityStamp: "stamp-1",
+		Metadata: jwt.Metadata{Audience: jwtgo.ClaimStrings{mcpAudience}, ExpiresAt: jwt.Time(time.Now().Add(time.Hour))},
+	})
+	code, _, _ := runAs(mcpSite(true, enum.RoleVisitor), "POST", "http://demo.test.fider.io/mcp", tok)
 	Expect(code).Equals(http.StatusUnauthorized)
 }

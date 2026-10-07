@@ -1,6 +1,10 @@
 package mcpserver
 
-import "github.com/getfider/fider/app/models/enum"
+import (
+	"strings"
+
+	"github.com/getfider/fider/app/models/enum"
+)
 
 // Field helpers keep the table readable.
 func pathInt(name, desc string) Field {
@@ -184,15 +188,15 @@ var Catalog = []Tool{
 			req(b("briefMarkdown", "string", "The Idea Brief, following the structure from upvora_ai_ideation_context.")),
 			arr("tags", "string", "Tag slugs."), b("productId", "integer", ""), b("isPrivate", "boolean", ""),
 			arr("voraTranscript", "object", "Optional interview transcript: [{role: user|assistant, content}], up to 60 messages.")}},
-	{Name: "upvora_ai_ideate", Method: "POST", Path: "/api/v1/ai/ideate", MinRole: member,
+	{Name: "upvora_ai_ideate", OpenWorld: true, Method: "POST", Path: "/api/v1/ai/ideate", MinRole: member,
 		Description: "Delegate one interview turn to the site's own Vora agent (uses the site's AI provider).",
 		Fields:      []Field{b("productId", "integer", ""), {Name: "messages", Type: "array", Items: "object", In: "body", Required: true, Description: "[{role: user|assistant, content}], 1 to 60."}}},
-	{Name: "upvora_ai_finalize", Method: "POST", Path: "/api/v1/ai/finalize", MinRole: member,
+	{Name: "upvora_ai_finalize", OpenWorld: true, Method: "POST", Path: "/api/v1/ai/finalize", MinRole: member,
 		Description: "Ask the site's Vora agent to turn a conversation into a title, description, brief and tags (does not submit).",
 		Fields:      []Field{b("productId", "integer", ""), {Name: "messages", Type: "array", Items: "object", In: "body", Required: true, Description: "[{role, content}]."}}},
 	{Name: "upvora_ai_get_brief", Method: "GET", Path: "/api/v1/posts/{number}/brief", MinRole: member, Description: "Get an idea's Idea Brief." + readOnlyNo, Fields: []Field{number}},
 	{Name: "upvora_ai_settings_get", Method: "GET", Path: "/api/v1/admin/settings/ai", MinRole: admin, Description: "Get AI (Vora) settings and agents; keys are reported only as present or not." + readOnlyNo},
-	{Name: "upvora_ai_settings_set", Method: "POST", Path: "/api/v1/admin/settings/ai", MinRole: admin,
+	{Name: "upvora_ai_settings_set", Destructive: true, Method: "POST", Path: "/api/v1/admin/settings/ai", MinRole: admin,
 		Description: "Set AI (Vora) provider settings." + adminWarn,
 		Fields: []Field{b("enabled", "boolean", ""), b("provider", "string", "claude, openai or custom."), b("model", "string", ""),
 			b("apiKey", "string", "Empty keeps the stored key."), b("customBaseUrl", "string", ""), b("customModel", "string", ""),
@@ -206,64 +210,64 @@ var Catalog = []Tool{
 	{Name: "upvora_users_list", Method: "GET", Path: "/api/v1/users", MinRole: staff, Paged: true, Description: "List users with roles (staff)." + readOnlyNo,
 		Fields: []Field{q("query", "string", "Name or email contains."), q("roles", "string", "Comma-separated: visitor, collaborator, administrator."),
 			q("page", "integer", ""), q("limit", "integer", "Up to 100.")}},
-	{Name: "upvora_users_invite", Method: "POST", Path: "/api/v1/invitations/send", MinRole: staff,
+	{Name: "upvora_users_invite", OpenWorld: true, Method: "POST", Path: "/api/v1/invitations/send", MinRole: staff,
 		Description: "Email invitations to join the site (staff). Confirm the recipient list with the user first.",
 		Fields: []Field{req(b("subject", "string", "Up to 70 characters.")), req(b("message", "string", "Must contain the invitation link placeholder %invite%.")),
 			{Name: "recipients", Type: "array", Items: "string", In: "body", Required: true, Description: "1 to 30 email addresses."}}},
-	{Name: "upvora_users_invite_sample", Method: "POST", Path: "/api/v1/invitations/sample", MinRole: staff, Description: "Send a sample invitation to myself (staff).",
+	{Name: "upvora_users_invite_sample", OpenWorld: true, Method: "POST", Path: "/api/v1/invitations/sample", MinRole: staff, Description: "Send a sample invitation to myself (staff).",
 		Fields: []Field{req(b("subject", "string", "")), req(b("message", "string", ""))}},
-	{Name: "upvora_users_block", Method: "PUT", Path: "/api/v1/admin/users/{userID}/block", MinRole: admin, Description: "Block a user (admin).", Fields: []Field{pathInt("userID", "User id.")}},
+	{Name: "upvora_users_block", Destructive: true, Method: "PUT", Path: "/api/v1/admin/users/{userID}/block", MinRole: admin, Description: "Block a user (admin).", Fields: []Field{pathInt("userID", "User id.")}},
 	{Name: "upvora_users_unblock", Method: "DELETE", Path: "/api/v1/admin/users/{userID}/block", MinRole: admin, Description: "Unblock a user (admin).", Fields: []Field{pathInt("userID", "User id.")}},
 	{Name: "upvora_users_trust", Method: "PUT", Path: "/api/v1/admin/users/{userID}/trust", MinRole: admin, Description: "Mark a user as trusted (admin).", Fields: []Field{pathInt("userID", "User id.")}},
 	{Name: "upvora_users_untrust", Method: "DELETE", Path: "/api/v1/admin/users/{userID}/trust", MinRole: admin, Description: "Remove trusted status (admin).", Fields: []Field{pathInt("userID", "User id.")}},
-	{Name: "upvora_users_set_role", Method: "POST", Path: "/api/v1/admin/roles/{role}/users", MinRole: admin,
+	{Name: "upvora_users_set_role", Destructive: true, Method: "POST", Path: "/api/v1/admin/roles/{role}/users", MinRole: admin,
 		Description: "Change a user's role (visitor, collaborator, administrator)." + adminWarn,
 		Fields:      []Field{pathStr("role", "visitor, collaborator or administrator."), req(b("userID", "integer", "User id."))}},
 	{Name: "upvora_users_taggable", Method: "GET", Path: "/api/v1/taggable-users", MinRole: member, Description: "List users who can be @mentioned." + readOnlyNo},
 
 	// Webhooks
 	{Name: "upvora_webhooks_list", Method: "GET", Path: "/api/v1/admin/webhooks", MinRole: admin, Description: "List webhooks (admin)." + readOnlyNo},
-	{Name: "upvora_webhooks_create", Method: "POST", Path: "/api/v1/admin/webhooks", MinRole: admin, Description: "Create a webhook that sends site data to an external URL." + adminWarn, Fields: webhookFields(false)},
-	{Name: "upvora_webhooks_update", Method: "PUT", Path: "/api/v1/admin/webhooks/{id}", MinRole: admin, Description: "Update a webhook." + adminWarn, Fields: webhookFields(true)},
+	{Name: "upvora_webhooks_create", Destructive: true, OpenWorld: true, Method: "POST", Path: "/api/v1/admin/webhooks", MinRole: admin, Description: "Create a webhook that sends site data to an external URL." + adminWarn, Fields: webhookFields(false)},
+	{Name: "upvora_webhooks_update", Destructive: true, OpenWorld: true, Method: "PUT", Path: "/api/v1/admin/webhooks/{id}", MinRole: admin, Description: "Update a webhook. upvora_webhooks_list masks URLs and header values: send the real values, never the masked ones." + adminWarn, Fields: webhookFields(true)},
 	{Name: "upvora_webhooks_delete", Method: "DELETE", Path: "/api/v1/admin/webhooks/{id}", MinRole: admin, Description: "Delete a webhook (admin).", Fields: []Field{pathInt("id", "Webhook id.")}},
 	{Name: "upvora_webhooks_preview", Method: "POST", Path: "/api/v1/admin/webhooks/preview", MinRole: admin, Description: "Preview a webhook's rendered URL and content (admin).",
 		Fields: []Field{req(b("type", "string", "new_post, new_comment, change_status or delete_post.")), b("url", "string", ""), b("content", "string", "")}},
-	{Name: "upvora_webhooks_test", Method: "POST", Path: "/api/v1/admin/webhooks/test/{id}", MinRole: admin, Description: "Send a test call for a webhook (admin).", Fields: []Field{pathInt("id", "Webhook id.")}},
+	{Name: "upvora_webhooks_test", OpenWorld: true, Method: "POST", Path: "/api/v1/admin/webhooks/test/{id}", MinRole: admin, Description: "Send a test call for a webhook (admin).", Fields: []Field{pathInt("id", "Webhook id.")}},
 
 	// OAuth providers and settings
 	{Name: "upvora_oauth_providers_list", Method: "GET", Path: "/api/v1/admin/oauth", MinRole: admin, Description: "List sign-in providers (admin)." + readOnlyNo},
-	{Name: "upvora_oauth_providers_set", Method: "POST", Path: "/api/v1/admin/oauth", MinRole: admin,
+	{Name: "upvora_oauth_providers_set", Destructive: true, Method: "POST", Path: "/api/v1/admin/oauth", MinRole: admin,
 		Description: "Add or edit a custom sign-in (OAuth) provider. A wrong setting can lock people out." + adminWarn,
 		Fields: []Field{b("provider", "string", "Omit to create; existing key to edit."), req(b("status", "integer", "1 disabled, 2 enabled.")),
 			req(b("displayName", "string", "")), req(b("clientID", "string", "")), b("clientSecret", "string", "Required on create; empty keeps the stored secret."),
 			req(b("authorizeURL", "string", "")), req(b("tokenURL", "string", "")), req(b("scope", "string", "")), b("profileURL", "string", ""),
 			b("isTrusted", "boolean", ""), req(b("jsonUserIDPath", "string", "")), b("jsonUserNamePath", "string", ""), b("jsonUserEmailPath", "string", ""),
 			b("jsonUserRolesPath", "string", ""), b("allowedRoles", "string", "")}},
-	{Name: "upvora_oauth_providers_set_status", Method: "POST", Path: "/api/v1/admin/oauth/{provider}/status", MinRole: admin,
+	{Name: "upvora_oauth_providers_set_status", Destructive: true, Method: "POST", Path: "/api/v1/admin/oauth/{provider}/status", MinRole: admin,
 		Description: "Enable or disable a sign-in provider (admin). Refused if it would leave no way to sign in.",
 		Fields:      []Field{{Name: "provider", Type: "string", In: "both", Required: true, Description: "Provider key."}, req(b("isEnabled", "boolean", ""))}},
 	{Name: "upvora_settings_general_get", Method: "GET", Path: "/api/v1/tenant", MinRole: admin, Description: "Get the site's settings (name, welcome text, locale, theme, privacy, MCP)." + readOnlyNo},
-	{Name: "upvora_settings_general_set", Method: "POST", Path: "/api/v1/admin/settings/general", MinRole: admin,
+	{Name: "upvora_settings_general_set", Destructive: true, Method: "POST", Path: "/api/v1/admin/settings/general", MinRole: admin,
 		Description: "Set general settings (admin). Replaces every field: read with upvora_settings_general_get first.", Fields: generalFields()},
 	{Name: "upvora_settings_theme_get", Method: "GET", Path: "/api/v1/tenant", MinRole: admin, Description: "Get theme settings (themePrimary, themeAccents, defaultTheme on the site)." + readOnlyNo},
 	{Name: "upvora_settings_theme_set", Method: "POST", Path: "/api/v1/admin/settings/theme", MinRole: admin, Description: "Set theme colors (admin).",
 		Fields: []Field{b("primary", "string", "#RGB or #RRGGBB, empty for the built-in brand."), b("accents", "object", "Keys buttons, votes, links, header to hex or empty."),
 			b("defaultTheme", "string", "light, dark or system.")}},
 	{Name: "upvora_settings_advanced_get", Method: "GET", Path: "/api/v1/admin/settings/advanced", MinRole: admin, Description: "Get custom CSS and allowed link schemes." + readOnlyNo},
-	{Name: "upvora_settings_advanced_set", Method: "POST", Path: "/api/v1/admin/settings/advanced", MinRole: admin, Description: "Set custom CSS and allowed link schemes (admin).",
+	{Name: "upvora_settings_advanced_set", Destructive: true, Method: "POST", Path: "/api/v1/admin/settings/advanced", MinRole: admin, Description: "Set custom CSS and allowed link schemes (admin).",
 		Fields: []Field{b("customCSS", "string", ""), b("allowedSchemes", "string", "")}},
 	{Name: "upvora_settings_privacy_get", Method: "GET", Path: "/api/v1/tenant", MinRole: admin, Description: "Get privacy settings (isPrivate, isFeedEnabled, isModerationEnabled, membersPrivateIdeas, membersCanPublishPrivate)." + readOnlyNo},
-	{Name: "upvora_settings_privacy_set", Method: "POST", Path: "/api/v1/admin/settings/privacy", MinRole: admin,
+	{Name: "upvora_settings_privacy_set", Destructive: true, Method: "POST", Path: "/api/v1/admin/settings/privacy", MinRole: admin,
 		Description: "Set privacy settings, e.g. make the whole board private." + adminWarn + " Send every field.",
 		Fields: []Field{b("isPrivate", "boolean", ""), b("isFeedEnabled", "boolean", "Cannot be true while private."), b("isModerationEnabled", "boolean", ""),
 			b("membersPrivateIdeas", "boolean", ""), b("membersCanPublishPrivate", "boolean", "")}},
 	{Name: "upvora_settings_emailauth_get", Method: "GET", Path: "/api/v1/tenant", MinRole: admin, Description: "Get whether email sign-in is allowed (isEmailAuthAllowed)." + readOnlyNo},
-	{Name: "upvora_settings_emailauth_set", Method: "POST", Path: "/api/v1/admin/settings/emailauth", MinRole: admin,
+	{Name: "upvora_settings_emailauth_set", Destructive: true, Method: "POST", Path: "/api/v1/admin/settings/emailauth", MinRole: admin,
 		Description: "Allow or disallow email sign-in (admin). Needs another active sign-in provider.", Fields: []Field{req(b("isEmailAuthAllowed", "boolean", ""))}},
 	{Name: "upvora_settings_banner_set", Method: "POST", Path: "/api/v1/admin/settings/site-banner", MinRole: admin, Description: "Set the site-wide banner (admin).",
 		Fields: []Field{b("enabled", "boolean", ""), b("message", "string", "Up to 500 characters."), b("variant", "string", "info, success, warning, danger or brand.")}},
 	{Name: "upvora_settings_mcp_get", Method: "GET", Path: "/api/v1/tenant", MinRole: admin, Description: "Get MCP settings (mcpEnabled, mcpMinRole, mcpDcrEnabled)." + readOnlyNo},
-	{Name: "upvora_settings_mcp_set", Method: "POST", Path: "/api/v1/admin/settings/mcp", MinRole: admin,
+	{Name: "upvora_settings_mcp_set", Destructive: true, Method: "POST", Path: "/api/v1/admin/settings/mcp", MinRole: admin,
 		Description: "Set who may use MCP. Turning it off disconnects every client, including this one." + adminWarn,
 		Fields:      []Field{req(b("enabled", "boolean", "")), req(b("minRole", "string", "visitor, collaborator or administrator.")), b("dcrEnabled", "boolean", "")}},
 
@@ -275,10 +279,10 @@ var Catalog = []Tool{
 
 	// System and tenant
 	{Name: "upvora_system_status", Method: "GET", Path: "/api/v1/admin/system/status", MinRole: admin, Description: "Installed version and latest available release (admin)." + readOnlyNo},
-	{Name: "upvora_system_update", Method: "POST", Path: "/api/v1/admin/system/update", MinRole: admin,
+	{Name: "upvora_system_update", Destructive: true, Method: "POST", Path: "/api/v1/admin/system/update", MinRole: admin,
 		Description: "Update Upvora to the latest release now; the site restarts." + adminWarn},
 	{Name: "upvora_tenant_get", Method: "GET", Path: "/api/v1/tenant", MinRole: member, Description: "Get the site's public settings, statuses and products." + readOnlyNo},
-	{Name: "upvora_tenant_update", Method: "POST", Path: "/api/v1/admin/settings/general", MinRole: admin,
+	{Name: "upvora_tenant_update", Destructive: true, Method: "POST", Path: "/api/v1/admin/settings/general", MinRole: admin,
 		Description: "Update the site's name and general settings (same as upvora_settings_general_set; replaces every field).", Fields: generalFields()},
 	{Name: "upvora_tenant_cancel_deletion", Method: "POST", Path: "/api/v1/admin/tenant/cancel-deletion", MinRole: admin, MultiTenant: true, Description: "Cancel a scheduled site deletion (owner)."},
 	{Name: "upvora_tenant_delete", Method: "DELETE", Path: "/api/v1/admin/tenant", MinRole: admin, MultiTenant: true,
@@ -317,5 +321,15 @@ func generalFields() []Field {
 		b("welcomeHeader", "string", ""), b("descriptionTemplate", "string", ""), b("shareIdeaInstructions", "string", ""),
 		b("railCtaHeading", "string", ""), b("railCtaText", "string", ""), b("railCtaButton", "string", ""),
 		b("defaultTheme", "string", "light, dark or system."), req(b("locale", "string", "e.g. en.")), b("cname", "string", ""),
+	}
+}
+
+// Every destructive tool asks the client to confirm with the user, whether or
+// not its description already says so.
+func init() {
+	for i := range Catalog {
+		if Catalog[i].IsDestructive() && !strings.Contains(Catalog[i].Description, "Confirm with the user") {
+			Catalog[i].Description += " Confirm with the user before calling."
+		}
 	}
 }

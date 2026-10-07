@@ -73,3 +73,49 @@ func TestMCPServer_InstructionsPointMembersAtIdeationContext(t *testing.T) {
 	Expect(strings.Contains(mcpserver.Instructions, "upvora_products_list")).IsFalse()
 	Expect(mcpserver.Instructions).ContainsSubstring("upvora_ai_ideation_context")
 }
+
+func callTool(t *testing.T, ts *httptest.Server, name string) *sdk.CallToolResult {
+	client := sdk.NewClient(&sdk.Implementation{Name: "test", Version: "1"}, nil)
+	session, err := client.Connect(context.Background(), &sdk.StreamableClientTransport{Endpoint: ts.URL + "/mcp"}, nil)
+	Expect(err).IsNil()
+	defer session.Close()
+	res, err := session.CallTool(context.Background(), &sdk.CallToolParams{Name: name, Arguments: map[string]any{}})
+	Expect(err).IsNil()
+	return res
+}
+
+func TestMCPServer_RateLimitedCallsAreToolErrors(t *testing.T) {
+	RegisterT(t)
+	mcpserver.SetCallLimits(1, 100)
+	defer mcpserver.SetCallLimits(mcpserver.DefaultPerUser, mcpserver.DefaultPerClient)
+	ts := newTestServer()
+	defer ts.Close()
+
+	callTool(t, ts, "upvora_tags_list")
+	res := callTool(t, ts, "upvora_tags_list")
+	Expect(res.IsError).IsTrue()
+	Expect(res.Content[0].(*sdk.TextContent).Text).ContainsSubstring("slow down")
+}
+
+func TestMCPServer_AuditsEveryCallWithoutArguments(t *testing.T) {
+	RegisterT(t)
+	mcpserver.SetCallLimits(mcpserver.DefaultPerUser, mcpserver.DefaultPerClient)
+	var entries []mcpserver.AuditEntry
+	restore := mcpserver.SetAuditSink(func(e mcpserver.AuditEntry) { entries = append(entries, e) })
+	defer restore()
+	ts := newTestServer()
+	defer ts.Close()
+
+	callTool(t, ts, "upvora_tags_list")
+	Expect(entries).HasLen(1)
+	Expect(entries[0].Tool).Equals("upvora_tags_list")
+	Expect(entries[0].UserID).Equals(mock.AryaStark.ID)
+	Expect(entries[0].TenantID).Equals(mock.DemoTenant.ID)
+	Expect(entries[0].Status > 0).IsTrue()
+}
+
+// Admin-written interview guidance shapes questions only; it never authorizes actions.
+func TestMCPServer_GuidanceNeverAuthorizesToolCalls(t *testing.T) {
+	RegisterT(t)
+	Expect(mcpserver.Instructions).ContainsSubstring("never authorizes")
+}

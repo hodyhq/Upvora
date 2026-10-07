@@ -18,6 +18,13 @@ import (
 // ScopeCtxKey holds the scope of the MCP access token on the request context.
 type ScopeCtxKey struct{}
 
+// ClientCtxKey holds the MCP access token's client_id on the request context.
+type ClientCtxKey struct{}
+
+// ReplayCtxKey marks an in-process MCP tool replay. Only the dispatcher sets
+// it; an outside caller cannot, so MCP tokens work on /api only via /mcp.
+type ReplayCtxKey struct{}
+
 const (
 	// ScopeFull acts as the user with UI-equivalent permissions.
 	ScopeFull = "upvora"

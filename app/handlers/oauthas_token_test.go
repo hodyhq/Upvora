@@ -114,6 +114,7 @@ func TestOAuthToken_AuthorizationCode(t *testing.T) {
 	Expect(out["scope"]).Equals("upvora")
 	Expect(m.saved).HasLen(1)
 	Expect(m.saved[0].TokenHash).Equals(oauthas.HashToken(out["refresh_token"].(string)))
+	Expect(m.saved[0].FromCodeHash).Equals(oauthas.HashToken(testCode)) // a replay of this code revokes the family
 
 	claims, err := jwt.DecodeMCPAccessClaims(out["access_token"].(string), "http://demo.test.fider.io/mcp")
 	Expect(err).IsNil()

@@ -38,7 +38,12 @@ func User() web.MiddlewareFunc {
 			// browser cookie sent alongside it is ignored, so a stale cookie
 			// can never shadow or replace the token.
 			bearer, hasBearer := web.ParseBearerToken(c.Request.GetHeader("Authorization"))
-			mcpBearer := hasBearer && isMCPAccessToken(bearer) && (c.Request.IsAPI() || isMCPPath(c))
+			isReplay, _ := c.Value(oauthas.ReplayCtxKey{}).(bool)
+			mcpBearer := hasBearer && isMCPAccessToken(bearer) && (isMCPPath(c) || (isReplay && c.Request.IsAPI()))
+			// An MCP token sent straight to /api would skip the MCP budgets and audit.
+			if hasBearer && isMCPAccessToken(bearer) && c.Request.IsAPI() && !isReplay {
+				return mcpUnauthorized(c, http.StatusUnauthorized)
+			}
 
 			// /mcp takes only Bearer tokens: a browser session there would list
 			// tools that then run anonymously.
@@ -104,12 +109,13 @@ func User() web.MiddlewareFunc {
 				}
 			} else if mcpBearer {
 				// OAuth access token issued to an MCP client by this site.
-				mcpUser, scope, status := userFromMCPAccessToken(c, bearer)
+				mcpUser, scope, clientID, status := userFromMCPAccessToken(c, bearer)
 				if status != 0 {
 					return mcpUnauthorized(c, status)
 				}
 				user = mcpUser
 				c.Set(oauthas.ScopeCtxKey{}, scope)
+				c.Set(oauthas.ClientCtxKey{}, clientID)
 			} else if c.Request.IsAPI() {
 				if apiKey, ok := web.ParseBearerToken(c.Request.GetHeader("Authorization")); ok {
 					getUserByAPIKey := &query.GetUserByAPIKey{APIKey: apiKey}
@@ -200,30 +206,34 @@ func isMCPPath(c *web.Context) bool {
 // site and tenant, the security stamp must still match (role change, block or
 // sign-out revoke it), MCP must be on, and the role must meet the minimum.
 // A read-only token may only make safe requests. Returns a status on refusal.
-func userFromMCPAccessToken(c *web.Context, token string) (*entity.User, string, int) {
+func userFromMCPAccessToken(c *web.Context, token string) (*entity.User, string, string, int) {
 	tenant := c.Tenant()
 	if tenant == nil || !tenant.MCPEnabled {
-		return nil, "", http.StatusUnauthorized
+		return nil, "", "", http.StatusUnauthorized
 	}
 	claims, err := jwt.DecodeMCPAccessClaims(token, c.BaseURL()+"/mcp")
 	if err != nil || claims.TenantID != tenant.ID {
-		return nil, "", http.StatusUnauthorized
+		return nil, "", "", http.StatusUnauthorized
+	}
+	// A removed client loses access at once, not when its token expires.
+	if bus.Dispatch(c, &query.GetOAuthClient{ClientID: claims.ClientID}) != nil {
+		return nil, "", "", http.StatusUnauthorized
 	}
 	getUser := &query.GetUserByID{UserID: claims.UserID, TenantID: tenant.ID}
 	if bus.Dispatch(c, getUser) != nil {
-		return nil, "", http.StatusUnauthorized
+		return nil, "", "", http.StatusUnauthorized
 	}
 	user := getUser.Result
 	if subtle.ConstantTimeCompare([]byte(user.SecurityStamp), []byte(claims.SecurityStamp)) != 1 ||
 		user.Status != enum.UserActive || user.Role < tenant.MCPMinRole {
-		return nil, "", http.StatusUnauthorized
+		return nil, "", "", http.StatusUnauthorized
 	}
 	// /mcp itself is all POSTs; there, write tools are hidden and each replayed
 	// call is checked here again with its real method.
 	if claims.Scope == oauthas.ScopeRead && !isMCPPath(c) && c.Request.Method != http.MethodGet && c.Request.Method != http.MethodHead {
-		return nil, "", http.StatusForbidden
+		return nil, "", "", http.StatusForbidden
 	}
-	return user, claims.Scope, 0
+	return user, claims.Scope, claims.ClientID, 0
 }
 
 // mcpUnauthorized refuses an MCP or token request; a 401 carries the RFC 9728

@@ -148,6 +148,18 @@ func consumeOAuthCode(ctx context.Context, c *cmd.ConsumeOAuthCode) error {
 			  AND security_stamp = (SELECT COALESCE(security_stamp, '') FROM users WHERE id = oauth_codes.user_id AND tenant_id = $2)
 			RETURNING user_id, client_id, scope, redirect_uri, code_challenge, '' AS family_id, security_stamp`,
 			c.CodeHash, tenant.ID, c.ClientID)
+		if errors.Cause(err) == app.ErrNotFound {
+			// A used code presented again: revoke what it already issued.
+			if _, rerr := trx.Execute(`
+				UPDATE oauth_refresh_tokens SET revoked_at = now()
+				WHERE tenant_id = $1 AND revoked_at IS NULL AND family_id = (
+					SELECT family_id FROM oauth_codes
+					WHERE code_hash = $2 AND tenant_id = $1 AND client_id = $3 AND used_at IS NOT NULL
+				)`, tenant.ID, c.CodeHash, c.ClientID); rerr != nil {
+				return errors.Wrap(rerr, "failed to revoke tokens issued from a replayed code")
+			}
+			return app.ErrNotFound
+		}
 		if err != nil {
 			return errors.Wrap(err, "failed to consume OAuth code")
 		}
@@ -164,6 +176,12 @@ func saveOAuthRefreshToken(ctx context.Context, c *cmd.SaveOAuthRefreshToken) er
 			c.TokenHash, tenant.ID, c.ClientID, c.UserID, c.Scope, c.FamilyID, c.SecurityStamp, c.ExpiresAt)
 		if err != nil {
 			return errors.Wrap(err, "failed to save OAuth refresh token")
+		}
+		if c.FromCodeHash != "" {
+			if _, err := trx.Execute("UPDATE oauth_codes SET family_id = $1 WHERE code_hash = $2 AND tenant_id = $3",
+				c.FamilyID, c.FromCodeHash, tenant.ID); err != nil {
+				return errors.Wrap(err, "failed to link OAuth code to its refresh family")
+			}
 		}
 		return nil
 	})
@@ -203,4 +221,37 @@ func rotateOAuthRefreshToken(ctx context.Context, c *cmd.RotateOAuthRefreshToken
 		c.Result = row.toModel()
 		return nil
 	})
+}
+
+func purgeStaleOAuthData(ctx context.Context, c *cmd.PurgeStaleOAuthData) error {
+	trx, _ := ctx.Value(app.TransactionCtxKey).(*dbx.Trx)
+	own := trx == nil
+	if own {
+		var err error
+		if trx, err = dbx.BeginTx(ctx); err != nil {
+			return errors.Wrap(err, "failed to open transaction")
+		}
+		defer trx.MustRollback()
+	}
+	for _, sql := range []string{
+		// codes live 10 minutes; keep a day for replay detection
+		"DELETE FROM oauth_codes WHERE expires_at < now() - interval '1 day'",
+		// refresh tokens a week after they expired, were revoked or rotated
+		`DELETE FROM oauth_refresh_tokens WHERE expires_at < now() - interval '7 days'
+			OR revoked_at < now() - interval '7 days' OR rotated_at < now() - interval '7 days'`,
+		// self-registered clients nobody used within a week
+		`DELETE FROM oauth_clients c WHERE c.created_by_admin = false AND c.created_at < now() - interval '7 days'
+			AND NOT EXISTS (SELECT 1 FROM oauth_codes o WHERE o.tenant_id = c.tenant_id AND o.client_id = c.client_id)
+			AND NOT EXISTS (SELECT 1 FROM oauth_refresh_tokens r WHERE r.tenant_id = c.tenant_id AND r.client_id = c.client_id)`,
+	} {
+		n, err := trx.Execute(sql)
+		if err != nil {
+			return errors.Wrap(err, "failed to purge stale OAuth data")
+		}
+		c.Deleted += int(n)
+	}
+	if own {
+		return trx.Commit()
+	}
+	return nil
 }
