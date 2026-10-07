@@ -117,7 +117,7 @@ var (
 													AND r.tenant_id = $1
 													LEFT JOIN posts d
 													ON d.id = p.original_id
-													AND d.tenant_id = $1
+													AND d.tenant_id = $1 %s
 													LEFT JOIN statuses ps
 													ON ps.tenant_id = p.tenant_id
 													AND ps.slug = p.status_slug
@@ -372,6 +372,34 @@ func setPostPrivacy(ctx context.Context, c *cmd.SetPostPrivacy) error {
 		// duplicate pointing at it) in one statement. Otherwise flipping only the
 		// original to public would expose private content copied in from a
 		// still-private duplicate.
+		//
+		// For the same reason a member may only flip a cluster made entirely of
+		// their own ideas: staff can merge several members' private ideas into
+		// one staff idea, and one member must not publish the others' content.
+		if user == nil || !user.IsCollaborator() {
+			var me any // nil: anonymous, so every author counts as foreign
+			if user != nil {
+				me = user.ID
+			}
+			var foreign bool
+			err := trx.Scalar(&foreign, `
+				WITH target AS (
+					SELECT COALESCE(original_id, id) AS root_id
+					FROM posts WHERE id = $1 AND tenant_id = $2
+				)
+				SELECT EXISTS(
+					SELECT 1 FROM posts
+					WHERE tenant_id = $2
+					  AND (id = (SELECT root_id FROM target) OR original_id = (SELECT root_id FROM target))
+					  AND user_id IS DISTINCT FROM $3
+				)`, c.Post.ID, tenant.ID, me)
+			if err != nil {
+				return errors.Wrap(err, "failed to check privacy cluster for post %d", c.Post.ID)
+			}
+			if foreign {
+				return errors.New("cannot change the privacy of an idea merged with other people's ideas")
+			}
+		}
 		_, err := trx.Execute(`
 			WITH target AS (
 				SELECT COALESCE(original_id, id) AS root_id
@@ -735,7 +763,7 @@ func buildPostQuery(user *entity.User, filter string, moderationFilter string) s
 	}
 
 	combinedFilter := filter + approvalFilter + visibilityFilter(user)
-	return fmt.Sprintf(sqlSelectPostsWhere, tagCondition, hasVotedSubQuery, combinedFilter)
+	return fmt.Sprintf(sqlSelectPostsWhere, tagCondition, hasVotedSubQuery, privacyClause(user, "d."), combinedFilter)
 }
 
 // buildSinglePostQuery is used for fetching individual posts (by ID, slug, or number)
@@ -764,5 +792,5 @@ func buildSinglePostQuery(user *entity.User, filter string) string {
 	}
 
 	combinedFilter := filter + approvalFilter + visibilityFilter(user)
-	return fmt.Sprintf(sqlSelectPostsWhere, tagCondition, hasVotedSubQuery, combinedFilter)
+	return fmt.Sprintf(sqlSelectPostsWhere, tagCondition, hasVotedSubQuery, privacyClause(user, "d."), combinedFilter)
 }

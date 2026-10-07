@@ -343,3 +343,55 @@ func TestMarkPostAsDuplicate_AllowsSameMemberPrivate(t *testing.T) {
 	Expect(bus.Dispatch(jonSnowCtx, two)).IsNil()
 	Expect(bus.Dispatch(jonSnowCtx, &cmd.MarkPostAsDuplicate{Post: one.Result, Original: two.Result})).IsNil()
 }
+
+// seedStaffClusterOfMembers: staff private root 9201 with Arya's private 9202
+// and Sansa's private 9203 merged into it (allowed: the root is staff-authored).
+func seedStaffClusterOfMembers(t *testing.T) {
+	now := time.Now()
+	_, err := trx.Execute("INSERT INTO posts (title, slug, number, description, created_at, tenant_id, user_id, status_slug, is_approved, is_private, language) VALUES ('Staff Root', 'staff-root', 9201, 'root', $1, 1, 1, 'open', true, true, 'english')", now)
+	Expect(err).IsNil()
+	_, err = trx.Execute("INSERT INTO posts (title, slug, number, description, created_at, tenant_id, user_id, status_slug, is_approved, is_private, language, original_id, response, response_date, response_user_id) VALUES ('Arya Dup', 'arya-dup', 9202, 'a', $1, 1, 2, 'duplicate', true, true, 'english', (SELECT id FROM posts WHERE number = 9201 AND tenant_id = 1), '', $1, 1), ('Sansa Dup', 'sansa-dup', 9203, 's', $1, 1, 3, 'duplicate', true, true, 'english', (SELECT id FROM posts WHERE number = 9201 AND tenant_id = 1), '', $1, 1)", now)
+	Expect(err).IsNil()
+}
+
+// A member publishing their own idea must not publish a cluster that holds
+// other authors' private content.
+func TestSetPostPrivacy_MemberCannotPublishSharedCluster(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	seedStaffClusterOfMembers(t)
+
+	own := &query.GetPostByNumber{Number: 9202}
+	Expect(bus.Dispatch(aryaStarkCtx, own)).IsNil()
+	Expect(bus.Dispatch(aryaStarkCtx, &cmd.SetPostPrivacy{Post: own.Result, IsPrivate: false})).IsNotNil()
+
+	sansa := &query.GetPostByNumber{Number: 9203}
+	Expect(bus.Dispatch(jonSnowCtx, sansa)).IsNil()
+	Expect(sansa.Result.IsPrivate).IsTrue()
+}
+
+// A member may publish a cluster that is entirely their own.
+func TestSetPostPrivacy_MemberPublishesOwnCluster(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	seedMemberPrivate(t)
+
+	own := &query.GetPostByNumber{Number: 9101}
+	Expect(bus.Dispatch(aryaStarkCtx, own)).IsNil()
+	Expect(bus.Dispatch(aryaStarkCtx, &cmd.SetPostPrivacy{Post: own.Result, IsPrivate: false})).IsNil()
+}
+
+// A member's own duplicate must not reveal the title of an original they cannot see.
+func TestMemberPrivate_HiddenOriginalNotExposed(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	seedStaffClusterOfMembers(t)
+
+	own := &query.GetPostByNumber{Number: 9202}
+	Expect(bus.Dispatch(aryaStarkCtx, own)).IsNil()
+	Expect(own.Result.Response == nil || own.Result.Response.Original == nil).IsTrue()
+
+	staff := &query.GetPostByNumber{Number: 9202}
+	Expect(bus.Dispatch(jonSnowCtx, staff)).IsNil()
+	Expect(staff.Result.Response.Original.Title).Equals("Staff Root")
+}
