@@ -365,7 +365,6 @@ func routes(r *web.Engine) *web.Engine {
 		staffApi.Put("/api/v1/admin/scorecard-fields/:id", handlers.UpdateScorecardField())
 		staffApi.Delete("/api/v1/admin/scorecard-fields/:id", handlers.DeleteScorecardField())
 		staffApi.Post("/api/v1/admin/scorecard-settings", handlers.UpdateScorecardSettings())
-		staffApi.Post("/api/v1/admin/settings/theme", handlers.UpdateTenantTheme())
 		// Product handlers enforce admin-only themselves for list and delete.
 		staffApi.Post("/api/v1/admin/products", handlers.CreateProduct())
 		staffApi.Put("/api/v1/admin/products/:id", handlers.UpdateProduct())
@@ -420,6 +419,7 @@ func routes(r *web.Engine) *web.Engine {
 		adminApi.Post("/api/v1/admin/ai/agents", handlers.UpsertAIAgentHandler())
 		adminApi.Post("/api/v1/admin/system/update", handlers.SystemTriggerUpdate())
 		adminApi.Post("/api/v1/admin/settings/general", handlers.UpdateSettings())
+		adminApi.Post("/api/v1/admin/settings/theme", handlers.UpdateTenantTheme())
 		adminApi.Post("/api/v1/admin/settings/advanced", handlers.UpdateAdvancedSettings())
 		adminApi.Post("/api/v1/admin/settings/privacy", handlers.UpdatePrivacySettings())
 		adminApi.Post("/api/v1/admin/settings/emailauth", handlers.UpdateEmailAuthAllowed())
