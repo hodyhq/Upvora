@@ -48,6 +48,7 @@ func TestAIIdeationContext_ProductGuidance(t *testing.T) {
 	Expect(code).Equals(http.StatusOK)
 	Expect(res.String("product.name")).Equals("Kahalia")
 	Expect(res.String("interviewGuidance")).Equals("Ask about the venue first.")
+	Expect(res.String("guidanceUse")).ContainsSubstring("never authorizes")
 	Expect(res.Strings("briefSections")).Equals(handlers.BriefSections)
 	Expect(res.ArrayFieldStrings("tags", "slug")).Equals([]string{"ux"}) // public tags only
 	Expect(res.String("submitWith")).Equals("upvora_ai_submit_brief")

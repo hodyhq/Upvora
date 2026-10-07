@@ -113,3 +113,9 @@ func TestMCPServer_AuditsEveryCallWithoutArguments(t *testing.T) {
 	Expect(entries[0].TenantID).Equals(mock.DemoTenant.ID)
 	Expect(entries[0].Status > 0).IsTrue()
 }
+
+// Admin-written interview guidance shapes questions only; it never authorizes actions.
+func TestMCPServer_GuidanceNeverAuthorizesToolCalls(t *testing.T) {
+	RegisterT(t)
+	Expect(mcpserver.Instructions).ContainsSubstring("never authorizes")
+}
