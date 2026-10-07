@@ -31,12 +31,15 @@ export default class PrivacySettingsPage extends AdminBasePage<any, PrivacySetti
 
   // Applies a partial change and saves the whole settings object.
   private updatePrivacy = (patch: Partial<PrivacySettingsPageState>) => {
+    const previous = this.state
     const next = { ...this.state, ...patch }
     if (next.isPrivate) next.isFeedEnabled = false // Disable feed if site is private
     this.setState(next, async () => {
       const response = await actions.updateTenantPrivacy(this.state)
       if (response.ok) {
         notify.success("Your privacy settings have been saved.")
+      } else {
+        this.setState(previous) // http already shows the error; keep the toggles truthful
       }
     })
   }
