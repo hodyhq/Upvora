@@ -7,6 +7,7 @@ import (
 	"github.com/getfider/fider/app"
 	"github.com/getfider/fider/app/models/cmd"
 	"github.com/getfider/fider/app/models/entity"
+	"github.com/getfider/fider/app/models/enum"
 	"github.com/getfider/fider/app/models/query"
 	. "github.com/getfider/fider/app/pkg/assert"
 	"github.com/getfider/fider/app/pkg/bus"
@@ -267,4 +268,48 @@ func TestMemberPrivate_CountsIncludeOnlyOwn(t *testing.T) {
 	Expect(bus.Dispatch(aryaStarkCtx, aryaProd)).IsNil()
 	Expect(bus.Dispatch(demoTenantCtx, anonProd)).IsNil()
 	Expect(aryaProd.Result[0] - anonProd.Result[0]).Equals(1)
+}
+
+// "Similar ideas" while typing a title must not reveal another member's private idea.
+func TestMemberPrivate_NotInOthersSimilarPosts(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	seedMemberPrivate(t)
+
+	own := &query.FindSimilarPosts{Query: "Arya Secret"}
+	Expect(bus.Dispatch(aryaStarkCtx, own)).IsNil()
+	Expect(slugsFrom(own.Result)["arya-secret"]).IsTrue()
+
+	other := &query.FindSimilarPosts{Query: "Arya Secret"}
+	Expect(bus.Dispatch(sansaStarkCtx, other)).IsNil()
+	Expect(slugsFrom(other.Result)["arya-secret"]).IsFalse()
+}
+
+// Turning the setting off only gates new private ideas; existing ones stay
+// private and visible to their author.
+func TestMemberPrivate_SurvivesSettingOff(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	seedMemberPrivate(t)
+	_, err := trx.Execute("UPDATE tenants SET members_private_ideas = false WHERE id = 1")
+	Expect(err).IsNil()
+
+	own := &query.GetPostByNumber{Number: 9101}
+	Expect(bus.Dispatch(aryaStarkCtx, own)).IsNil()
+	Expect(own.Result.IsPrivate).IsTrue()
+}
+
+// Visibility follows the caller's role on each request.
+func TestMemberPrivate_RoleChangeApplies(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	seedMemberPrivate(t)
+
+	promoted := *sansaStark
+	promoted.Role = enum.RoleCollaborator
+	asCollaborator := &query.GetPostByNumber{Number: 9101}
+	Expect(bus.Dispatch(withUser(sansaStarkCtx, &promoted), asCollaborator)).IsNil()
+
+	asMember := &query.GetPostByNumber{Number: 9101}
+	Expect(errors.Cause(bus.Dispatch(sansaStarkCtx, asMember))).Equals(app.ErrNotFound)
 }
