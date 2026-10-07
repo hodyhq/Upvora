@@ -250,6 +250,7 @@
   "oauth.consent.redirect": "After you choose, you will return to {0}.",
   "oauth.consent.scope.full": "It will be able to do everything you can do here: share and edit ideas, comment, vote, and use any settings your role allows.",
   "oauth.consent.scope.read": "It will be able to read everything you can see here, but not change anything.",
+  "oauth.consent.signedInAs": "Signed in as <0>{userName}</0>. Not you? Close this page and sign out first.",
   "oauth.consent.through": "You are connecting through {0}, this site's public address for AI assistants.",
   "oauth.consent.title": "Allow <0>{0}</0> to use {siteName} as you?",
   "page.backhome": "Take me back to <0>{0}</0> home page.",

@@ -19,6 +19,7 @@ import (
 	"github.com/getfider/fider/app/pkg/env"
 	"github.com/getfider/fider/app/pkg/jwt"
 	"github.com/getfider/fider/app/pkg/mock"
+	"github.com/getfider/fider/app/pkg/oauthas"
 )
 
 const (
@@ -65,12 +66,22 @@ func TestOAuthAuthorize_SignedOutOnMCPOriginSignsInOnTheBoard(t *testing.T) {
 	claims, err := jwt.DecodeMCPSignInRequest(loc.Query().Get("request"))
 	Expect(err).IsNil()
 	Expect(claims.Origin).Equals(mcpBase)
+	// the browser that starts the sign-in gets a flow cookie; only it can finish
+	var flow *http.Cookie
+	for _, c := range res.Result().Cookies() {
+		if c.Name == handlers.MCPFlowCookie {
+			flow = c
+		}
+	}
+	Expect(flow).IsNotNil()
+	Expect(flow.HttpOnly).IsTrue()
+	Expect(claims.FlowHash).Equals(oauthas.HashToken(flow.Value))
 	want, _ := url.Parse(target)
 	Expect(claims.Query).Equals(want.RawQuery)
 }
 
 func signInRequest(origin string, tenantID int) string {
-	token, _ := jwt.EncodeMCPSignInRequest(tenantID, origin, "client_id=c&state=s", time.Minute)
+	token, _ := jwt.EncodeMCPSignInRequest(tenantID, origin, "client_id=c&state=s", "flow-hash", time.Minute)
 	return boardBase + "/oauth2/continue?request=" + url.QueryEscape(token)
 }
 
@@ -93,6 +104,7 @@ func TestOAuthSignInContinue_ReturnsToTheMCPOriginWithAHandoff(t *testing.T) {
 	Expect(saved[0].UserID).Equals(mock.AryaStark.ID)
 	Expect(saved[0].Origin).Equals(mcpBase)
 	Expect(saved[0].Query).Equals("client_id=c&state=s")
+	Expect(saved[0].FlowHash).Equals("flow-hash")
 	Expect(saved[0].CodeHash == loc.Query().Get("code")).IsFalse() // only the hash is stored
 	Expect(len(loc.Query().Get("code")) >= 43).IsTrue()
 }
@@ -130,18 +142,49 @@ func TestOAuthResume_SetsAConsentOnlyCookie(t *testing.T) {
 		return nil
 	})
 	code, res := mock.NewSingleTenantServer().OnTenant(mcpTenantMinRole(enum.RoleVisitor)).
+		AddCookie(handlers.MCPFlowCookie, "plain-flow").
 		WithURL(mcpBase + "/oauth2/resume?code=abc").Execute(handlers.OAuthResume())
 
 	Expect(code).Equals(http.StatusTemporaryRedirect)
 	Expect(res.Header().Get("Location")).Equals("/oauth2/authorize?client_id=c&state=s")
 	Expect(redeemed.Origin).Equals(mcpBase)
-	cookies := res.Result().Cookies()
-	Expect(cookies).HasLen(1)
-	Expect(cookies[0].Name).Equals(handlers.MCPConsentCookie)
-	Expect(cookies[0].HttpOnly).IsTrue()
-	claims, err := jwt.DecodeMCPConsent(cookies[0].Value, mcpBase)
+	Expect(redeemed.FlowHash).Equals(oauthas.HashToken("plain-flow"))
+	var consent *http.Cookie
+	for _, c := range res.Result().Cookies() {
+		if c.Name == handlers.MCPConsentCookie {
+			consent = c
+		}
+	}
+	Expect(consent).IsNotNil()
+	Expect(consent.HttpOnly).IsTrue()
+	claims, err := jwt.DecodeMCPConsent(consent.Value, mcpBase)
 	Expect(err).IsNil()
 	Expect(claims.UserID).Equals(mock.AryaStark.ID)
+}
+
+// A resume link opened in another browser (no flow cookie) is refused: an
+// insider cannot sign a colleague's browser in as themselves for consent.
+func TestOAuthResume_RefusedWithoutTheFlowCookie(t *testing.T) {
+	RegisterT(t)
+	withMCPOrigin(t)
+	redeemCalled := false
+	bus.AddHandler(func(ctx context.Context, c *cmd.RedeemOAuthSignInHandoff) error {
+		redeemCalled = true
+		return app.ErrNotFound
+	})
+	code, res := mock.NewSingleTenantServer().OnTenant(mcpTenantMinRole(enum.RoleVisitor)).
+		WithURL(mcpBase + "/oauth2/resume?code=abc").Execute(handlers.OAuthResume())
+	Expect(code).Equals(http.StatusBadRequest)
+	Expect(redeemCalled).IsFalse()
+	for _, c := range res.Result().Cookies() {
+		Expect(c.Name == handlers.MCPConsentCookie).IsFalse()
+	}
+}
+
+func TestOAuthMCPCookies_HostPrefixed(t *testing.T) {
+	RegisterT(t)
+	Expect(handlers.MCPConsentCookie).Equals("__Host-mcp_consent")
+	Expect(handlers.MCPFlowCookie).Equals("__Host-mcp_flow")
 }
 
 func TestOAuthResume_Refusals(t *testing.T) {
@@ -149,9 +192,12 @@ func TestOAuthResume_Refusals(t *testing.T) {
 	withMCPOrigin(t)
 	bus.AddHandler(func(ctx context.Context, c *cmd.RedeemOAuthSignInHandoff) error { return app.ErrNotFound })
 	code, res := mock.NewSingleTenantServer().OnTenant(mcpTenantMinRole(enum.RoleVisitor)).
+		AddCookie(handlers.MCPFlowCookie, "plain-flow").
 		WithURL(mcpBase + "/oauth2/resume?code=used").Execute(handlers.OAuthResume())
 	Expect(code).Equals(http.StatusBadRequest)
-	Expect(res.Result().Cookies()).HasLen(0)
+	for _, c := range res.Result().Cookies() {
+		Expect(c.Name == handlers.MCPConsentCookie).IsFalse()
+	}
 
 	// only meaningful on an MCP-only address
 	code, _ = mock.NewSingleTenantServer().OnTenant(mcpTenantMinRole(enum.RoleVisitor)).
@@ -183,7 +229,7 @@ func TestOAuthAuthorizeDecision_OnMCPOriginBindsCodeAndEndsConsent(t *testing.T)
 	Expect((*saved)[0].Origin).Equals(mcpBase)
 	removed := false
 	for _, c := range res.Result().Cookies() {
-		if c.Name == handlers.MCPConsentCookie && c.MaxAge < 0 {
+		if c.Name == handlers.MCPConsentCookie && c.MaxAge < 0 && c.Secure {
 			removed = true
 		}
 	}
@@ -198,4 +244,17 @@ func TestManageMCPPage_ListsPublicMCPAddresses(t *testing.T) {
 		WithURL(boardBase + "/admin/mcp").ExecuteAsPage(handlers.ManageMCPPage())
 	Expect(page.Data["mcpUrl"]).Equals(boardBase + "/mcp")
 	Expect(page.Data["publicMcpUrls"]).Equals([]any{mcpBase + "/mcp"})
+}
+
+// Signed out on a private site's own address: the normal sign-in, as before.
+func TestOAuthAuthorize_SignedOutOnPrivateBoardGoesToSignIn(t *testing.T) {
+	RegisterT(t)
+	mockOAuthClient()
+	tenant := mcpTenantMinRole(enum.RoleVisitor)
+	tenant.IsPrivate = true
+	target := authorizeQuery(nil)
+	code, res := mock.NewServer().OnTenant(tenant).WithURL(target).Execute(handlers.OAuthAuthorize())
+	Expect(code).Equals(http.StatusTemporaryRedirect)
+	u, _ := url.Parse(target)
+	Expect(res.Header().Get("Location")).Equals("/signin?redirect=" + url.QueryEscape(u.RequestURI()))
 }

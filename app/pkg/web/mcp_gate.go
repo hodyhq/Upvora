@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"net/http"
 	"path"
 	"strings"
@@ -70,13 +71,17 @@ func mcpOriginAllows(p string) bool {
 }
 
 // MCPOriginGate answers 404 for every path outside the MCP surface when a
-// request arrives on one of the MCP_ORIGINS. In-process tool replays (which
-// keep the caller's host) pass, and other addresses are untouched.
+// request arrives on one of the MCP_ORIGINS (or on the MCP listener, where
+// nothing is served if none is configured). In-process tool replays (which
+// keep the caller's host) may call the REST API; other addresses are untouched.
 func MCPOriginGate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if _, ok := mcpOriginOf(r); ok {
+		_, onMCP := mcpOriginOf(r)
+		if onMCP || onMCPListener(r) {
+			// In-process tool replays only ever call the REST API.
 			replay, _ := r.Context().Value(oauthas.ReplayCtxKey{}).(bool)
-			if !replay && !mcpOriginAllows(r.URL.Path) {
+			allowed := mcpOriginAllows(r.URL.Path) || (replay && strings.HasPrefix(r.URL.Path, "/api/"))
+			if !onMCP || !allowed {
 				http.NotFound(w, r)
 				return
 			}
@@ -102,5 +107,27 @@ func mcpOriginOf(r *http.Request) (string, bool) {
 			return origin, true
 		}
 	}
+	// On the dedicated listener the headers prove nothing either way.
+	if onMCPListener(r) {
+		return env.Config.MCPOrigins[0], true
+	}
 	return "", false
+}
+
+type mcpListenerCtxKey struct{}
+
+func onMCPListener(r *http.Request) bool {
+	on, _ := r.Context().Value(mcpListenerCtxKey{}).(bool)
+	return on
+}
+
+// MCPListenerHandler serves the dedicated MCP listener (MCP_PORT). Every
+// request on it is MCP-only whatever its Host or forwarded headers say, so a
+// proxy that rewrites Host, or a client that sends any Host, cannot reach the
+// board through it. Point the public tunnel at this port.
+func MCPListenerHandler(next http.Handler) http.Handler {
+	gated := MCPOriginGate(next)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gated.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), mcpListenerCtxKey{}, true)))
+	})
 }

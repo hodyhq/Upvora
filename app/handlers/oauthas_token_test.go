@@ -224,10 +224,12 @@ func TestOAuthToken_BoundToTheRequestAddress(t *testing.T) {
 	Expect(err).IsNil()
 	Expect(claims.UserID).Equals(mock.AryaStark.ID)
 
+	// On the board itself grants stay unbound, exactly as before MCP_ORIGINS.
 	code, _ = post(boardBase, codeForm(nil))
 	Expect(code).Equals(http.StatusOK)
-	Expect(m.consumed.Origin).Equals(boardBase)
+	Expect(m.consumed.Origin).Equals("")
 	Expect(m.consumed.AllowUnbound).IsTrue()
+	Expect(m.saved[len(m.saved)-1].Origin).Equals("")
 
 	code, _ = post(mcpBase, url.Values{"grant_type": {"refresh_token"}, "refresh_token": {testRefresh}, "client_id": {testClientID}})
 	Expect(code).Equals(http.StatusOK)

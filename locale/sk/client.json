@@ -248,6 +248,7 @@
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",
+  "oauth.consent.signedInAs": "",
   "oauth.consent.through": "",
   "oauth.consent.title": "",
   "page.backhome": "Vezmi ma späť do <0>{0}</0> domovskú stránku.",

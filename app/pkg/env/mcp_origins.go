@@ -2,7 +2,9 @@ package env
 
 import (
 	"fmt"
+	"net"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -32,6 +34,14 @@ func ParseMCPOrigins(raw, baseURL string, allowHTTP bool) ([]string, error) {
 		}
 		if u.Scheme != "https" && !(allowHTTP && u.Scheme == "http") {
 			return nil, fmt.Errorf("MCP_ORIGINS: '%s' must use https", entry)
+		}
+		// Values that would parse but never match a request's Host, leaving
+		// the board unguarded: a trailing dot, an IP literal, https on :80.
+		if strings.HasSuffix(u.Hostname(), ".") || net.ParseIP(u.Hostname()) != nil {
+			return nil, fmt.Errorf("MCP_ORIGINS: '%s' must be a host name without a trailing dot, not an IP address", entry)
+		}
+		if u.Scheme == "https" && u.Port() == "80" {
+			return nil, fmt.Errorf("MCP_ORIGINS: '%s' uses https on port 80", entry)
 		}
 		origin, _ := normalizeOrigin(entry)
 		if origin == base {
@@ -99,11 +109,39 @@ func MCPOriginForHost(host string) (string, bool) {
 	if host == "" || len(Config.MCPOrigins) == 0 {
 		return "", false
 	}
-	host = strings.TrimSuffix(strings.TrimSuffix(host, ":443"), ":80")
+	name, port := host, ""
+	if h, p, err := net.SplitHostPort(host); err == nil {
+		name, port = h, p
+	}
+	name = strings.TrimSuffix(name, ".")
 	for _, o := range Config.MCPOrigins {
-		if strings.SplitN(o, "://", 2)[1] == host {
+		u, err := url.Parse(o)
+		if err != nil || u.Hostname() != name {
+			continue
+		}
+		// The configured port, or none: a request names the default port of
+		// whichever scheme the proxy used, or none at all.
+		if port == u.Port() || (u.Port() == "" && (port == "443" || port == "80")) {
 			return o, true
 		}
 	}
 	return "", false
+}
+
+// ValidateMCPPort checks MCP_PORT: the optional dedicated listener for the
+// MCP-only addresses. It needs MCP_ORIGINS and its own port.
+func ValidateMCPPort(mcpPort, port string, origins []string) error {
+	if mcpPort == "" {
+		return nil
+	}
+	if n, err := strconv.Atoi(mcpPort); err != nil || n < 1 || n > 65535 {
+		return fmt.Errorf("MCP_PORT: '%s' is not a port number", mcpPort)
+	}
+	if len(origins) == 0 {
+		return fmt.Errorf("MCP_PORT needs MCP_ORIGINS: the listener serves only those addresses")
+	}
+	if mcpPort == port {
+		return fmt.Errorf("MCP_PORT must differ from PORT (%s)", port)
+	}
+	return nil
 }

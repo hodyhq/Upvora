@@ -23,6 +23,9 @@ type MCPSignInRequestClaims struct {
 	TenantID int    `json:"mcpsignin/tenant_id"`
 	Origin   string `json:"mcpsignin/origin"`
 	Query    string `json:"mcpsignin/query"`
+	// FlowHash is the hash of the flow cookie set in the browser that started
+	// the sign-in on the MCP-only address; only that browser can finish it.
+	FlowHash string `json:"mcpsignin/flow_hash"`
 	Metadata
 }
 
@@ -45,8 +48,8 @@ func shortLived(audience string, ttl time.Duration) Metadata {
 }
 
 // EncodeMCPSignInRequest signs a sign-in request valid for ttl.
-func EncodeMCPSignInRequest(tenantID int, origin, query string, ttl time.Duration) (string, error) {
-	return Encode(&MCPSignInRequestClaims{TenantID: tenantID, Origin: origin, Query: query, Metadata: shortLived(mcpSignInAudience, ttl)})
+func EncodeMCPSignInRequest(tenantID int, origin, query, flowHash string, ttl time.Duration) (string, error) {
+	return Encode(&MCPSignInRequestClaims{TenantID: tenantID, Origin: origin, Query: query, FlowHash: flowHash, Metadata: shortLived(mcpSignInAudience, ttl)})
 }
 
 // DecodeMCPSignInRequest decodes an unexpired sign-in request.
@@ -56,7 +59,7 @@ func DecodeMCPSignInRequest(token string) (*MCPSignInRequestClaims, error) {
 		return nil, errors.Wrap(err, "failed to decode MCP sign-in request")
 	}
 	if len(claims.Audience) != 1 || claims.Audience[0] != mcpSignInAudience || claims.ExpiresAt == nil ||
-		claims.TenantID <= 0 || claims.Origin == "" {
+		claims.TenantID <= 0 || claims.Origin == "" || claims.FlowHash == "" {
 		return nil, errors.New("not an MCP sign-in request")
 	}
 	return claims, nil

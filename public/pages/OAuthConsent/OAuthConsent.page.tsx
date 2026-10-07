@@ -37,6 +37,7 @@ const OAuthConsentPage = (props: OAuthConsentPageProps) => {
   // Allow-then-Cancel cannot send a second decision while one is in flight.
   const inFlight = useRef(false)
   const siteName = Fider.session.tenant?.name
+  const userName = Fider.session.isAuthenticated ? Fider.session.user.name : ""
 
   const decide = async (approve: boolean) => {
     if (inFlight.current) return
@@ -87,6 +88,13 @@ const OAuthConsentPage = (props: OAuthConsentPageProps) => {
                 </Trans>
               )}
             </p>
+            {userName && (
+              <p className="p-oauth-consent__text p-oauth-consent__signed-in">
+                <Trans id="oauth.consent.signedInAs">
+                  Signed in as <strong>{userName}</strong>. Not you? Close this page and sign out first.
+                </Trans>
+              </p>
+            )}
             <p className="p-oauth-consent__text text-muted">
               <Trans id="oauth.consent.redirect">After you choose, you will return to {props.redirectHost}.</Trans>
             </p>

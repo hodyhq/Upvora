@@ -1,6 +1,6 @@
--- MCP-only public addresses (MCP_ORIGINS): codes and refresh tokens remember
--- the address they were issued on and work only there ('' = issued before
--- this, accepted on the board's own address only).
+-- MCP-only public addresses (MCP_ORIGINS): codes and refresh tokens issued
+-- there remember that address and work only there. '' is the board's own
+-- (and every grant issued before this), accepted only off MCP-only addresses.
 ALTER TABLE oauth_codes ADD COLUMN IF NOT EXISTS origin TEXT NOT NULL DEFAULT '';
 ALTER TABLE oauth_refresh_tokens ADD COLUMN IF NOT EXISTS origin TEXT NOT NULL DEFAULT '';
 
@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS oauth_signin_handoffs (
   origin         TEXT NOT NULL,
   query          TEXT NOT NULL,
   security_stamp VARCHAR(100) NOT NULL DEFAULT '',
+  flow_hash      VARCHAR(64) NOT NULL,
   expires_at     TIMESTAMPTZ NOT NULL,
   used_at        TIMESTAMPTZ NULL
 );

@@ -77,6 +77,7 @@ type Engine struct {
 	middlewares   []MiddlewareFunc
 	worker        worker.Worker
 	webServer     *http.Server
+	mcpServer     *http.Server
 	metricsServer *http.Server
 	cache         *cache.Cache
 	routes        []string
@@ -140,6 +141,25 @@ func (e *Engine) Start(address string) {
 		go e.Worker().Run(strconv.Itoa(i))
 	}
 
+	// The dedicated listener for MCP-only public addresses (MCP_PORT): plain
+	// HTTP behind the tunnel, MCP-only whatever the request's headers say.
+	if env.Config.MCPPort != "" {
+		e.mcpServer = &http.Server{
+			ReadTimeout:  env.Config.HTTP.ReadTimeout,
+			WriteTimeout: env.Config.HTTP.WriteTimeout,
+			IdleTimeout:  env.Config.HTTP.IdleTimeout,
+			Addr:         env.Config.Host + ":" + env.Config.MCPPort,
+			Handler:      MCPListenerHandler(e.mux),
+		}
+		log.Infof(e, "MCP-only listener on port @{Port}", dto.Props{"Port": env.Config.MCPPort})
+		go func() {
+			err := e.mcpServer.ListenAndServe()
+			if err != nil && err != http.ErrServerClosed {
+				panic(errors.Wrap(err, "failed to start MCP listener"))
+			}
+		}()
+	}
+
 	if env.Config.Metrics.Enabled {
 		metricsAddress := env.Config.Metrics.Host + ":" + env.Config.Metrics.Port
 		e.metricsServer = newMetricsServer(metricsAddress)
@@ -190,6 +210,12 @@ func (e *Engine) Stop() error {
 			return errors.Wrap(err, "failed to shutdown metrics server")
 		}
 		log.Info(e, "metrics server has shutdown")
+	}
+
+	if e.mcpServer != nil {
+		if err := e.mcpServer.Shutdown(ctx); err != nil {
+			return errors.Wrap(err, "failed to shutdown MCP listener")
+		}
 	}
 
 	if e.webServer != nil {

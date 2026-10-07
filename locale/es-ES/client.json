@@ -248,6 +248,7 @@
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",
+  "oauth.consent.signedInAs": "",
   "oauth.consent.through": "",
   "oauth.consent.title": "",
   "page.backhome": "Llévame a la página de inicio de <0>{0}</0>.",

@@ -29,7 +29,7 @@ type SaveOAuthCode struct {
 	Scope         string
 	CodeChallenge string
 	SecurityStamp string // user's stamp at issue; a later rotation invalidates the code
-	Origin        string // address the code was issued on; only redeemable there
+	Origin        string // MCP-only address it was issued on ('' on the board); only redeemable there
 	ExpiresAt     time.Time
 }
 
@@ -38,9 +38,9 @@ type SaveOAuthCode struct {
 type ConsumeOAuthCode struct {
 	CodeHash string
 	ClientID string
-	// Origin is the address the exchange arrived on; a code bound to another
-	// address is refused (and not burned). AllowUnbound accepts codes issued
-	// before codes carried an address: set it only on the board's own address.
+	// Origin is the MCP-only address the exchange arrived on, or '' on the
+	// board; a code bound elsewhere is refused (and not burned). AllowUnbound
+	// accepts the board's own unbound codes: set it only off MCP-only addresses.
 	Origin       string
 	AllowUnbound bool
 
@@ -59,7 +59,7 @@ type SaveOAuthRefreshToken struct {
 	// FromCodeHash links the family to the code that started it, so a replay
 	// of that code revokes it.
 	FromCodeHash string
-	Origin       string // address the token was issued on; only usable there
+	Origin       string // MCP-only address it was issued on ('' on the board); only usable there
 	ExpiresAt    time.Time
 }
 
@@ -92,7 +92,10 @@ type SaveOAuthSignInHandoff struct {
 	Origin        string
 	Query         string
 	SecurityStamp string
-	ExpiresAt     time.Time
+	// FlowHash is the hash of the flow cookie set on the MCP-only address
+	// when the sign-in started: only that browser can redeem the code.
+	FlowHash  string
+	ExpiresAt time.Time
 }
 
 // RedeemOAuthSignInHandoff burns an unexpired handoff code issued for Origin
@@ -100,6 +103,7 @@ type SaveOAuthSignInHandoff struct {
 type RedeemOAuthSignInHandoff struct {
 	CodeHash string
 	Origin   string
+	FlowHash string
 
 	Result *entity.OAuthSignInHandoff
 }

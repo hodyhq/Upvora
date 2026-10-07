@@ -62,6 +62,7 @@ type config struct {
 	HostDomain                  string `env:"HOST_DOMAIN"`
 	BaseURL                     string `env:"BASE_URL"`
 	MCPOriginsRaw               string `env:"MCP_ORIGINS"`
+	MCPPort                     string `env:"MCP_PORT"`
 	MCPOrigins                  []string
 	Locale                      string `env:"LOCALE,default=en"`
 	JWTSecret                   string `env:"JWT_SECRET,required"`
@@ -205,6 +206,9 @@ func Reload() {
 		panic(err)
 	}
 	Config.MCPOrigins = origins
+	if err := ValidateMCPPort(Config.MCPPort, Config.Port, Config.MCPOrigins); err != nil {
+		panic(err)
+	}
 
 	// Email Type can be inferred if absense
 	if Config.Email.Type == "" {

@@ -35,6 +35,10 @@ func TestParseMCPOrigins_Invalid(t *testing.T) {
 		"https://ideas.internal.example",              // same as BASE_URL
 		"https://IDEAS.internal.example:443/",         // same as BASE_URL after normalising
 		"https://a.example.com,https://A.example.com", // duplicate
+		"https://mcp.example.com.",                    // trailing dot never matches a Host
+		"https://[2001:db8::1]",                       // IP literal
+		"https://203.0.113.7",                         // IP literal
+		"https://mcp.example.com:80",                  // https on the http port
 	} {
 		_, err := env.ParseMCPOrigins(raw, "https://ideas.internal.example", false)
 		Expect(err).IsNotNil()
@@ -66,15 +70,29 @@ func TestMCPOriginForHost(t *testing.T) {
 	for host, want := range map[string]string{
 		"mcp.example.com":      "https://mcp.example.com",
 		"MCP.Example.com:443":  "https://mcp.example.com",
-		"mcp.example.com:80":   "https://mcp.example.com",
 		"alt.example.com:8443": "https://alt.example.com:8443",
 	} {
 		got, ok := env.MCPOriginForHost(host)
 		Expect(ok).IsTrue()
 		Expect(got).Equals(want)
 	}
-	for _, host := range []string{"", "alt.example.com", "ideas.internal.example", "mcp.example.com.evil.com", "mcp.example.com:3000"} {
+	// a trailing dot in Host is the same name
+	got, ok := env.MCPOriginForHost("mcp.example.com.")
+	Expect(ok).IsTrue()
+	Expect(got).Equals("https://mcp.example.com")
+	for _, host := range []string{"", "alt.example.com", "alt.example.com:443", "ideas.internal.example", "mcp.example.com.evil.com", "mcp.example.com:3000"} {
 		_, ok := env.MCPOriginForHost(host)
 		Expect(ok).IsFalse()
 	}
+}
+
+func TestValidateMCPPort(t *testing.T) {
+	RegisterT(t)
+	origins := []string{"https://mcp.example.com"}
+	Expect(env.ValidateMCPPort("", "3000", nil)).IsNil()
+	Expect(env.ValidateMCPPort("3001", "3000", origins)).IsNil()
+	Expect(env.ValidateMCPPort("3001", "3000", nil)).IsNotNil()     // a listener with no address to serve
+	Expect(env.ValidateMCPPort("3000", "3000", origins)).IsNotNil() // the board's own port
+	Expect(env.ValidateMCPPort("http", "3000", origins)).IsNotNil()
+	Expect(env.ValidateMCPPort("70000", "3000", origins)).IsNotNil()
 }

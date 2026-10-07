@@ -106,3 +106,10 @@ describe("<OAuthConsentPage /> on an MCP-only address", () => {
     expect(notes(container)).toBe(1)
   })
 })
+
+describe("<OAuthConsentPage /> identity", () => {
+  test("shows who is signed in, so a wrong account is visible before allowing", () => {
+    const { container } = render(<OAuthConsentPage {...props} />)
+    expect(container.querySelector(".p-oauth-consent__signed-in")).not.toBeNull()
+  })
+})

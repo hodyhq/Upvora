@@ -266,9 +266,9 @@ func purgeStaleOAuthData(ctx context.Context, c *cmd.PurgeStaleOAuthData) error 
 func saveOAuthSignInHandoff(ctx context.Context, c *cmd.SaveOAuthSignInHandoff) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
 		_, err := trx.Execute(`
-			INSERT INTO oauth_signin_handoffs (code_hash, tenant_id, user_id, origin, query, security_stamp, expires_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-			c.CodeHash, tenant.ID, c.UserID, c.Origin, c.Query, c.SecurityStamp, c.ExpiresAt)
+			INSERT INTO oauth_signin_handoffs (code_hash, tenant_id, user_id, origin, query, security_stamp, flow_hash, expires_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+			c.CodeHash, tenant.ID, c.UserID, c.Origin, c.Query, c.SecurityStamp, c.FlowHash, c.ExpiresAt)
 		if err != nil {
 			return errors.Wrap(err, "failed to save OAuth sign-in handoff")
 		}
@@ -284,10 +284,10 @@ func redeemOAuthSignInHandoff(ctx context.Context, c *cmd.RedeemOAuthSignInHando
 		}{}
 		err := trx.Get(&row, `
 			UPDATE oauth_signin_handoffs SET used_at = now()
-			WHERE code_hash = $1 AND tenant_id = $2 AND origin = $3 AND used_at IS NULL AND expires_at > now()
+			WHERE code_hash = $1 AND tenant_id = $2 AND origin = $3 AND flow_hash = $4 AND $4 <> '' AND used_at IS NULL AND expires_at > now()
 			  AND security_stamp = (SELECT COALESCE(security_stamp, '') FROM users WHERE id = oauth_signin_handoffs.user_id AND tenant_id = $2)
 			RETURNING user_id, query`,
-			c.CodeHash, tenant.ID, c.Origin)
+			c.CodeHash, tenant.ID, c.Origin, c.FlowHash)
 		if err != nil {
 			if errors.Cause(err) == app.ErrNotFound {
 				return app.ErrNotFound

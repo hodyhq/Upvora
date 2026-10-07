@@ -62,7 +62,12 @@ const CookieAuthName = "auth"
 
 // CookieMCPConsentName identifies a person on an MCP-only public address for
 // the consent step only, after they signed in on the board's own address.
-const CookieMCPConsentName = "__mcp_consent"
+// The __Host- prefix makes the browser require Secure, Path=/ and no Domain.
+const CookieMCPConsentName = "__Host-mcp_consent"
+
+// CookieMCPFlowName binds a sign-in started on an MCP-only public address to
+// the browser that started it.
+const CookieMCPFlowName = "__Host-mcp_flow"
 
 // CookieSignUpAuthName is the name of the cookie that holds the temporary Authentication Token
 const CookieSignUpAuthName = "__signup_auth"

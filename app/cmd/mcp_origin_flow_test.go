@@ -10,7 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/getfider/fider/app/mcpserver"
 	"github.com/getfider/fider/app/models/query"
 	. "github.com/getfider/fider/app/pkg/assert"
 	"github.com/getfider/fider/app/pkg/bus"
@@ -35,7 +34,7 @@ type flowCall struct {
 	bearer                            string
 }
 
-func serve(engine *web.Engine, call flowCall) *httptest.ResponseRecorder {
+func serve(engine http.Handler, call flowCall) *httptest.ResponseRecorder {
 	var body io.Reader
 	if call.body != "" {
 		body = strings.NewReader(call.body)
@@ -50,6 +49,7 @@ func serve(engine *web.Engine, call flowCall) *httptest.ResponseRecorder {
 	}
 	if call.bearer != "" {
 		req.Header.Set("Authorization", "Bearer "+call.bearer)
+		req.Header.Set("Accept", "application/json, text/event-stream")
 	}
 	rec := httptest.NewRecorder()
 	engine.ServeHTTP(rec, req)
@@ -60,6 +60,16 @@ func serve(engine *web.Engine, call flowCall) *httptest.ResponseRecorder {
 // browser only ever use the MCP-only address, signing in happens on the board,
 // and the token works on the MCP-only address alone.
 func TestMCPOrigin_FullConnectionThroughRealEngine(t *testing.T) {
+	runMCPOriginFlow(t, false)
+}
+
+// The safe deployment: the tunnel points at MCP_PORT, so even a proxy that
+// rewrites Host to the board's own name serves only the MCP surface.
+func TestMCPOrigin_FullConnectionThroughDedicatedListener(t *testing.T) {
+	runMCPOriginFlow(t, true)
+}
+
+func runMCPOriginFlow(t *testing.T, viaListener bool) {
 	if testing.Short() {
 		t.Skip("needs the test database")
 	}
@@ -84,18 +94,34 @@ func TestMCPOrigin_FullConnectionThroughRealEngine(t *testing.T) {
 	Expect(trx.Scalar(&name, "SELECT name FROM users WHERE id = 2")).IsNil()
 	Expect(trx.Commit()).IsNil()
 	engine := routes(web.New())
+	// pub serves a call on the MCP-only side, as the deployment would.
+	pub := func(call flowCall) *httptest.ResponseRecorder {
+		if viaListener {
+			// Through MCP_PORT, with the proxy rewriting Host to the board's name.
+			call.target = strings.Replace(call.target, flowMCP, flowBoard, 1)
+			return serve(web.MCPListenerHandler(engine), call)
+		}
+		return serve(engine, call)
+	}
 
 	// The board itself is not served on the MCP-only address.
 	for _, p := range []string{"/", "/admin", "/posts/1", "/signin", "/api/v1/posts", "/oauth2/continue"} {
-		Expect(serve(engine, flowCall{method: "GET", target: flowMCP + p}).Code).Equals(http.StatusNotFound)
+		Expect(pub(flowCall{method: "GET", target: flowMCP + p}).Code).Equals(http.StatusNotFound)
 	}
 
 	// 1. The client sends the browser to authorize on the MCP-only address.
 	q := url.Values{"response_type": {"code"}, "client_id": {"cid"}, "redirect_uri": {flowRedirect},
 		"code_challenge": {flowChallenge}, "code_challenge_method": {"S256"}, "scope": {"upvora"}, "state": {"st"}}
-	rec := serve(engine, flowCall{method: "GET", target: flowMCP + "/oauth2/authorize?" + q.Encode()})
+	rec := pub(flowCall{method: "GET", target: flowMCP + "/oauth2/authorize?" + q.Encode()})
 	Expect(rec.Code).Equals(http.StatusTemporaryRedirect)
 	toBoard := rec.Header().Get("Location")
+	var flow []*http.Cookie
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == web.CookieMCPFlowName {
+			flow = append(flow, c)
+		}
+	}
+	Expect(flow).HasLen(1)
 	Expect(strings.HasPrefix(toBoard, flowBoard+"/oauth2/continue?request=")).IsTrue()
 
 	// 2. On the board, signed in with its normal session, it hands back.
@@ -106,7 +132,9 @@ func TestMCPOrigin_FullConnectionThroughRealEngine(t *testing.T) {
 	Expect(strings.HasPrefix(toResume, flowMCP+"/oauth2/resume?code=")).IsTrue()
 
 	// 3. Back on the MCP-only address: a consent-step cookie, then authorize again.
-	rec = serve(engine, flowCall{method: "GET", target: toResume})
+	// Another browser (no flow cookie) cannot use the link: no login CSRF.
+	Expect(pub(flowCall{method: "GET", target: toResume}).Code).Equals(http.StatusBadRequest)
+	rec = pub(flowCall{method: "GET", target: toResume, cookies: flow})
 	Expect(rec.Code).Equals(http.StatusTemporaryRedirect)
 	Expect(rec.Header().Get("Location")).Equals("/oauth2/authorize?" + q.Encode())
 	var consent []*http.Cookie
@@ -119,11 +147,11 @@ func TestMCPOrigin_FullConnectionThroughRealEngine(t *testing.T) {
 	Expect(consent[0].HttpOnly).IsTrue()
 	Expect(consent[0].Secure).IsTrue()
 	// the handoff code is single-use
-	reused := serve(engine, flowCall{method: "GET", target: toResume})
+	reused := pub(flowCall{method: "GET", target: toResume, cookies: flow})
 	Expect(reused.Code).Equals(http.StatusBadRequest)
 
 	// 4. The consent page renders there, self-contained on that address.
-	rec = serve(engine, flowCall{method: "GET", target: flowMCP + "/oauth2/authorize?" + q.Encode(), cookies: consent})
+	rec = pub(flowCall{method: "GET", target: flowMCP + "/oauth2/authorize?" + q.Encode(), cookies: consent})
 	Expect(rec.Code).Equals(http.StatusOK)
 	page := rec.Body.String()
 	Expect(page).ContainsSubstring(`"connectingThrough":"mcp.demo.test"`)
@@ -133,7 +161,7 @@ func TestMCPOrigin_FullConnectionThroughRealEngine(t *testing.T) {
 	// The person approves; the code comes back for the client.
 	approve, _ := json.Marshal(map[string]any{"clientId": "cid", "redirectUri": flowRedirect, "codeChallenge": flowChallenge,
 		"codeChallengeMethod": "S256", "scope": "upvora", "state": "st", "approve": true})
-	rec = serve(engine, flowCall{method: "POST", target: flowMCP + "/_api/oauth2/authorize", body: string(approve),
+	rec = pub(flowCall{method: "POST", target: flowMCP + "/_api/oauth2/authorize", body: string(approve),
 		contentType: "application/json", cookies: consent})
 	Expect(rec.Code).Equals(http.StatusOK)
 	var decision struct{ Redirect string }
@@ -149,7 +177,7 @@ func TestMCPOrigin_FullConnectionThroughRealEngine(t *testing.T) {
 	Expect(rec.Code).Equals(http.StatusBadRequest)
 
 	// 5. The client (server to server) exchanges it on the MCP-only address.
-	rec = serve(engine, flowCall{method: "POST", target: flowMCP + "/oauth2/token", body: form.Encode(), contentType: "application/x-www-form-urlencoded"})
+	rec = pub(flowCall{method: "POST", target: flowMCP + "/oauth2/token", body: form.Encode(), contentType: "application/x-www-form-urlencoded"})
 	Expect(rec.Code).Equals(http.StatusOK)
 	var tokens struct {
 		AccessToken  string `json:"access_token"`
@@ -158,25 +186,19 @@ func TestMCPOrigin_FullConnectionThroughRealEngine(t *testing.T) {
 	Expect(json.Unmarshal(rec.Body.Bytes(), &tokens)).IsNil()
 
 	// 6. The token works on the MCP-only address, and only there.
-	mcpReq, _ := http.NewRequest("POST", flowMCP+"/mcp", nil)
-	mcpReq.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
-	var tool mcpserver.Tool
-	for _, c := range mcpserver.Catalog {
-		if c.Name == "upvora_notifications_list" {
-			tool = c
-		}
+	call := `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"upvora_notifications_list","arguments":{}}}`
+	rec = pub(flowCall{method: "POST", target: flowMCP + "/mcp", body: call, contentType: "application/json", bearer: tokens.AccessToken})
+	Expect(rec.Code).Equals(http.StatusOK)
+	if strings.Contains(rec.Body.String(), `"isError":true`) {
+		t.Fatalf("tool call on the MCP-only address failed: %.300s", rec.Body.String())
 	}
-	res := mcpserver.Dispatch(engine, mcpReq, tool, map[string]any{})
-	if res.IsError {
-		t.Fatalf("tool call on the MCP-only address failed: %s", res.Text)
-	}
-	init := `{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}`
-	Expect(serve(engine, flowCall{method: "POST", target: flowBoard + "/mcp", body: init, contentType: "application/json", bearer: tokens.AccessToken}).Code).Equals(http.StatusUnauthorized)
+	list := `{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}`
+	Expect(serve(engine, flowCall{method: "POST", target: flowBoard + "/mcp", body: list, contentType: "application/json", bearer: tokens.AccessToken}).Code).Equals(http.StatusUnauthorized)
 
 	// 7. Refresh works on the MCP-only address only.
 	refresh := url.Values{"grant_type": {"refresh_token"}, "refresh_token": {tokens.RefreshToken}, "client_id": {"cid"}}
 	rec = serve(engine, flowCall{method: "POST", target: flowBoard + "/oauth2/token", body: refresh.Encode(), contentType: "application/x-www-form-urlencoded"})
 	Expect(rec.Code).Equals(http.StatusBadRequest)
-	rec = serve(engine, flowCall{method: "POST", target: flowMCP + "/oauth2/token", body: refresh.Encode(), contentType: "application/x-www-form-urlencoded"})
+	rec = pub(flowCall{method: "POST", target: flowMCP + "/oauth2/token", body: refresh.Encode(), contentType: "application/x-www-form-urlencoded"})
 	Expect(rec.Code).Equals(http.StatusOK)
 }

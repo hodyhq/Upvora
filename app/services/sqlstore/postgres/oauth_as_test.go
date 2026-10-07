@@ -217,26 +217,30 @@ func TestOAuthSignInHandoff_SingleUseScopedAndExpiring(t *testing.T) {
 	defer TeardownDatabaseTest()
 	save := func(hash string, expires time.Time) {
 		Expect(bus.Dispatch(demoTenantCtx, &cmd.SaveOAuthSignInHandoff{
-			CodeHash: hash, UserID: aryaStark.ID, Origin: mcpOrigin, Query: "client_id=c&state=s", ExpiresAt: expires,
+			CodeHash: hash, UserID: aryaStark.ID, Origin: mcpOrigin, Query: "client_id=c&state=s", FlowHash: "flow-1", ExpiresAt: expires,
 		})).IsNil()
 	}
 	save("ho-1", time.Now().Add(2*time.Minute))
 
-	wrongOrigin := &cmd.RedeemOAuthSignInHandoff{CodeHash: "ho-1", Origin: "https://other.demo.test"}
+	wrongOrigin := &cmd.RedeemOAuthSignInHandoff{CodeHash: "ho-1", Origin: "https://other.demo.test", FlowHash: "flow-1"}
 	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, wrongOrigin))).Equals(app.ErrNotFound)
-	wrongTenant := &cmd.RedeemOAuthSignInHandoff{CodeHash: "ho-1", Origin: mcpOrigin}
+	wrongTenant := &cmd.RedeemOAuthSignInHandoff{CodeHash: "ho-1", Origin: mcpOrigin, FlowHash: "flow-1"}
 	Expect(errors.Cause(bus.Dispatch(avengersTenantCtx, wrongTenant))).Equals(app.ErrNotFound)
 
-	first := &cmd.RedeemOAuthSignInHandoff{CodeHash: "ho-1", Origin: mcpOrigin}
+	// another browser (no or a different flow cookie) cannot redeem it
+	otherBrowser := &cmd.RedeemOAuthSignInHandoff{CodeHash: "ho-1", Origin: mcpOrigin, FlowHash: "flow-2"}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, otherBrowser))).Equals(app.ErrNotFound)
+
+	first := &cmd.RedeemOAuthSignInHandoff{CodeHash: "ho-1", Origin: mcpOrigin, FlowHash: "flow-1"}
 	Expect(bus.Dispatch(demoTenantCtx, first)).IsNil()
 	Expect(first.Result.UserID).Equals(aryaStark.ID)
 	Expect(first.Result.Query).Equals("client_id=c&state=s")
 
-	again := &cmd.RedeemOAuthSignInHandoff{CodeHash: "ho-1", Origin: mcpOrigin}
+	again := &cmd.RedeemOAuthSignInHandoff{CodeHash: "ho-1", Origin: mcpOrigin, FlowHash: "flow-1"}
 	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, again))).Equals(app.ErrNotFound)
 
 	save("ho-old", time.Now().Add(-time.Second))
-	old := &cmd.RedeemOAuthSignInHandoff{CodeHash: "ho-old", Origin: mcpOrigin}
+	old := &cmd.RedeemOAuthSignInHandoff{CodeHash: "ho-old", Origin: mcpOrigin, FlowHash: "flow-1"}
 	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, old))).Equals(app.ErrNotFound)
 }
 

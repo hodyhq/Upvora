@@ -188,7 +188,7 @@ func TestTenantDeletion_WithOAuthClientsAndTokens(t *testing.T) {
 		Scope: "upvora", FamilyID: "f", ExpiresAt: time.Now().Add(time.Hour)})).IsNil()
 
 	Expect(bus.Dispatch(demoTenantCtx, &cmd.SaveOAuthSignInHandoff{CodeHash: "del-ho", UserID: jonSnow.ID,
-		Origin: "https://mcp.demo.test", Query: "q", ExpiresAt: time.Now().Add(time.Minute)})).IsNil()
+		Origin: "https://mcp.demo.test", Query: "q", FlowHash: "f", ExpiresAt: time.Now().Add(time.Minute)})).IsNil()
 	Expect(bus.Dispatch(ctx, &cmd.DeleteTenant{TenantID: demoTenant.ID})).IsNil()
 	for _, table := range []string{"oauth_clients", "oauth_codes", "oauth_refresh_tokens", "oauth_signin_handoffs"} {
 		Expect(countTenantRows(table, demoTenant.ID)).Equals(0)
