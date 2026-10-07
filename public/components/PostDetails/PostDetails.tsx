@@ -283,7 +283,7 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
         post.isPrivate ? (
           <Trans id="showpost.privacy.public">This idea is now public.</Trans>
         ) : (
-          <Trans id="showpost.privacy.private">This idea is now private — only collaborators and admins can see it.</Trans>
+          <Trans id="showpost.privacy.private">This idea is now private. Only its author, collaborators and admins can see it.</Trans>
         )
       )
       setTimeout(() => location.reload(), 1000)
@@ -404,7 +404,7 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
 
           {!editMode && post.isPrivate && (
             <div className="text-sm p-3 bg-yellow-100 text-yellow-800 rounded-md mt-2">
-              🔒 <Trans id="showpost.private.banner">Private idea — only collaborators and admins can see this.</Trans>
+              🔒 <Trans id="showpost.private.banner">Private idea: only its author, collaborators and admins can see this.</Trans>
             </div>
           )}
 

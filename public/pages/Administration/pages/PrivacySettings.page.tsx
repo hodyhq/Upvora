@@ -32,15 +32,17 @@ export default class PrivacySettingsPage extends AdminBasePage<any, PrivacySetti
 
   private confirmed: PrivacySettingsPageState // last settings the server accepted
   private saveSeq = 0
+  private saving: Promise<void> = Promise.resolve()
 
-  // Applies a partial change and saves the whole settings object. Only the
-  // latest save may roll back, and only to the last confirmed settings, so a
-  // slow failed save never undoes a newer successful one.
+  // Applies a partial change and saves the whole settings object. Saves run
+  // one at a time, so the server applies them in click order; only the latest
+  // save may roll back, and only to the last settings the server accepted.
   private updatePrivacy = (patch: Partial<PrivacySettingsPageState>) => {
     const next = { ...this.state, ...patch }
     if (next.isPrivate) next.isFeedEnabled = false // Disable feed if site is private
     const seq = ++this.saveSeq
-    this.setState(next, async () => {
+    this.setState(next)
+    this.saving = this.saving.then(async () => {
       const response = await actions.updateTenantPrivacy(next)
       if (response.ok) {
         this.confirmed = next

@@ -40,24 +40,56 @@ describe("PrivacySettings save", () => {
     const page = newPage()
 
     update(page, { membersPrivateIdeas: true })
+    await flush()
     pending[0].resolve(false)
     await flush()
 
     expect(page.state.membersPrivateIdeas).toBeFalsy()
   })
 
-  test("a slow failed save does not undo a newer successful save", async () => {
+  test("a failed older save does not undo a newer successful save", async () => {
     const pending = queuePosts()
     const page = newPage()
 
     update(page, { membersPrivateIdeas: true }) // save A
     update(page, { isModerationEnabled: true }) // save B, includes A's change
-    pending[1].resolve(true)
     await flush()
     pending[0].resolve(false)
+    await flush()
+    pending[1].resolve(true)
     await flush()
 
     expect(page.state.membersPrivateIdeas).toBe(true)
     expect(page.state.isModerationEnabled).toBe(true)
+  })
+
+  test("after overlapping saves settle, the toggles match what the server accepted", async () => {
+    let server: any = null
+    const pending: { resolve: (ok: boolean) => void }[] = []
+    http.post = jest.fn(
+      (_url: string, body: any) =>
+        new Promise((resolve) => {
+          pending.push({
+            resolve: (ok) => {
+              if (ok) server = body
+              resolve({ ok, data: null as any })
+            },
+          })
+        })
+    ) as any
+    const page = newPage()
+
+    update(page, { membersPrivateIdeas: true }) // save A: will succeed
+    update(page, { isModerationEnabled: true }) // save B: will fail
+    // Fail B as early as possible (before A where both are in flight), then succeed A.
+    if (pending[1]) pending[1].resolve(false)
+    await flush()
+    pending[0].resolve(true)
+    await flush()
+    if (pending.length > 1) pending[1].resolve(false)
+    await flush()
+
+    expect(page.state.membersPrivateIdeas).toBe(server.membersPrivateIdeas)
+    expect(page.state.isModerationEnabled).toBe(server.isModerationEnabled)
   })
 })
