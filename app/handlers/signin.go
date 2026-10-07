@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/getfider/fider/app/models/cmd"
@@ -19,9 +20,40 @@ import (
 	"github.com/getfider/fider/app/tasks"
 )
 
+// SignInReturnCookie remembers where to go after signing in by magic link
+// (always a same-site path, sanitized when set and again when read).
+const SignInReturnCookie = "__signin_return"
+
+// signInReturnURL consumes the remembered return path, defaulting to the root.
+func signInReturnURL(c *web.Context) string {
+	cookie, err := c.Request.Cookie(SignInReturnCookie)
+	if err != nil || cookie.Value == "" {
+		return c.BaseURL()
+	}
+	c.RemoveCookie(SignInReturnCookie)
+	value, err := url.QueryUnescape(cookie.Value)
+	if err != nil {
+		return c.BaseURL() + "/"
+	}
+	return c.BaseURL() + sanitiseOAuthRedirect(c, value)
+}
+
 // SignInPage renders the sign in page
 func SignInPage() web.HandlerFunc {
 	return func(c *web.Context) error {
+		// With a redirect (e.g. from /oauth2/authorize), show the page on any
+		// site and remember where to come back to after a magic link.
+		if redirect := c.QueryParam("redirect"); redirect != "" {
+			target := sanitiseOAuthRedirect(c, redirect)
+			if c.User() != nil {
+				return c.Redirect(c.BaseURL() + target)
+			}
+			c.AddCookie(SignInReturnCookie, url.QueryEscape(target), time.Now().Add(15*time.Minute))
+			return c.Page(http.StatusOK, web.Props{
+				Page:  "SignIn/SignIn.page",
+				Title: "Sign in",
+			})
+		}
 
 		if c.Tenant().IsPrivate {
 			return c.Page(http.StatusOK, web.Props{
@@ -351,8 +383,7 @@ func VerifySignInKey(kind enum.EmailVerificationKind) web.HandlerFunc {
 					}
 
 					webutil.AddAuthUserCookie(c, user)
-					baseURL := c.BaseURL()
-					return c.Redirect(baseURL)
+					return c.Redirect(signInReturnURL(c))
 				}
 
 				// Otherwise, show profile completion page
@@ -376,8 +407,7 @@ func VerifySignInKey(kind enum.EmailVerificationKind) web.HandlerFunc {
 
 		webutil.AddAuthUserCookie(c, userByEmail.Result)
 
-		baseURL := c.BaseURL()
-		return c.Redirect(baseURL)
+		return c.Redirect(signInReturnURL(c))
 	}
 }
 
