@@ -27,19 +27,26 @@ export default class PrivacySettingsPage extends AdminBasePage<any, PrivacySetti
       membersPrivateIdeas: Fider.session.tenant.membersPrivateIdeas,
       membersCanPublishPrivate: Fider.session.tenant.membersCanPublishPrivate,
     }
+    this.confirmed = this.state
   }
 
-  // Applies a partial change and saves the whole settings object.
+  private confirmed: PrivacySettingsPageState // last settings the server accepted
+  private saveSeq = 0
+
+  // Applies a partial change and saves the whole settings object. Only the
+  // latest save may roll back, and only to the last confirmed settings, so a
+  // slow failed save never undoes a newer successful one.
   private updatePrivacy = (patch: Partial<PrivacySettingsPageState>) => {
-    const previous = this.state
     const next = { ...this.state, ...patch }
     if (next.isPrivate) next.isFeedEnabled = false // Disable feed if site is private
+    const seq = ++this.saveSeq
     this.setState(next, async () => {
-      const response = await actions.updateTenantPrivacy(this.state)
+      const response = await actions.updateTenantPrivacy(next)
       if (response.ok) {
+        this.confirmed = next
         notify.success("Your privacy settings have been saved.")
-      } else {
-        this.setState(previous) // http already shows the error; keep the toggles truthful
+      } else if (seq === this.saveSeq) {
+        this.setState(this.confirmed) // http already shows the error
       }
     })
   }
