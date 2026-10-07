@@ -73,14 +73,21 @@ func TestGetAISettingsHandler(t *testing.T) {
 func TestListWebhooksHandler(t *testing.T) {
 	RegisterT(t)
 	bus.AddHandler(func(ctx context.Context, q *query.ListAllWebhooks) error {
-		q.Result = []*entity.Webhook{{ID: 7, Name: "Slack"}}
+		q.Result = []*entity.Webhook{{ID: 7, Name: "Slack",
+			Url:         "https://user:pw@hooks.slack.com/services/T000/B000/slacksecret?token=querysecret",
+			HttpHeaders: entity.HttpHeaders{"Authorization": "Bearer headersecret"}}}
 		return nil
 	})
 
-	code, res := mock.NewServer().OnTenant(mock.DemoTenant).AsUser(mock.JonSnow).ExecuteAsJSON(apiv1.ListWebhooks())
+	code, raw := mock.NewServer().OnTenant(mock.DemoTenant).AsUser(mock.JonSnow).Execute(apiv1.ListWebhooks())
 
 	Expect(code).Equals(http.StatusOK)
-	Expect(res.ArrayLength()).Equals(1)
+	body := raw.Body.String()
+	for _, secret := range []string{"slacksecret", "querysecret", "headersecret", "pw@"} {
+		Expect(strings.Contains(body, secret)).IsFalse()
+	}
+	Expect(body).ContainsSubstring("https://hooks.slack.com/")
+	Expect(body).ContainsSubstring("Authorization")
 }
 
 func TestListOAuthProvidersHandler(t *testing.T) {
