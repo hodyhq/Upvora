@@ -30,8 +30,9 @@ type CreateNewPost struct {
 	BriefMarkdown string `json:"briefMarkdown"`
 	// VoraTranscript is the conversation that produced the brief; admin-viewable.
 	VoraTranscript []entity.AIMessage `json:"voraTranscript"`
-	// IsPrivate marks the idea visible only to collaborators/admins. Only a
-	// collaborator may set it (enforced in Validate).
+	// IsPrivate marks the idea visible only to its author and collaborators/admins.
+	// Staff may always set it; members only when the tenant enables member
+	// private ideas (enforced in Validate).
 	IsPrivate bool `json:"isPrivate"`
 
 	Tags []*entity.Tag
@@ -69,13 +70,26 @@ func (action *CreateNewPost) IsAuthorized(ctx context.Context, user *entity.User
 	return true
 }
 
+// canSubmitPrivate reports whether user may mark a new idea private: staff
+// always may; members only when the tenant enables member private ideas.
+func canSubmitPrivate(ctx context.Context, user *entity.User) bool {
+	if user == nil {
+		return false
+	}
+	if user.IsCollaborator() {
+		return true
+	}
+	tenant, _ := ctx.Value(app.TenantCtxKey).(*entity.Tenant)
+	return tenant != nil && tenant.MembersPrivateIdeas
+}
+
 // Validate if current model is valid
 func (action *CreateNewPost) Validate(ctx context.Context, user *entity.User) *validate.Result {
 	result := validate.Success()
 	action.Attachments = withoutNilUploads(action.Attachments)
 
-	if action.IsPrivate && (user == nil || !user.IsCollaborator()) {
-		result.AddFieldFailure("isPrivate", "Only collaborators can create private ideas.")
+	if action.IsPrivate && !canSubmitPrivate(ctx, user) {
+		result.AddFieldFailure("isPrivate", "You are not allowed to create private ideas.")
 	}
 
 	if len(action.VoraTranscript) > 60 {
