@@ -26,6 +26,8 @@ type Tenant struct {
 	IsFeedEnabled              bool              `json:"isFeedEnabled"`
 	PreventIndexing            bool              `json:"preventIndexing"`
 	IsModerationEnabled        bool              `json:"isModerationEnabled"`
+	MembersPrivateIdeas        bool              `json:"membersPrivateIdeas"`      // members may mark an idea private at submission (visible to them and staff)
+	MembersCanPublishPrivate   bool              `json:"membersCanPublishPrivate"` // members may later make their own private idea public (never the reverse)
 	IsPro                      bool              `json:"isPro"`
 	ShareIdeaInstructions      string            `json:"shareIdeaInstructions"`
 	RailCtaHeading             string            `json:"railCtaHeading"`

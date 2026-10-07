@@ -438,3 +438,30 @@ func TestTenantStorage_Save_Get_ListOAuthConfig(t *testing.T) {
 	Expect(customConfigs.Result[0].JSONUserNamePath).Equals("New user.name")
 	Expect(customConfigs.Result[0].JSONUserEmailPath).Equals("New user.email")
 }
+
+func TestTenantStorage_UpdatePrivacy_MemberPrivateIdeas(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+
+	err := bus.Dispatch(jonSnowCtx, &cmd.UpdateTenantPrivacySettings{
+		IsFeedEnabled:            true,
+		MembersPrivateIdeas:      true,
+		MembersCanPublishPrivate: false,
+	})
+	Expect(err).IsNil()
+
+	getTenant := &query.GetTenantByDomain{Domain: "demo"}
+	Expect(bus.Dispatch(demoTenantCtx, getTenant)).IsNil()
+	Expect(getTenant.Result.MembersPrivateIdeas).IsTrue()
+	Expect(getTenant.Result.MembersCanPublishPrivate).IsFalse()
+}
+
+func TestTenantStorage_MemberPrivateIdeas_Defaults(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+
+	getTenant := &query.GetTenantByDomain{Domain: "demo"}
+	Expect(bus.Dispatch(demoTenantCtx, getTenant)).IsNil()
+	Expect(getTenant.Result.MembersPrivateIdeas).IsFalse()
+	Expect(getTenant.Result.MembersCanPublishPrivate).IsTrue()
+}

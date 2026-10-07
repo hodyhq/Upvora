@@ -61,6 +61,12 @@ func updateTenantPrivacySettings(ctx context.Context, c *cmd.UpdateTenantPrivacy
 		if err != nil {
 			return errors.Wrap(err, "failed update tenant moderation setting")
 		}
+		_, err = trx.Execute(
+			"UPDATE tenants SET members_private_ideas = $1, members_can_publish_private = $2 WHERE id = $3",
+			c.MembersPrivateIdeas, c.MembersCanPublishPrivate, tenant.ID)
+		if err != nil {
+			return errors.Wrap(err, "failed update tenant member private ideas settings")
+		}
 		return nil
 	})
 }
@@ -281,7 +287,7 @@ func getFirstTenant(ctx context.Context, q *query.GetFirstTenant) error {
 		tenant := dbEntities.Tenant{}
 
 	err := trx.Get(&tenant, `
-		SELECT t.id, t.name, t.subdomain, t.cname, t.invitation, t.locale, t.welcome_message, t.welcome_header, t.description_template, t.status, t.is_private, t.logo_bkey, t.custom_css, t.allowed_schemes, t.is_email_auth_allowed, t.is_feed_enabled, t.is_moderation_enabled, t.prevent_indexing, t.is_pro, t.scheduled_deletion_at, t.deletion_cancel_key,
+		SELECT t.id, t.name, t.subdomain, t.cname, t.invitation, t.locale, t.welcome_message, t.welcome_header, t.description_template, t.status, t.is_private, t.logo_bkey, t.custom_css, t.allowed_schemes, t.is_email_auth_allowed, t.is_feed_enabled, t.is_moderation_enabled, t.members_private_ideas, t.members_can_publish_private, t.prevent_indexing, t.is_pro, t.scheduled_deletion_at, t.deletion_cancel_key,
 			t.share_idea_instructions, t.rail_cta_heading, t.rail_cta_text, t.rail_cta_button, t.default_theme, t.theme_primary, t.theme_accents::text AS theme_accents, t.site_banner_enabled, t.site_banner_message, t.site_banner_variant,
 			t.is_scorecard_enabled, t.scorecard_band_strong, t.scorecard_band_good, t.scorecard_band_refine, t.scorecard_band_low, t.scorecard_trigger_status_slug,
 			t.scorecard_band_strong_label, t.scorecard_band_good_label, t.scorecard_band_refine_label, t.scorecard_band_low_label, t.scorecard_band_none_label,
@@ -306,7 +312,7 @@ func getTenantByDomain(ctx context.Context, q *query.GetTenantByDomain) error {
 		tenant := dbEntities.Tenant{}
 
 	err := trx.Get(&tenant, `
-		SELECT t.id, t.name, t.subdomain, t.cname, t.invitation, t.locale, t.welcome_message, t.welcome_header, t.description_template, t.status, t.is_private, t.logo_bkey, t.custom_css, t.allowed_schemes, t.is_email_auth_allowed, t.is_feed_enabled, t.is_moderation_enabled, t.prevent_indexing, t.is_pro, t.scheduled_deletion_at, t.deletion_cancel_key,
+		SELECT t.id, t.name, t.subdomain, t.cname, t.invitation, t.locale, t.welcome_message, t.welcome_header, t.description_template, t.status, t.is_private, t.logo_bkey, t.custom_css, t.allowed_schemes, t.is_email_auth_allowed, t.is_feed_enabled, t.is_moderation_enabled, t.members_private_ideas, t.members_can_publish_private, t.prevent_indexing, t.is_pro, t.scheduled_deletion_at, t.deletion_cancel_key,
 			t.share_idea_instructions, t.rail_cta_heading, t.rail_cta_text, t.rail_cta_button, t.default_theme, t.theme_primary, t.theme_accents::text AS theme_accents, t.site_banner_enabled, t.site_banner_message, t.site_banner_variant,
 			t.is_scorecard_enabled, t.scorecard_band_strong, t.scorecard_band_good, t.scorecard_band_refine, t.scorecard_band_low, t.scorecard_trigger_status_slug,
 			t.scorecard_band_strong_label, t.scorecard_band_good_label, t.scorecard_band_refine_label, t.scorecard_band_low_label, t.scorecard_band_none_label,

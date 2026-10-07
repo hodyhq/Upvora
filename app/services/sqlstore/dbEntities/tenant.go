@@ -29,6 +29,8 @@ type Tenant struct {
 	IsFeedEnabled              bool           `db:"is_feed_enabled"`
 	PreventIndexing            bool           `db:"prevent_indexing"`
 	IsModerationEnabled        bool           `db:"is_moderation_enabled"`
+	MembersPrivateIdeas        bool           `db:"members_private_ideas"`
+	MembersCanPublishPrivate   bool           `db:"members_can_publish_private"`
 	IsPro                      bool           `db:"is_pro"`
 	HasPaddleSubscription      bool           `db:"has_paddle_subscription"`
 	ScheduledDeletionAt        dbx.NullTime   `db:"scheduled_deletion_at"`
@@ -97,6 +99,8 @@ func (t *Tenant) ToModel() *entity.Tenant {
 		IsFeedEnabled:            t.IsFeedEnabled,
 		PreventIndexing:          t.PreventIndexing,
 		IsModerationEnabled:      isPro && t.IsModerationEnabled,
+		MembersPrivateIdeas:      t.MembersPrivateIdeas,
+		MembersCanPublishPrivate: t.MembersCanPublishPrivate,
 		IsPro:                    isPro,
 		ShareIdeaInstructions:    t.ShareIdeaInstructions,
 		RailCtaHeading:           t.RailCtaHeading,
