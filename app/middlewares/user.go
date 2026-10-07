@@ -215,6 +215,10 @@ func userFromMCPAccessToken(c *web.Context, token string) (*entity.User, string,
 	if err != nil || claims.TenantID != tenant.ID {
 		return nil, "", "", http.StatusUnauthorized
 	}
+	// A removed client loses access at once, not when its token expires.
+	if bus.Dispatch(c, &query.GetOAuthClient{ClientID: claims.ClientID}) != nil {
+		return nil, "", "", http.StatusUnauthorized
+	}
 	getUser := &query.GetUserByID{UserID: claims.UserID, TenantID: tenant.ID}
 	if bus.Dispatch(c, getUser) != nil {
 		return nil, "", "", http.StatusUnauthorized

@@ -40,6 +40,13 @@ func accessToken(user *entity.User, tenantID int, scope, aud, stamp string) stri
 func mcpUser() *entity.User {
 	u := *mock.AryaStark
 	u.SecurityStamp = "stamp-1"
+	bus.AddHandler(func(ctx context.Context, q *query.GetOAuthClient) error {
+		if q.ClientID != "cid" {
+			return app.ErrNotFound
+		}
+		q.Result = &entity.OAuthClient{ClientID: "cid"}
+		return nil
+	})
 	bus.AddHandler(func(ctx context.Context, q *query.GetUserByID) error {
 		if q.UserID != u.ID {
 			return app.ErrNotFound
@@ -203,4 +210,16 @@ func TestUser_MCPAccessToken_RefusedOnDirectAPI(t *testing.T) {
 	code, _, body := runDirect(mcpSite(true, enum.RoleVisitor), "GET", "http://demo.test.fider.io/api/v1/posts", tok)
 	Expect(code).Equals(http.StatusUnauthorized)
 	Expect(body == u.Name).IsFalse()
+}
+
+// Removing a client cuts off its access tokens at once, not after their hour.
+func TestUser_MCPAccessToken_RemovedClientRefused(t *testing.T) {
+	RegisterT(t)
+	u := mcpUser()
+	tok, _ := jwt.Encode(&jwt.MCPAccessClaims{
+		UserID: u.ID, TenantID: mock.DemoTenant.ID, ClientID: "removed-client", Scope: "upvora", SecurityStamp: "stamp-1",
+		Metadata: jwt.Metadata{Audience: jwtgo.ClaimStrings{mcpAudience}, ExpiresAt: jwt.Time(time.Now().Add(time.Hour))},
+	})
+	code, _, _ := runAs(mcpSite(true, enum.RoleVisitor), "POST", "http://demo.test.fider.io/mcp", tok)
+	Expect(code).Equals(http.StatusUnauthorized)
 }
