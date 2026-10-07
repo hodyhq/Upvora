@@ -41,7 +41,7 @@ var (
 // address it is always that address as configured, whatever the scheme the
 // proxy reported, so the gate fails closed and emitted URLs stay https.
 func requestOrigin(r *http.Request) string {
-	if origin, ok := mcpOriginOf(r); ok {
+	if origin, ok := mcpOriginOf(r); ok && origin != "" {
 		return origin
 	}
 	host := r.Host
@@ -76,12 +76,12 @@ func mcpOriginAllows(p string) bool {
 // keep the caller's host) may call the REST API; other addresses are untouched.
 func MCPOriginGate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, onMCP := mcpOriginOf(r)
+		origin, onMCP := mcpOriginOf(r)
 		if onMCP || onMCPListener(r) {
 			// In-process tool replays only ever call the REST API.
 			replay, _ := r.Context().Value(oauthas.ReplayCtxKey{}).(bool)
 			allowed := mcpOriginAllows(r.URL.Path) || (replay && strings.HasPrefix(r.URL.Path, "/api/"))
-			if !onMCP || !allowed {
+			if origin == "" || !allowed {
 				http.NotFound(w, r)
 				return
 			}
@@ -107,9 +107,14 @@ func mcpOriginOf(r *http.Request) (string, bool) {
 			return origin, true
 		}
 	}
-	// On the dedicated listener the headers prove nothing either way.
+	// On the dedicated listener the headers prove nothing either way: with a
+	// single address it is that one; with several and none named, it cannot be
+	// known, so it is MCP-only with no origin and nothing is served.
 	if onMCPListener(r) {
-		return env.Config.MCPOrigins[0], true
+		if len(env.Config.MCPOrigins) == 1 {
+			return env.Config.MCPOrigins[0], true
+		}
+		return "", true
 	}
 	return "", false
 }

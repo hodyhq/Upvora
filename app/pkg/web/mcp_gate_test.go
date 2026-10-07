@@ -190,3 +190,14 @@ func TestMCPOriginGate_ReplaysOnlyForTheAPI(t *testing.T) {
 	Expect(gateStatus("https://mcp.example.com/api/v1/posts", nil, replay)).Equals(http.StatusTeapot)
 	Expect(gateStatus("https://mcp.example.com/admin", nil, replay)).Equals(http.StatusNotFound)
 }
+
+// Several MCP-only addresses and a Host that names none of them: which one is
+// unknowable, so nothing is served rather than guessing (a guessed issuer
+// would break the client's discovery checks anyway).
+func TestMCPListener_AmbiguousAddressServesNothing(t *testing.T) {
+	RegisterT(t)
+	env.Config.MCPOrigins = []string{"https://mcp.example.com", "https://mcp2.example.com"}
+	defer func() { env.Config.MCPOrigins = nil }()
+	code, _ := listenerStatus("http://ideas.internal.example/mcp", nil)
+	Expect(code).Equals(http.StatusNotFound)
+}

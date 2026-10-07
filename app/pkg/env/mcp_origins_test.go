@@ -89,10 +89,12 @@ func TestMCPOriginForHost(t *testing.T) {
 func TestValidateMCPPort(t *testing.T) {
 	RegisterT(t)
 	origins := []string{"https://mcp.example.com"}
-	Expect(env.ValidateMCPPort("", "3000", nil)).IsNil()
-	Expect(env.ValidateMCPPort("3001", "3000", origins)).IsNil()
-	Expect(env.ValidateMCPPort("3001", "3000", nil)).IsNotNil()     // a listener with no address to serve
-	Expect(env.ValidateMCPPort("3000", "3000", origins)).IsNotNil() // the board's own port
-	Expect(env.ValidateMCPPort("http", "3000", origins)).IsNotNil()
-	Expect(env.ValidateMCPPort("70000", "3000", origins)).IsNotNil()
+	Expect(env.ValidateMCPPort("", "3000", "", nil)).IsNil()
+	Expect(env.ValidateMCPPort("3001", "3000", "4000", origins)).IsNil()
+	Expect(env.ValidateMCPPort("3001", "3000", "", nil)).IsNotNil()     // a listener with no address to serve
+	Expect(env.ValidateMCPPort("3000", "3000", "", origins)).IsNotNil() // the board's own port
+	Expect(env.ValidateMCPPort("http", "3000", "", origins)).IsNotNil()
+	Expect(env.ValidateMCPPort("70000", "3000", "", origins)).IsNotNil()
+	Expect(env.ValidateMCPPort("4000", "3000", "4000", origins)).IsNotNil() // the metrics port
+	Expect(env.ValidateMCPPort("03001", "3001", "", origins)).IsNotNil()    // same port, written differently
 }

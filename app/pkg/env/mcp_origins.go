@@ -129,19 +129,23 @@ func MCPOriginForHost(host string) (string, bool) {
 }
 
 // ValidateMCPPort checks MCP_PORT: the optional dedicated listener for the
-// MCP-only addresses. It needs MCP_ORIGINS and its own port.
-func ValidateMCPPort(mcpPort, port string, origins []string) error {
+// MCP-only addresses. It needs MCP_ORIGINS and a port of its own (not PORT,
+// nor the metrics port when metrics are on; pass "" for that otherwise).
+func ValidateMCPPort(mcpPort, port, metricsPort string, origins []string) error {
 	if mcpPort == "" {
 		return nil
 	}
-	if n, err := strconv.Atoi(mcpPort); err != nil || n < 1 || n > 65535 {
+	n, err := strconv.Atoi(mcpPort)
+	if err != nil || n < 1 || n > 65535 {
 		return fmt.Errorf("MCP_PORT: '%s' is not a port number", mcpPort)
 	}
 	if len(origins) == 0 {
 		return fmt.Errorf("MCP_PORT needs MCP_ORIGINS: the listener serves only those addresses")
 	}
-	if mcpPort == port {
-		return fmt.Errorf("MCP_PORT must differ from PORT (%s)", port)
+	for name, other := range map[string]string{"PORT": port, "the metrics port": metricsPort} {
+		if o, err := strconv.Atoi(other); err == nil && o == n {
+			return fmt.Errorf("MCP_PORT must differ from %s (%s)", name, other)
+		}
 	}
 	return nil
 }

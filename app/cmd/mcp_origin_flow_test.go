@@ -189,7 +189,14 @@ func runMCPOriginFlow(t *testing.T, viaListener bool) {
 	call := `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"upvora_notifications_list","arguments":{}}}`
 	rec = pub(flowCall{method: "POST", target: flowMCP + "/mcp", body: call, contentType: "application/json", bearer: tokens.AccessToken})
 	Expect(rec.Code).Equals(http.StatusOK)
-	if strings.Contains(rec.Body.String(), `"isError":true`) {
+	var reply struct {
+		Error  *json.RawMessage `json:"error"`
+		Result *struct {
+			IsError bool `json:"isError"`
+		} `json:"result"`
+	}
+	Expect(json.Unmarshal(rec.Body.Bytes(), &reply)).IsNil()
+	if reply.Error != nil || reply.Result == nil || reply.Result.IsError {
 		t.Fatalf("tool call on the MCP-only address failed: %.300s", rec.Body.String())
 	}
 	list := `{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}`

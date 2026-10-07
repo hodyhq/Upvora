@@ -206,7 +206,11 @@ func Reload() {
 		panic(err)
 	}
 	Config.MCPOrigins = origins
-	if err := ValidateMCPPort(Config.MCPPort, Config.Port, Config.MCPOrigins); err != nil {
+	metricsPort := ""
+	if Config.Metrics.Enabled {
+		metricsPort = Config.Metrics.Port
+	}
+	if err := ValidateMCPPort(Config.MCPPort, Config.Port, metricsPort, Config.MCPOrigins); err != nil {
 		panic(err)
 	}
 

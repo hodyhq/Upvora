@@ -212,9 +212,11 @@ func (e *Engine) Stop() error {
 		log.Info(e, "metrics server has shutdown")
 	}
 
+	// The MCP listener's error is reported after the others have shut down.
+	var mcpErr error
 	if e.mcpServer != nil {
 		if err := e.mcpServer.Shutdown(ctx); err != nil {
-			return errors.Wrap(err, "failed to shutdown MCP listener")
+			mcpErr = errors.Wrap(err, "failed to shutdown MCP listener")
 		}
 	}
 
@@ -234,7 +236,7 @@ func (e *Engine) Stop() error {
 		log.Info(e, "worker has shutdown")
 	}
 
-	return nil
+	return mcpErr
 }
 
 // Cache returns current cache
