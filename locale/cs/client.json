@@ -284,5 +284,8 @@
   "showpost.moderation.postsuccess": "Váš nápad čeká na schválení 📝",
   "showpost.postedby": "Zveřejnil(a)",
   "showpost.save.success": "Příspěvek byl úspěšně aktualizován",
-  "signin.code.locked": "Platnost vašeho kódu vypršela z důvodu příliš mnoha neúspěšných pokusů. Požádejte prosím o nový."
+  "signin.code.locked": "Platnost vašeho kódu vypršela z důvodu příliš mnoha neúspěšných pokusů. Požádejte prosím o nový.",
+  "post.private": "",
+  "showpost.privacy.private": "",
+  "showpost.private.banner": ""
 }

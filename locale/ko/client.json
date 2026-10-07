@@ -285,5 +285,8 @@
   "showpost.moderation.postsuccess": "제출하신 아이디어는 검토를 기다리고 있습니다 📝",
   "showpost.postedby": "게시자:",
   "showpost.save.success": "게시물이 성공적으로 업데이트되었습니다.",
-  "signin.code.locked": "잘못된 입력 횟수가 너무 많아 코드가 만료되었습니다. 새 코드를 요청해 주세요."
+  "signin.code.locked": "잘못된 입력 횟수가 너무 많아 코드가 만료되었습니다. 새 코드를 요청해 주세요.",
+  "post.private": "",
+  "showpost.privacy.private": "",
+  "showpost.private.banner": ""
 }
