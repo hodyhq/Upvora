@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/getfider/fider/app/mcpserver"
 	. "github.com/getfider/fider/app/pkg/assert"
 	"github.com/getfider/fider/app/pkg/env"
 	"github.com/getfider/fider/app/pkg/web"
@@ -31,7 +33,7 @@ var apiV1Surface = []string{
 	"POST /api/v1/posts/:number/comments/:id/reactions/:reaction",
 	"POST /api/v1/posts/:number/votes", "DELETE /api/v1/posts/:number/votes", "POST /api/v1/posts/:number/votes/toggle",
 	"POST /api/v1/posts/:number/subscription", "DELETE /api/v1/posts/:number/subscription",
-	"POST /api/v1/ai/ideate", "POST /api/v1/ai/finalize", "GET /api/v1/posts/:number/brief",
+	"POST /api/v1/ai/ideate", "POST /api/v1/ai/finalize", "GET /api/v1/ai/ideation-context", "GET /api/v1/posts/:number/brief",
 	"GET /api/v1/notifications", "GET /api/v1/notifications/unread/total", "POST /api/v1/notifications/read-all",
 	"GET /api/v1/user/settings", "POST /api/v1/user/settings", "POST /api/v1/user/change-email",
 	"POST /api/v1/posts/:number/privacy",
@@ -74,7 +76,7 @@ var apiV1Surface = []string{
 
 	// OAuth authorization server (MCP)
 	"GET /.well-known/oauth-authorization-server", "GET /.well-known/oauth-protected-resource",
-	"GET /.well-known/oauth-protected-resource/mcp", "POST /oauth2/register", "POST /oauth2/token",
+	"GET /.well-known/oauth-protected-resource/mcp", "POST /oauth2/register", "POST /oauth2/token", "POST /mcp", "GET /mcp", "DELETE /mcp",
 
 	// admin + pro
 	"GET /api/v1/admin/moderation/items", "GET /api/v1/admin/moderation/count",
@@ -101,6 +103,29 @@ func TestAPIv1Surface(t *testing.T) {
 	for _, r := range expected {
 		if !registered[r] {
 			missing = append(missing, r)
+		}
+	}
+	Expect(missing).Equals([]string{})
+}
+
+// Every MCP tool replays an /api/v1 route; each one must exist.
+func TestMCPCatalogRoutesExist(t *testing.T) {
+	RegisterT(t)
+	registered := map[string]bool{}
+	for _, r := range routes(web.New()).Routes() {
+		registered[r] = true
+	}
+	missing := []string{}
+	for _, tool := range mcpserver.Catalog {
+		path := tool.Path
+		for _, f := range tool.Fields {
+			if f.In == "path" || f.In == "both" {
+				path = strings.Replace(path, "{"+f.Name+"}", ":"+f.Name, 1)
+			}
+		}
+		key := tool.Method + " " + path
+		if !registered[key] && !(tool.Billing && !env.IsBillingEnabled()) {
+			missing = append(missing, tool.Name+" -> "+key)
 		}
 	}
 	Expect(missing).Equals([]string{})

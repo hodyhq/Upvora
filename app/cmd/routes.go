@@ -7,6 +7,7 @@ import (
 	"github.com/getfider/fider/app/handlers"
 	"github.com/getfider/fider/app/handlers/apiv1"
 	"github.com/getfider/fider/app/handlers/webhooks"
+	"github.com/getfider/fider/app/mcpserver"
 	"github.com/getfider/fider/app/middlewares"
 	"github.com/getfider/fider/app/models/enum"
 	"github.com/getfider/fider/app/pkg/env"
@@ -87,6 +88,13 @@ func routes(r *web.Engine) *web.Engine {
 		oauthAS.Get("/.well-known/oauth-protected-resource/mcp", handlers.OAuthProtectedResourceMetadata())
 		oauthAS.Post("/oauth2/register", handlers.OAuthRegister())
 		oauthAS.Post("/oauth2/token", handlers.OAuthTokenEndpoint())
+
+		// MCP endpoint (Streamable HTTP). middlewares.User() has already
+		// accepted or refused the access token; tools replay calls against
+		// /api/v1 through this engine, as the same user.
+		oauthAS.Post("/mcp", mcpserver.Handler(r))
+		oauthAS.Get("/mcp", mcpserver.Handler(r))
+		oauthAS.Delete("/mcp", mcpserver.Handler(r))
 	}
 
 	r.Use(middlewares.CSRF())
@@ -334,6 +342,7 @@ func routes(r *web.Engine) *web.Engine {
 		membersApi.Delete("/api/v1/posts/:number/comments/:id", apiv1.DeleteComment())
 		membersApi.Post("/api/v1/ai/ideate", handlers.AIIdeate())
 		membersApi.Post("/api/v1/ai/finalize", handlers.AIFinalize())
+		membersApi.Get("/api/v1/ai/ideation-context", handlers.AIIdeationContext())
 		membersApi.Get("/api/v1/posts/:number/brief", handlers.GetIdeaBriefHandler())
 		membersApi.Post("/api/v1/posts/:number/votes", apiv1.AddVote())
 		membersApi.Delete("/api/v1/posts/:number/votes", apiv1.RemoveVote())
