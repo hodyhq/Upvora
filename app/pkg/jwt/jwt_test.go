@@ -135,3 +135,48 @@ func TestJWT_DecodeOAuthClaimsExpired(t *testing.T) {
 	Expect(err).IsNotNil()
 	Expect(decoded).IsNil()
 }
+
+func mcpClaims(aud string) *jwt.MCPAccessClaims {
+	return &jwt.MCPAccessClaims{
+		UserID: 7, TenantID: 1, ClientID: "c1", Scope: "upvora", SecurityStamp: "s",
+		Metadata: jwt.Metadata{
+			Audience:  jwtgo.ClaimStrings{aud},
+			ExpiresAt: jwt.Time(time.Now().Add(time.Hour)),
+		},
+	}
+}
+
+func TestJWT_MCPAccess_RoundTripAndAudience(t *testing.T) {
+	RegisterT(t)
+	token, err := jwt.Encode(mcpClaims("https://demo.test/mcp"))
+	Expect(err).IsNil()
+
+	got, err := jwt.DecodeMCPAccessClaims(token, "https://demo.test/mcp")
+	Expect(err).IsNil()
+	Expect(got.UserID).Equals(7)
+	Expect(got.Scope).Equals("upvora")
+
+	_, err = jwt.DecodeMCPAccessClaims(token, "https://other.test/mcp")
+	Expect(err).IsNotNil()
+}
+
+// A session token must never be accepted as an access token, and the reverse.
+func TestJWT_MCPAccess_NoConfusionWithSessions(t *testing.T) {
+	RegisterT(t)
+	session, _ := jwt.Encode(&jwt.FiderClaims{UserID: 7, Metadata: jwt.Metadata{ExpiresAt: jwt.Time(time.Now().Add(time.Hour))}})
+	_, err := jwt.DecodeMCPAccessClaims(session, "https://demo.test/mcp")
+	Expect(err).IsNotNil()
+
+	access, _ := jwt.Encode(mcpClaims("https://demo.test/mcp"))
+	_, err = jwt.DecodeFiderClaims(access)
+	Expect(err).IsNotNil()
+}
+
+func TestJWT_MCPAccess_Expired(t *testing.T) {
+	RegisterT(t)
+	c := mcpClaims("https://demo.test/mcp")
+	c.ExpiresAt = jwt.Time(time.Now().Add(-time.Minute))
+	token, _ := jwt.Encode(c)
+	_, err := jwt.DecodeMCPAccessClaims(token, "https://demo.test/mcp")
+	Expect(err).IsNotNil()
+}

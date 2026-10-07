@@ -62,6 +62,19 @@ type OAuthHandoffClaims struct {
 	Metadata
 }
 
+// MCPAccessClaims is an OAuth access token issued to an MCP client. It carries
+// its own claim keys and always an audience (the site's /mcp URL), so it can
+// never be decoded as a session token, and a session token (no audience) can
+// never be decoded as one.
+type MCPAccessClaims struct {
+	UserID        int    `json:"mcp/user_id"`
+	TenantID      int    `json:"mcp/tenant_id"`
+	ClientID      string `json:"mcp/client_id"`
+	Scope         string `json:"mcp/scope"`
+	SecurityStamp string `json:"mcp/security_stamp"`
+	Metadata
+}
+
 // Encode creates new JWT token with given claims
 func Encode(claims jwtgo.Claims) (string, error) {
 	jwtToken := jwtgo.NewWithClaims(jwtgo.GetSigningMethod("HS256"), claims)
@@ -78,6 +91,26 @@ func DecodeFiderClaims(token string) (*FiderClaims, error) {
 	err := decode(token, claims)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decode Fider claims")
+	}
+	// Session tokens never carry an audience; anything that does is an access
+	// token for another purpose (e.g. MCP) and is not a session.
+	if len(claims.Audience) > 0 {
+		return nil, errors.New("token with an audience is not a session token")
+	}
+	return claims, nil
+}
+
+// DecodeMCPAccessClaims decodes an MCP access token issued for audience.
+func DecodeMCPAccessClaims(token, audience string) (*MCPAccessClaims, error) {
+	claims := &MCPAccessClaims{}
+	if err := decode(token, claims); err != nil {
+		return nil, errors.Wrap(err, "failed to decode MCP access claims")
+	}
+	if audience == "" || !claims.VerifyAudience(audience, true) || len(claims.Audience) != 1 {
+		return nil, errors.New("MCP access token audience mismatch")
+	}
+	if claims.UserID <= 0 || claims.TenantID <= 0 || claims.ExpiresAt == nil {
+		return nil, errors.New("MCP access token is missing required claims")
 	}
 	return claims, nil
 }
