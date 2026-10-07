@@ -18,6 +18,9 @@ import (
 // ScopeCtxKey holds the scope of the MCP access token on the request context.
 type ScopeCtxKey struct{}
 
+// ClientCtxKey holds the MCP access token's client_id on the request context.
+type ClientCtxKey struct{}
+
 const (
 	// ScopeFull acts as the user with UI-equivalent permissions.
 	ScopeFull = "upvora"

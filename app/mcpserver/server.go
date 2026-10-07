@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/getfider/fider/app"
 	"github.com/getfider/fider/app/pkg/dbx"
@@ -69,6 +70,14 @@ func Handler(engine *web.Engine) web.HandlerFunc {
 // again by the route's own middleware in any case.
 func registerTools(server *sdk.Server, c *web.Context, engine http.Handler, orig *http.Request) {
 	scope, _ := c.Value(oauthas.ScopeCtxKey{}).(string)
+	clientID, _ := c.Value(oauthas.ClientCtxKey{}).(string)
+	tenantID, userID := 0, 0
+	if c.Tenant() != nil {
+		tenantID = c.Tenant().ID
+	}
+	if c.User() != nil {
+		userID = c.User().ID
+	}
 	for _, t := range Catalog {
 		if !Visible(t, c.User(), c.Tenant(), scope) {
 			continue
@@ -85,7 +94,16 @@ func registerTools(server *sdk.Server, c *web.Context, engine http.Handler, orig
 					return &sdk.CallToolResult{IsError: true, Content: []sdk.Content{&sdk.TextContent{Text: "Arguments must be a JSON object."}}}, nil
 				}
 			}
+			start := time.Now()
+			entry := AuditEntry{TenantID: tenantID, UserID: userID, ClientID: clientID, Tool: tool.Name}
+			if !CallAllowed(tenantID, userID, clientID) {
+				entry.Status = http.StatusTooManyRequests
+				audit(ctx, entry)
+				return &sdk.CallToolResult{IsError: true, Content: []sdk.Content{&sdk.TextContent{Text: "Too many tool calls; slow down and try again in a few minutes."}}}, nil
+			}
 			res := DispatchContext(ctx, engine, orig, tool, args)
+			entry.Status, entry.DurationMs = res.Status, time.Since(start).Milliseconds()
+			audit(ctx, entry)
 			return &sdk.CallToolResult{IsError: res.IsError, Content: []sdk.Content{&sdk.TextContent{Text: res.Text}}}, nil
 		})
 	}

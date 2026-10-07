@@ -102,6 +102,7 @@ func (t Tool) InputSchema() map[string]any {
 type Result struct {
 	Text    string
 	IsError bool
+	Status  int // HTTP status of the replay; 0 if it never ran
 }
 
 func errResult(format string, a ...any) Result {
@@ -229,12 +230,12 @@ func DispatchContext(parent context.Context, engine http.Handler, orig *http.Req
 		text += "\n[output truncated at 64 KB; narrow the request]"
 	}
 	if rec.Code() >= 400 {
-		return Result{Text: fmt.Sprintf("HTTP %d: %s", rec.Code(), text), IsError: true}
+		return Result{Text: fmt.Sprintf("HTTP %d: %s", rec.Code(), text), IsError: true, Status: rec.Code()}
 	}
 	if text == "" {
 		text = "{}"
 	}
-	return Result{Text: text}
+	return Result{Text: text, Status: rec.Code()}
 }
 
 func isDigits(s string) bool {
