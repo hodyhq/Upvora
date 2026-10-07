@@ -67,3 +67,9 @@ type RotateOAuthRefreshToken struct {
 
 	Result *entity.OAuthGrant
 }
+
+// PurgeStaleOAuthData deletes old codes, dead refresh tokens and
+// self-registered clients that were never used (all tenants).
+type PurgeStaleOAuthData struct {
+	Deleted int
+}

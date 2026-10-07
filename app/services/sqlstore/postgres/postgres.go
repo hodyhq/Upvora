@@ -140,6 +140,7 @@ func (s Service) Init() {
 	bus.AddHandler(consumeOAuthCode)
 	bus.AddHandler(saveOAuthRefreshToken)
 	bus.AddHandler(rotateOAuthRefreshToken)
+	bus.AddHandler(purgeStaleOAuthData)
 	bus.AddHandler(updateTenantEmailAuthAllowedSettings)
 	bus.AddHandler(updateTenantAdvancedSettings)
 	bus.AddHandler(updateTenantSiteBanner)
