@@ -1,4 +1,4 @@
-@use "~@fider/assets/styles/variables.scss" as *;
+@use "@fider/assets/styles/variables.scss" as *;
 
 .c-side-menu {
   &__item {
@@ -6,7 +6,9 @@
     border-radius: 9px;
     color: var(--colors-gray-700);
     font-weight: 550;
-    transition: background-color 0.12s ease, color 0.12s ease;
+    transition:
+      background-color 0.12s ease,
+      color 0.12s ease;
 
     &:hover {
       color: var(--colors-gray-900);

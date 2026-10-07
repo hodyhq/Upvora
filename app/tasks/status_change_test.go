@@ -2,7 +2,9 @@ package tasks_test
 
 import (
 	"context"
+	"github.com/getfider/fider/app/services/email"
 	"html/template"
+	"strings"
 	"testing"
 	"time"
 
@@ -241,42 +243,42 @@ func TestNotifyAboutStatusChangeTask_Duplicate(t *testing.T) {
 	Expect(triggerWebhooks).IsNotNil()
 	Expect(triggerWebhooks.Type).Equals(enum.WebhookChangeStatus)
 	Expect(triggerWebhooks.Props).ContainsProps(webhook.Props{
-		"post_old_status_slug":          "open",
-		"post_old_status_label":         "Open",
-		"post_status_label":             "Duplicate",
-		"post_id":                       post.ID,
-		"post_number":                   post.Number,
-		"post_title":                    post.Title,
-		"post_slug":                     post.Slug,
-		"post_description":              post.Description,
-		"post_status_slug":              post.StatusSlug,
-		"post_status_kind":              post.StatusKind,
-		"post_url":                      "http://domain.com/posts/2/i-need-typescript",
-		"post_author_id":                mock.AryaStark.ID,
-		"post_author_name":              mock.AryaStark.Name,
-		"post_author_email":             mock.AryaStark.Email,
-		"post_author_role":              mock.AryaStark.Role.String(),
-		"post_response":                 true,
-		"post_response_text":            post.Response.Text,
-		"post_response_responded_at":    post.Response.RespondedAt,
-		"post_response_author_id":       mock.JonSnow.ID,
-		"post_response_author_name":     mock.JonSnow.Name,
-		"post_response_author_email":    mock.JonSnow.Email,
-		"post_response_author_role":     mock.JonSnow.Role.String(),
-		"post_response_original_number": post.Response.Original.Number,
-		"post_response_original_title":  post.Response.Original.Title,
-		"post_response_original_slug":   post.Response.Original.Slug,
+		"post_old_status_slug":               "open",
+		"post_old_status_label":              "Open",
+		"post_status_label":                  "Duplicate",
+		"post_id":                            post.ID,
+		"post_number":                        post.Number,
+		"post_title":                         post.Title,
+		"post_slug":                          post.Slug,
+		"post_description":                   post.Description,
+		"post_status_slug":                   post.StatusSlug,
+		"post_status_kind":                   post.StatusKind,
+		"post_url":                           "http://domain.com/posts/2/i-need-typescript",
+		"post_author_id":                     mock.AryaStark.ID,
+		"post_author_name":                   mock.AryaStark.Name,
+		"post_author_email":                  mock.AryaStark.Email,
+		"post_author_role":                   mock.AryaStark.Role.String(),
+		"post_response":                      true,
+		"post_response_text":                 post.Response.Text,
+		"post_response_responded_at":         post.Response.RespondedAt,
+		"post_response_author_id":            mock.JonSnow.ID,
+		"post_response_author_name":          mock.JonSnow.Name,
+		"post_response_author_email":         mock.JonSnow.Email,
+		"post_response_author_role":          mock.JonSnow.Role.String(),
+		"post_response_original_number":      post.Response.Original.Number,
+		"post_response_original_title":       post.Response.Original.Title,
+		"post_response_original_slug":        post.Response.Original.Slug,
 		"post_response_original_status_slug": post.Response.Original.StatusSlug,
-		"post_response_original_url":    "http://domain.com/posts/1/add-support-for-typescript",
-		"author_id":                     mock.JonSnow.ID,
-		"author_name":                   mock.JonSnow.Name,
-		"author_email":                  mock.JonSnow.Email,
-		"author_role":                   mock.JonSnow.Role.String(),
-		"tenant_id":                     mock.DemoTenant.ID,
-		"tenant_name":                   mock.DemoTenant.Name,
-		"tenant_subdomain":              mock.DemoTenant.Subdomain,
-		"tenant_status":                 mock.DemoTenant.Status.String(),
-		"tenant_url":                    "http://domain.com",
+		"post_response_original_url":         "http://domain.com/posts/1/add-support-for-typescript",
+		"author_id":                          mock.JonSnow.ID,
+		"author_name":                        mock.JonSnow.Name,
+		"author_email":                       mock.JonSnow.Email,
+		"author_role":                        mock.JonSnow.Role.String(),
+		"tenant_id":                          mock.DemoTenant.ID,
+		"tenant_name":                        mock.DemoTenant.Name,
+		"tenant_subdomain":                   mock.DemoTenant.Subdomain,
+		"tenant_status":                      mock.DemoTenant.Status.String(),
+		"tenant_url":                         "http://domain.com",
 	})
 }
 
@@ -335,4 +337,67 @@ func TestNotifyAboutStatusChange_CustomSlugBothEnumZero(t *testing.T) {
 		"post_status_slug":      "parked",
 		"post_status_kind":      "closed-declined",
 	})
+}
+
+func TestNotifyAboutStatusChangeTask_Duplicate_EscapesOriginalTitleInEmail(t *testing.T) {
+	RegisterT(t)
+	bus.Init(emailmock.Service{})
+
+	bus.AddHandler(func(ctx context.Context, c *cmd.AddNewNotification) error {
+		return nil
+	})
+
+	bus.AddHandler(func(ctx context.Context, q *query.GetActiveSubscribers) error {
+		q.Result = []*entity.User{
+			mock.AryaStark,
+		}
+		return nil
+	})
+
+	bus.AddHandler(func(ctx context.Context, c *cmd.TriggerWebhooks) error {
+		return nil
+	})
+
+	bus.AddHandler(func(ctx context.Context, q *query.ListActiveStatusesForTenant) error {
+		return nil
+	})
+
+	worker := mock.NewWorker()
+	post := &entity.Post{
+		ID:         2,
+		Number:     2,
+		Title:      "I need TypeScript",
+		Slug:       "i-need-typescript",
+		User:       mock.AryaStark,
+		StatusSlug: "duplicate",
+		StatusKind: "duplicate",
+		Response: &entity.PostResponse{
+			RespondedAt: time.Now(),
+			User:        mock.JonSnow,
+			Original: &entity.OriginalPost{
+				Number:     1,
+				Title:      "<a href=//example.com><h1>View new Update</a> & more",
+				Slug:       "view-new-update-more",
+				StatusSlug: "open",
+			},
+		},
+	}
+
+	task := tasks.NotifyAboutStatusChange(post, "open")
+
+	err := worker.
+		OnTenant(mock.DemoTenant).
+		AsUser(mock.JonSnow).
+		WithBaseURL("http://domain.com").
+		Execute(task)
+
+	Expect(err).IsNil()
+	Expect(emailmock.MessageHistory).HasLen(1)
+
+	escapedLink := "<a href='http://domain.com/posts/1/view-new-update-more'>&lt;a href=//example.com&gt;&lt;h1&gt;View new Update&lt;/a&gt; &amp; more</a>"
+	Expect(emailmock.MessageHistory[0].Props["duplicate"]).Equals(escapedLink)
+
+	message := email.RenderMessage(context.Background(), emailmock.MessageHistory[0].TemplateName, email.NoReply, emailmock.MessageHistory[0].Props)
+	Expect(message.Body).ContainsSubstring("has been closed as a <strong>duplicate</strong> of " + escapedLink + ".")
+	Expect(strings.Contains(message.Body, "<h1>")).IsFalse()
 }

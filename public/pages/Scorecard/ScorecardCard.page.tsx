@@ -455,8 +455,8 @@ const ScorecardCard: React.FC<ScorecardCardPageProps> = (props) => {
                   {weightedScore === 0
                     ? "score any dimension to place this card"
                     : band.threshold > 0
-                    ? `band threshold ≥ ${band.threshold}`
-                    : `below ${Fider.session.tenant.scorecardBandLow}`}
+                      ? `band threshold ≥ ${band.threshold}`
+                      : `below ${Fider.session.tenant.scorecardBandLow}`}
                 </div>
               </div>
             </div>

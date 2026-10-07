@@ -1,4 +1,4 @@
-@use "~@fider/assets/styles/variables.scss" as *;
+@use "@fider/assets/styles/variables.scss" as *;
 
 .c-select {
   background-color: var(--colors-white);
@@ -25,7 +25,9 @@
   &:focus {
     outline: none;
     border-color: var(--colors-primary-base);
-    box-shadow: 0 0 0 3px rgba(45, 87, 237, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+    box-shadow:
+      0 0 0 3px rgba(45, 87, 237, 0.1),
+      0 1px 2px 0 rgba(0, 0, 0, 0.04);
   }
 
   &:disabled {

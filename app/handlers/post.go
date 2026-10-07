@@ -30,9 +30,10 @@ func renderBoard(c *web.Context, product *entity.Product) error {
 		searchPosts := &query.SearchPosts{
 			Query: c.QueryParam("query"),
 			View:  c.QueryParam("view"),
-			Limit: c.QueryParam("limit"),
 			Tags:  c.QueryParamAsArray("tags"),
 		}
+
+		searchPosts.SetLimitFromString(c.QueryParam("limit"), false)
 
 		if myVotesOnly, err := c.QueryParamAsBool("myvotes"); err == nil {
 			searchPosts.MyVotesOnly = myVotesOnly

@@ -1,4 +1,4 @@
-@use "~@fider/assets/styles/variables.scss" as *;
+@use "@fider/assets/styles/variables.scss" as *;
 
 .c-button {
   line-height: 1.15;
@@ -55,12 +55,16 @@
     background-color: var(--accent-buttons, var(--colors-primary-base));
     background-image: var(--accent-buttons-grad, var(--brand-grad));
     border: 1px solid var(--accent-buttons, var(--colors-primary-base));
-    box-shadow: 0 6px 16px -8px var(--brand-glow), 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    box-shadow:
+      0 6px 16px -8px var(--brand-glow),
+      0 1px 2px 0 rgba(0, 0, 0, 0.05);
 
     &:hover {
       filter: brightness(1.05);
       background-color: var(--colors-primary-dark);
-      box-shadow: 0 10px 22px -8px var(--brand-glow), 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+      box-shadow:
+        0 10px 22px -8px var(--brand-glow),
+        0 2px 4px 0 rgba(0, 0, 0, 0.1);
     }
   }
 
@@ -132,7 +136,9 @@
     color: transparent;
     opacity: 1;
     pointer-events: auto;
-    transition: all 0s linear, opacity 0.1s ease;
+    transition:
+      all 0s linear,
+      opacity 0.1s ease;
 
     &:before {
       position: absolute;

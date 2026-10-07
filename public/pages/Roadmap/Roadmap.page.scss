@@ -1,4 +1,4 @@
-@use "~@fider/assets/styles/variables.scss" as *;
+@use "@fider/assets/styles/variables.scss" as *;
 
 #p-roadmap {
   .p-roadmap__head {
@@ -264,7 +264,10 @@
   border: 1px solid var(--colors-gray-200);
   border-radius: 10px;
   padding: spacing(3) spacing(4);
-  transition: border-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+  transition:
+    border-color 0.16s ease,
+    transform 0.16s ease,
+    box-shadow 0.16s ease;
 
   // Status-colored left edge, inherited from the lane.
   &::before {

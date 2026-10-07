@@ -1,4 +1,4 @@
-@use "~@fider/assets/styles/variables.scss" as *;
+@use "@fider/assets/styles/variables.scss" as *;
 
 #p-admin-moderation {
   background-color: var(--colors-gray-100);
@@ -54,7 +54,9 @@
   cursor: pointer;
 
   &:hover {
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    box-shadow:
+      0 10px 15px -3px rgb(0 0 0 / 0.1),
+      0 4px 6px -4px rgb(0 0 0 / 0.1);
   }
 
   &__content {
@@ -98,7 +100,9 @@
   }
 
   &__actions {
-    transition: opacity 0.2s ease, visibility 0.2s ease;
+    transition:
+      opacity 0.2s ease,
+      visibility 0.2s ease;
     display: flex;
     flex-wrap: wrap;
     gap: spacing(2);

@@ -230,7 +230,7 @@ const Scorecard: React.FC<ScorecardPageProps> = (props) => {
                         )}
                       </td>
                       <td>{c.submittedBy || "—"}</td>
-                      <td className="is-right">{c.postNumber != null ? c.postVotes ?? 0 : "—"}</td>
+                      <td className="is-right">{c.postNumber != null ? (c.postVotes ?? 0) : "—"}</td>
                     </tr>
                   )
                 })}

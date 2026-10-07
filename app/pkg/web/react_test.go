@@ -166,8 +166,8 @@ func TestReactRenderer_RenderHomeWithPosts_Plurals(t *testing.T) {
 	RegisterT(t)
 
 	html := renderHomeWithVotes(t, "en")
-	Expect(html).ContainsSubstring(`<span class="text-gray-700">Vote</span>`)
-	Expect(html).ContainsSubstring(`<span class="text-gray-700">Votes</span>`)
+	Expect(html).ContainsSubstring(`<span class="c-post__voteslabel">Vote</span>`)
+	Expect(html).ContainsSubstring(`<span class="c-post__voteslabel">Votes</span>`)
 }
 
 func TestReactRenderer_RenderHomeWithPosts_Plurals_Polish(t *testing.T) {
@@ -175,7 +175,7 @@ func TestReactRenderer_RenderHomeWithPosts_Plurals_Polish(t *testing.T) {
 
 	// Polish has distinct forms for 1 (one), 3 (few) and 5 (many)
 	html := renderHomeWithVotes(t, "pl")
-	Expect(html).ContainsSubstring(`<span class="text-gray-700">Głos</span>`)
-	Expect(html).ContainsSubstring(`<span class="text-gray-700">Głosy</span>`)
-	Expect(html).ContainsSubstring(`<span class="text-gray-700">Głosów</span>`)
+	Expect(html).ContainsSubstring(`<span class="c-post__voteslabel">Głos</span>`)
+	Expect(html).ContainsSubstring(`<span class="c-post__voteslabel">Głosy</span>`)
+	Expect(html).ContainsSubstring(`<span class="c-post__voteslabel">Głosów</span>`)
 }

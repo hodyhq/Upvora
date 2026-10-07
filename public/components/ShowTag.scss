@@ -1,4 +1,4 @@
-@use "~@fider/assets/styles/variables.scss" as *;
+@use "@fider/assets/styles/variables.scss" as *;
 
 // Neutral boxed chip (prototype): no per-tag color, quiet uppercase-free label.
 .c-tag {
@@ -14,7 +14,9 @@
   border: 0;
 
   &[href] {
-    transition: background-color 0.12s, color 0.12s;
+    transition:
+      background-color 0.12s,
+      color 0.12s;
 
     &:hover {
       color: var(--colors-gray-900);

@@ -1,4 +1,4 @@
-@use "~@fider/assets/styles/variables.scss" as *;
+@use "@fider/assets/styles/variables.scss" as *;
 
 #p-home {
   // Mobile-first: simple column flow. The grid (and its named areas) only
@@ -108,7 +108,9 @@
       border-radius: get("border.radius.large");
       box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.08);
       cursor: pointer;
-      transition: box-shadow 0.2s ease-in-out, border-color 0.16s ease;
+      transition:
+        box-shadow 0.2s ease-in-out,
+        border-color 0.16s ease;
       font-size: get("font.size.lg");
       font-weight: get("font.weight.medium");
       color: var(--colors-gray-700);
@@ -184,7 +186,9 @@
       font-size: 15.5px;
       font-weight: 700;
       letter-spacing: -0.01em;
-      box-shadow: 0 10px 26px -10px var(--brand-glow), 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      box-shadow:
+        0 10px 26px -10px var(--brand-glow),
+        0 1px 2px 0 rgba(0, 0, 0, 0.05);
       animation: cta-pulse 3.2s ease-in-out infinite;
 
       &:hover {
@@ -290,10 +294,14 @@
 @keyframes cta-pulse {
   0%,
   100% {
-    box-shadow: 0 10px 26px -10px var(--brand-glow), 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    box-shadow:
+      0 10px 26px -10px var(--brand-glow),
+      0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
   50% {
-    box-shadow: 0 10px 34px -8px color-mix(in srgb, var(--colors-primary-base) 55%, transparent), 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    box-shadow:
+      0 10px 34px -8px color-mix(in srgb, var(--colors-primary-base) 55%, transparent),
+      0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
 }
 

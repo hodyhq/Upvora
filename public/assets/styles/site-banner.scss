@@ -15,11 +15,26 @@
   white-space: pre-wrap;
   word-wrap: break-word;
 
-  &--info    { background: #0EA5E9; color: #FFFFFF; }
-  &--success { background: #16A34A; color: #FFFFFF; }
-  &--warning { background: #FBBF24; color: #111111; }
-  &--danger  { background: #DC2626; color: #FFFFFF; }
-  &--brand   { background: var(--primary-color, #0F3EBB); color: #FFFFFF; }
+  &--info {
+    background: #0ea5e9;
+    color: #ffffff;
+  }
+  &--success {
+    background: #16a34a;
+    color: #ffffff;
+  }
+  &--warning {
+    background: #fbbf24;
+    color: #111111;
+  }
+  &--danger {
+    background: #dc2626;
+    color: #ffffff;
+  }
+  &--brand {
+    background: var(--primary-color, #0f3ebb);
+    color: #ffffff;
+  }
 }
 
 @media (max-width: 640px) {
