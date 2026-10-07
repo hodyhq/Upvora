@@ -101,3 +101,14 @@ func TestAIIdeationContext_StoreErrorsAreNotHidden(t *testing.T) {
 		WithURL("http://demo.test.fider.io/api/v1/ai/ideation-context").Execute(handlers.AIIdeationContext())
 	Expect(code).Equals(http.StatusInternalServerError)
 }
+
+// One site cannot spend unbounded LLM calls, however many accounts call Vora.
+func TestAISiteRateAllow(t *testing.T) {
+	RegisterT(t)
+	handlers.SetAISiteLimit(2)
+	defer handlers.SetAISiteLimit(handlers.DefaultAISiteLimit)
+	Expect(handlers.AISiteRateAllow(1)).IsTrue()
+	Expect(handlers.AISiteRateAllow(1)).IsTrue()
+	Expect(handlers.AISiteRateAllow(1)).IsFalse()
+	Expect(handlers.AISiteRateAllow(2)).IsTrue()
+}

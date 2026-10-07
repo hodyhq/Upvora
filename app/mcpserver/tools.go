@@ -228,7 +228,7 @@ var Catalog = []Tool{
 	// Webhooks
 	{Name: "upvora_webhooks_list", Method: "GET", Path: "/api/v1/admin/webhooks", MinRole: admin, Description: "List webhooks (admin)." + readOnlyNo},
 	{Name: "upvora_webhooks_create", Destructive: true, OpenWorld: true, Method: "POST", Path: "/api/v1/admin/webhooks", MinRole: admin, Description: "Create a webhook that sends site data to an external URL." + adminWarn, Fields: webhookFields(false)},
-	{Name: "upvora_webhooks_update", Destructive: true, OpenWorld: true, Method: "PUT", Path: "/api/v1/admin/webhooks/{id}", MinRole: admin, Description: "Update a webhook." + adminWarn, Fields: webhookFields(true)},
+	{Name: "upvora_webhooks_update", Destructive: true, OpenWorld: true, Method: "PUT", Path: "/api/v1/admin/webhooks/{id}", MinRole: admin, Description: "Update a webhook. upvora_webhooks_list masks URLs and header values: send the real values, never the masked ones." + adminWarn, Fields: webhookFields(true)},
 	{Name: "upvora_webhooks_delete", Method: "DELETE", Path: "/api/v1/admin/webhooks/{id}", MinRole: admin, Description: "Delete a webhook (admin).", Fields: []Field{pathInt("id", "Webhook id.")}},
 	{Name: "upvora_webhooks_preview", Method: "POST", Path: "/api/v1/admin/webhooks/preview", MinRole: admin, Description: "Preview a webhook's rendered URL and content (admin).",
 		Fields: []Field{req(b("type", "string", "new_post, new_comment, change_status or delete_post.")), b("url", "string", ""), b("content", "string", "")}},

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/getfider/fider/app"
 	"github.com/getfider/fider/app/pkg/errors"
+	"github.com/getfider/fider/app/pkg/ratelimit"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -44,6 +45,19 @@ var aiRate = struct {
 	sync.Mutex
 	hits map[int][]time.Time
 }{hits: map[int][]time.Time{}}
+
+// DefaultAISiteLimit caps Vora model calls per site per hour, however many
+// accounts make them (the provider key is the site admin's).
+const DefaultAISiteLimit = 300
+
+var aiSiteRate = ratelimit.New(DefaultAISiteLimit, time.Hour)
+
+// SetAISiteLimit replaces the per-site budget (tests and tuning).
+func SetAISiteLimit(n int) { aiSiteRate = ratelimit.New(n, time.Hour) }
+
+// AISiteRateAllow records a Vora model call for the site and reports whether
+// it is within the site's hourly budget.
+func AISiteRateAllow(tenantID int) bool { return aiSiteRate.Allow(strconv.Itoa(tenantID)) }
 
 func aiRateAllow(userID int) bool {
 	aiRate.Lock()
@@ -192,7 +206,7 @@ func AIIdeate() web.HandlerFunc {
 		if agent == nil {
 			return c.BadRequest(web.Map{"message": "The ideation agent is not enabled here."})
 		}
-		if !aiRateAllow(c.User().ID) {
+		if !aiRateAllow(c.User().ID) || !AISiteRateAllow(c.Tenant().ID) {
 			return c.BadRequest(web.Map{"message": "You're moving fast — give Vora a minute and try again."})
 		}
 		extendWriteDeadline(c)
@@ -321,7 +335,7 @@ func AIFinalize() web.HandlerFunc {
 		if agent == nil {
 			return c.BadRequest(web.Map{"message": "The ideation agent is not enabled here."})
 		}
-		if !aiRateAllow(c.User().ID) {
+		if !aiRateAllow(c.User().ID) || !AISiteRateAllow(c.Tenant().ID) {
 			return c.BadRequest(web.Map{"message": "You're moving fast — give Vora a minute and try again."})
 		}
 		extendWriteDeadline(c)

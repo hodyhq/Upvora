@@ -131,6 +131,13 @@ func (a *AIConverse) Validate(ctx context.Context, user *entity.User) *validate.
 			break
 		}
 	}
+	total := 0
+	for _, m := range a.Messages {
+		total += len(m.Content)
+	}
+	if total > 60000 {
+		result.AddFieldFailure("messages", "This conversation is too long; wrap it up or start fresh.")
+	}
 	return result
 }
 
