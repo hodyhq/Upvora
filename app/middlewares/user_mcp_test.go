@@ -151,3 +151,24 @@ func TestUser_MCPAccessToken_WinsOverCookie(t *testing.T) {
 	Expect(code).Equals(http.StatusOK)
 	Expect(body).Equals(u.Name)
 }
+
+// Every MCP message is a POST; a read-only token must still reach /mcp (write
+// tools are hidden there, and each replayed call is checked with its own method).
+func TestUser_MCPReadScope_CanUseMCPEndpoint(t *testing.T) {
+	RegisterT(t)
+	u := mcpUser()
+	tok := accessToken(u, mock.DemoTenant.ID, "upvora:read", mcpAudience, "stamp-1")
+
+	code, _, body := runAs(mcpSite(true, enum.RoleVisitor), "POST", "http://demo.test.fider.io/mcp", tok)
+	Expect(code).Equals(http.StatusOK)
+	Expect(body).Equals(u.Name)
+}
+
+// /mcp only takes Bearer tokens: a browser session must not list tools that
+// would then run anonymously.
+func TestUser_MCPEndpoint_RefusesCookieSessions(t *testing.T) {
+	RegisterT(t)
+	mcpUser()
+	code, _, _ := runAs(mcpSite(true, enum.RoleVisitor), "POST", "http://demo.test.fider.io/mcp", "", "Cookie", "auth=whatever")
+	Expect(code).Equals(http.StatusUnauthorized)
+}

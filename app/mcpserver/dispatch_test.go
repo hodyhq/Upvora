@@ -1,6 +1,7 @@
 package mcpserver_test
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -90,9 +91,20 @@ func TestDispatch_PathParamsAreEscapedAndValidated(t *testing.T) {
 	res := mcpserver.Dispatch(echoEngine{}, origRequest(), tagTool, map[string]any{"slug": "../admin/settings?x=1"})
 	Expect(res.IsError).IsTrue()
 
-	res = mcpserver.Dispatch(echoEngine{}, origRequest(), tagTool, map[string]any{"slug": "a/b?c#d"})
+	// separators would add segments once the router decodes %2F; refuse them
+	for _, bad := range []string{"a/b", "5/comments", `a\b`} {
+		res = mcpserver.Dispatch(echoEngine{}, origRequest(), tagTool, map[string]any{"slug": bad})
+		Expect(res.IsError).IsTrue()
+	}
+	res = mcpserver.Dispatch(echoEngine{}, origRequest(), tagTool, map[string]any{"slug": "a?c#d"})
 	got := decode(t, res.Text)
-	Expect(got["path"]).Equals("/api/v1/tags/a%2Fb%3Fc%23d")
+	Expect(got["path"]).Equals("/api/v1/tags/a%3Fc%23d")
+
+	// integer path params must be digits, even when sent as strings
+	res = mcpserver.Dispatch(echoEngine{}, origRequest(), commentTool, map[string]any{"number": "5abc", "id": float64(1), "content": "x"})
+	Expect(res.IsError).IsTrue()
+	res = mcpserver.Dispatch(echoEngine{}, origRequest(), commentTool, map[string]any{"number": float64(1.5), "id": float64(1), "content": "x"})
+	Expect(res.IsError).IsTrue()
 
 	res = mcpserver.Dispatch(echoEngine{}, origRequest(), tagTool, map[string]any{})
 	Expect(res.IsError).IsTrue()
@@ -151,4 +163,40 @@ func TestDispatch_RawBodyAndBoth(t *testing.T) {
 	got := decode(t, res.Text)
 	Expect(got["path"]).Equals("/api/v1/admin/oauth/_abc/status")
 	Expect(got["body"]).Equals(`{"isEnabled":true,"provider":"_abc"}`)
+}
+
+func TestDispatch_LimitAlwaysCapped(t *testing.T) {
+	RegisterT(t)
+	search := mcpserver.Tool{Name: "s", Method: "GET", Path: "/api/v1/posts", Paged: true,
+		Fields: []mcpserver.Field{{Name: "limit", Type: "integer", In: "query"}}}
+	for _, in := range []any{"all", float64(-5), float64(0), "abc"} {
+		res := mcpserver.DispatchContext(context.Background(), echoEngine{}, origRequest(), search, map[string]any{"limit": in})
+		Expect(decode(t, res.Text)["query"]).Equals("limit=100")
+	}
+}
+
+func TestDispatch_ForwardedHostAndCancellation(t *testing.T) {
+	RegisterT(t)
+	orig := origRequest()
+	orig.Header.Set("X-Forwarded-Host", "public.example")
+	res := mcpserver.DispatchContext(context.Background(), headerEcho{}, orig, commentTool, map[string]any{"number": float64(1), "id": float64(2), "content": "x"})
+	Expect(res.Text).Equals("public.example")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	res = mcpserver.DispatchContext(ctx, slowEngine{}, origRequest(), commentTool, map[string]any{"number": float64(1), "id": float64(2), "content": "x"})
+	Expect(res.IsError).IsTrue()
+}
+
+type headerEcho struct{}
+
+func (headerEcho) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	_, _ = w.Write([]byte(r.Header.Get("X-Forwarded-Host")))
+}
+
+type slowEngine struct{}
+
+func (slowEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	<-r.Context().Done()
+	w.WriteHeader(http.StatusServiceUnavailable)
 }

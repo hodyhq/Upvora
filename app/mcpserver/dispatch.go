@@ -127,6 +127,12 @@ func argString(v any) (string, bool) {
 // Dispatch replays a tool call in-process against /api/v1 through engine, as
 // the caller (same Authorization and host headers as the /mcp request).
 func Dispatch(engine http.Handler, orig *http.Request, t Tool, args map[string]any) Result {
+	return DispatchContext(context.Background(), engine, orig, t, args)
+}
+
+// DispatchContext is Dispatch bound to the tool call's context, so a client
+// that goes away cancels the replayed request.
+func DispatchContext(parent context.Context, engine http.Handler, orig *http.Request, t Tool, args map[string]any) Result {
 	path := t.Path
 	query := url.Values{}
 	body := map[string]any{}
@@ -143,9 +149,13 @@ func Dispatch(engine http.Handler, orig *http.Request, t Tool, args map[string]a
 		switch f.In {
 		case "path", "both":
 			s, ok := argString(v)
-			// Path templates are fixed; a value may never add segments.
-			if !ok || s == "" || s == "." || strings.Contains(s, "..") {
+			// Path templates are fixed; a value may never add or climb segments
+			// (the router decodes %2F back to "/").
+			if !ok || s == "" || s == "." || strings.Contains(s, "..") || strings.ContainsAny(s, "/\\") {
 				return errResult("Invalid value for %q.", f.Name)
+			}
+			if f.Type == "integer" && !isDigits(s) {
+				return errResult("%q must be a whole number.", f.Name)
 			}
 			path = strings.Replace(path, "{"+f.Name+"}", url.PathEscape(s), 1)
 			if f.In == "both" {
@@ -163,8 +173,9 @@ func Dispatch(engine http.Handler, orig *http.Request, t Tool, args map[string]a
 			body[f.Name] = v
 		}
 	}
-	if t.Paged {
-		if n, err := strconv.Atoi(query.Get("limit")); err == nil && n > maxListLimit {
+	if t.Paged && query.Has("limit") {
+		// "all", negatives and anything over the cap become the cap.
+		if n, err := strconv.Atoi(query.Get("limit")); err != nil || n < 1 || n > maxListLimit {
 			query.Set("limit", strconv.Itoa(maxListLimit))
 		}
 	}
@@ -187,7 +198,7 @@ func Dispatch(engine http.Handler, orig *http.Request, t Tool, args map[string]a
 		reader = bytes.NewReader(raw)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), replayTimeout)
+	ctx, cancel := context.WithTimeout(parent, replayTimeout)
 	defer cancel()
 	target := "http://" + orig.Host + path
 	if len(query) > 0 {
@@ -200,7 +211,7 @@ func Dispatch(engine http.Handler, orig *http.Request, t Tool, args map[string]a
 	req.Host = orig.Host
 	// Fider reads the path from RequestURI, which only an HTTP server sets.
 	req.RequestURI = req.URL.RequestURI()
-	for _, h := range []string{"Authorization", "X-Forwarded-Proto", "X-Forwarded-For", "CF-Connecting-IP"} {
+	for _, h := range []string{"Authorization", "X-Forwarded-Proto", "X-Forwarded-Host", "X-Forwarded-For", "CF-Connecting-IP"} {
 		if v := orig.Header.Get(h); v != "" {
 			req.Header.Set(h, v)
 		}
@@ -225,4 +236,13 @@ func Dispatch(engine http.Handler, orig *http.Request, t Tool, args map[string]a
 		text = "{}"
 	}
 	return Result{Text: text}
+}
+
+func isDigits(s string) bool {
+	for _, r := range s {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return s != ""
 }

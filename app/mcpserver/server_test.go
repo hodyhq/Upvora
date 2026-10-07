@@ -3,6 +3,7 @@ package mcpserver_test
 import (
 	"context"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/getfider/fider/app/mcpserver"
@@ -65,4 +66,10 @@ func TestMCPServer_SubmitIdeaPrompt(t *testing.T) {
 	text := got.Messages[0].Content.(*sdk.TextContent).Text
 	Expect(text).ContainsSubstring("upvora_ai_ideation_context")
 	Expect(text).ContainsSubstring("dark mode")
+}
+
+func TestMCPServer_InstructionsPointMembersAtIdeationContext(t *testing.T) {
+	RegisterT(t)
+	Expect(strings.Contains(mcpserver.Instructions, "upvora_products_list")).IsFalse()
+	Expect(mcpserver.Instructions).ContainsSubstring("upvora_ai_ideation_context")
 }

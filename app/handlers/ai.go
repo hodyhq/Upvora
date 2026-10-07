@@ -266,10 +266,11 @@ func AIIdeationContext() web.HandlerFunc {
 			return c.BadRequest(web.Map{"product": "Unknown or inactive product."})
 		}
 
+		// Same gating as server-side Vora: guidance only when AI is enabled
+		// for the site and the product's agent is on.
 		guidance := ""
-		agent := &query.GetAIAgentForProduct{ProductID: productID}
-		if err := bus.Dispatch(c, agent); err == nil && agent.Result != nil && agent.Result.Enabled {
-			guidance = agent.Result.Instructions
+		if agent, err := resolveAgent(c, productID); err == nil && agent != nil && agent.Enabled {
+			guidance = agent.Instructions
 		}
 
 		allTags := &query.GetAllTags{}

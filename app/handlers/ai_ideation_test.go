@@ -18,6 +18,7 @@ import (
 func ideationTenant() *entity.Tenant {
 	t := *mock.DemoTenant
 	t.Products = []*entity.Product{{ID: 4, Name: "Kahalia", Slug: "kahalia", IsActive: true}}
+	t.AIEnabled = true
 	return &t
 }
 
@@ -78,4 +79,15 @@ func TestAIIdeationContext_NoAgentConfigured(t *testing.T) {
 	Expect(code).Equals(http.StatusOK)
 	Expect(res.String("interviewGuidance")).Equals("")
 	Expect(len(res.Strings("interviewRules")) > 3).IsTrue()
+}
+
+func TestAIIdeationContext_NoGuidanceWhenAIDisabled(t *testing.T) {
+	RegisterT(t)
+	mockIdeation()
+	tenant := ideationTenant()
+	tenant.AIEnabled = false
+	code, res := mock.NewServer().OnTenant(tenant).AsUser(mock.AryaStark).
+		WithURL("http://demo.test.fider.io/api/v1/ai/ideation-context?product=4").ExecuteAsJSON(handlers.AIIdeationContext())
+	Expect(code).Equals(http.StatusOK)
+	Expect(res.String("interviewGuidance")).Equals("")
 }

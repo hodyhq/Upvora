@@ -40,13 +40,16 @@ func User() web.MiddlewareFunc {
 			bearer, hasBearer := web.ParseBearerToken(c.Request.GetHeader("Authorization"))
 			mcpBearer := hasBearer && isMCPAccessToken(bearer) && (c.Request.IsAPI() || isMCPPath(c))
 
+			// /mcp takes only Bearer tokens: a browser session there would list
+			// tools that then run anonymously.
+			cookieAllowed := !mcpBearer && !isMCPPath(c)
 			cookie, err := c.Request.Cookie(web.CookieAuthName)
-			if mcpBearer {
+			if !cookieAllowed {
 				err = http.ErrNoCookie
 			}
 			if err == nil {
 				token = cookie.Value
-			} else if !mcpBearer {
+			} else if cookieAllowed {
 				// The signup-transfer cookie is domain-wide, so it reaches every tenant
 				// subdomain. We do NOT promote it to a durable host-only auth cookie here:
 				// that only happens later, and only once we have confirmed the token's user
@@ -215,7 +218,9 @@ func userFromMCPAccessToken(c *web.Context, token string) (*entity.User, string,
 		user.Status != enum.UserActive || user.Role < tenant.MCPMinRole {
 		return nil, "", http.StatusUnauthorized
 	}
-	if claims.Scope == oauthas.ScopeRead && c.Request.Method != http.MethodGet && c.Request.Method != http.MethodHead {
+	// /mcp itself is all POSTs; there, write tools are hidden and each replayed
+	// call is checked here again with its real method.
+	if claims.Scope == oauthas.ScopeRead && !isMCPPath(c) && c.Request.Method != http.MethodGet && c.Request.Method != http.MethodHead {
 		return nil, "", http.StatusForbidden
 	}
 	return user, claims.Scope, 0
