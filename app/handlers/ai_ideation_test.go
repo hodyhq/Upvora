@@ -2,6 +2,7 @@ package handlers_test
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 	"testing"
@@ -90,4 +91,13 @@ func TestAIIdeationContext_NoGuidanceWhenAIDisabled(t *testing.T) {
 		WithURL("http://demo.test.fider.io/api/v1/ai/ideation-context?product=4").ExecuteAsJSON(handlers.AIIdeationContext())
 	Expect(code).Equals(http.StatusOK)
 	Expect(res.String("interviewGuidance")).Equals("")
+}
+
+func TestAIIdeationContext_StoreErrorsAreNotHidden(t *testing.T) {
+	RegisterT(t)
+	bus.AddHandler(func(ctx context.Context, q *query.GetAIAgentForProduct) error { return errors.New("database is down") })
+	bus.AddHandler(func(ctx context.Context, q *query.GetAllTags) error { return nil })
+	code, _ := mock.NewServer().OnTenant(ideationTenant()).AsUser(mock.AryaStark).
+		WithURL("http://demo.test.fider.io/api/v1/ai/ideation-context").Execute(handlers.AIIdeationContext())
+	Expect(code).Equals(http.StatusInternalServerError)
 }

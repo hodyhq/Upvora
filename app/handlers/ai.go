@@ -3,6 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/getfider/fider/app"
+	"github.com/getfider/fider/app/pkg/errors"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -269,7 +271,11 @@ func AIIdeationContext() web.HandlerFunc {
 		// Same gating as server-side Vora: guidance only when AI is enabled
 		// for the site and the product's agent is on.
 		guidance := ""
-		if agent, err := resolveAgent(c, productID); err == nil && agent != nil && agent.Enabled {
+		agent, err := resolveAgent(c, productID)
+		if err != nil && errors.Cause(err) != app.ErrNotFound {
+			return c.Failure(err)
+		}
+		if err == nil && agent != nil && agent.Enabled {
 			guidance = agent.Instructions
 		}
 

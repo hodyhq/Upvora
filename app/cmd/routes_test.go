@@ -76,7 +76,7 @@ var apiV1Surface = []string{
 
 	// OAuth authorization server (MCP)
 	"GET /.well-known/oauth-authorization-server", "GET /.well-known/oauth-protected-resource",
-	"GET /.well-known/oauth-protected-resource/mcp", "POST /oauth2/register", "POST /oauth2/token", "POST /mcp",
+	"GET /.well-known/oauth-protected-resource/mcp", "POST /oauth2/register", "POST /oauth2/token", "POST /mcp", "GET /mcp", "DELETE /mcp",
 
 	// admin + pro
 	"GET /api/v1/admin/moderation/items", "GET /api/v1/admin/moderation/count",

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/getfider/fider/app/mcpserver"
 	"github.com/getfider/fider/app/models/entity"
@@ -199,4 +200,27 @@ type slowEngine struct{}
 func (slowEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	<-r.Context().Done()
 	w.WriteHeader(http.StatusServiceUnavailable)
+}
+
+type multibyteEngine struct{}
+
+func (multibyteEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	_, _ = w.Write([]byte(strings.Repeat("é", 50*1024))) // 100 KB of 2-byte runes
+}
+
+func TestDispatch_TruncatesOnRuneBoundary(t *testing.T) {
+	RegisterT(t)
+	res := mcpserver.Dispatch(multibyteEngine{}, origRequest(), commentTool, map[string]any{"number": float64(1), "id": float64(2), "content": "x"})
+	Expect(utf8.ValidString(res.Text)).IsTrue()
+	Expect(res.Text).ContainsSubstring("truncated")
+}
+
+func TestCappedRecorder_RetainsAtMostTheCap(t *testing.T) {
+	RegisterT(t)
+	rec := mcpserver.NewCappedRecorder(10)
+	n, err := rec.Write([]byte("0123456789abcdef"))
+	Expect(err).IsNil()
+	Expect(n).Equals(16) // reports the full write so handlers do not fail
+	Expect(rec.Body()).Equals("0123456789")
+	Expect(rec.Truncated()).IsTrue()
 }

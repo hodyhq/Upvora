@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"strconv"
 	"strings"
@@ -222,15 +221,15 @@ func DispatchContext(parent context.Context, engine http.Handler, orig *http.Req
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
-	rec := httptest.NewRecorder()
+	rec := NewCappedRecorder(maxOutputBytes)
 	engine.ServeHTTP(rec, req)
 
-	text := rec.Body.String()
-	if len(text) > maxOutputBytes {
-		text = text[:maxOutputBytes] + "\n[output truncated at 64 KB; narrow the request]"
+	text := rec.Body()
+	if rec.Truncated() {
+		text += "\n[output truncated at 64 KB; narrow the request]"
 	}
-	if rec.Code >= 400 {
-		return Result{Text: fmt.Sprintf("HTTP %d: %s", rec.Code, text), IsError: true}
+	if rec.Code() >= 400 {
+		return Result{Text: fmt.Sprintf("HTTP %d: %s", rec.Code(), text), IsError: true}
 	}
 	if text == "" {
 		text = "{}"
