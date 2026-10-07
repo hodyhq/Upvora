@@ -326,7 +326,6 @@ func routes(r *web.Engine) *web.Engine {
 		membersApi.Post("/api/v1/notifications/read-all", handlers.ReadAllNotifications())
 		membersApi.Post("/api/v1/user/settings", handlers.UpdateUserSettings())
 		membersApi.Post("/api/v1/user/change-email", handlers.ChangeUserEmail())
-		membersApi.Post("/api/v1/user/regenerate-apikey", handlers.RegenerateAPIKey())
 		// Members may publish their own private idea; the handler enforces the rules.
 		membersApi.Post("/api/v1/posts/:number/privacy", handlers.SetPostPrivacy())
 

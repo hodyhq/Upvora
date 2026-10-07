@@ -169,9 +169,14 @@ func DeleteUser() web.HandlerFunc {
 	}
 }
 
-// RegenerateAPIKey regenerates current user's API Key
+// RegenerateAPIKey regenerates current user's API Key. Signed-in UI only: a
+// Bearer caller would revoke the key it is using, and an impersonating admin
+// would receive someone else's new key.
 func RegenerateAPIKey() web.HandlerFunc {
 	return func(c *web.Context) error {
+		if c.IsAuthenticatedByAPIKey() {
+			return c.Forbidden()
+		}
 		regenerateAPIKey := &cmd.RegenerateAPIKey{}
 		if err := bus.Dispatch(c, regenerateAPIKey); err != nil {
 			return c.Failure(err)

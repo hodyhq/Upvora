@@ -33,7 +33,7 @@ var apiV1Surface = []string{
 	"POST /api/v1/posts/:number/subscription", "DELETE /api/v1/posts/:number/subscription",
 	"POST /api/v1/ai/ideate", "POST /api/v1/ai/finalize", "GET /api/v1/posts/:number/brief",
 	"GET /api/v1/notifications", "GET /api/v1/notifications/unread/total", "POST /api/v1/notifications/read-all",
-	"POST /api/v1/user/settings", "POST /api/v1/user/change-email", "POST /api/v1/user/regenerate-apikey",
+	"POST /api/v1/user/settings", "POST /api/v1/user/change-email",
 	"POST /api/v1/posts/:number/privacy",
 
 	// collaborator
