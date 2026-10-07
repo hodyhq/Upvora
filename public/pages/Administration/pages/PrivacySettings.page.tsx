@@ -43,7 +43,8 @@ export default class PrivacySettingsPage extends AdminBasePage<any, PrivacySetti
     const seq = ++this.saveSeq
     this.setState(next)
     this.saving = this.saving.then(async () => {
-      const response = await actions.updateTenantPrivacy(next)
+      // A network error throws; treat it as a failed save so the queue keeps going.
+      const response = await actions.updateTenantPrivacy(next).catch(() => ({ ok: false }))
       if (response.ok) {
         this.confirmed = next
         notify.success("Your privacy settings have been saved.")

@@ -92,4 +92,19 @@ describe("PrivacySettings save", () => {
     expect(page.state.membersPrivateIdeas).toBe(server.membersPrivateIdeas)
     expect(page.state.isModerationEnabled).toBe(server.isModerationEnabled)
   })
+
+  test("a network error rolls back and does not block later saves", async () => {
+    let calls = 0
+    http.post = jest.fn(() => (++calls === 1 ? Promise.reject(new Error("offline")) : Promise.resolve({ ok: true, data: null as any }))) as any
+    const page = newPage()
+
+    update(page, { membersPrivateIdeas: true })
+    await flush()
+    expect(page.state.membersPrivateIdeas).toBeFalsy()
+
+    update(page, { isModerationEnabled: true })
+    await flush()
+    expect(calls).toBe(2)
+    expect(page.state.isModerationEnabled).toBe(true)
+  })
 })
