@@ -269,6 +269,10 @@ func routes(r *web.Engine) *web.Engine {
 		ui.Post("/_api/admin/settings/advanced", handlers.UpdateAdvancedSettings())
 		ui.Post("/_api/admin/settings/privacy", handlers.UpdatePrivacySettings())
 		ui.Post("/_api/admin/settings/mcp", handlers.UpdateMCPSettings())
+		ui.Get("/admin/mcp", handlers.ManageMCPPage())
+		ui.Get("/_api/admin/mcp/clients", handlers.ListMCPClients())
+		ui.Post("/_api/admin/mcp/clients", handlers.CreateMCPClient())
+		ui.Delete("/_api/admin/mcp/clients/:id", handlers.DeleteMCPClient())
 		ui.Post("/_api/admin/settings/emailauth", handlers.UpdateEmailAuthAllowed())
 		ui.Post("/_api/admin/settings/site-banner", handlers.UpdateSiteBanner())
 		ui.Get("/_api/admin/statuses", handlers.ListStatuses())
@@ -410,6 +414,7 @@ func routes(r *web.Engine) *web.Engine {
 		adminApi.Get("/api/v1/admin/settings/advanced", apiv1.GetAdvancedSettings())
 		adminApi.Get("/api/v1/admin/settings/ai", apiv1.GetAISettings())
 		adminApi.Get("/api/v1/admin/webhooks", apiv1.ListWebhooks())
+		adminApi.Get("/api/v1/admin/mcp/clients", handlers.ListMCPClients())
 
 		// Billing and site deletion stay reachable on a locked tenant, as in the UI.
 		if env.IsBillingEnabled() {
@@ -449,6 +454,8 @@ func routes(r *web.Engine) *web.Engine {
 		adminApi.Post("/api/v1/admin/settings/advanced", handlers.UpdateAdvancedSettings())
 		adminApi.Post("/api/v1/admin/settings/privacy", handlers.UpdatePrivacySettings())
 		adminApi.Post("/api/v1/admin/settings/mcp", handlers.UpdateMCPSettings())
+		adminApi.Post("/api/v1/admin/mcp/clients", handlers.CreateMCPClient())
+		adminApi.Delete("/api/v1/admin/mcp/clients/:id", handlers.DeleteMCPClient())
 		adminApi.Post("/api/v1/admin/settings/emailauth", handlers.UpdateEmailAuthAllowed())
 		adminApi.Post("/api/v1/admin/settings/site-banner", handlers.UpdateSiteBanner())
 		adminApi.Post("/api/v1/admin/statuses", handlers.CreateStatus())

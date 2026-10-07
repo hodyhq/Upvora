@@ -9,6 +9,7 @@ import (
 	"github.com/getfider/fider/app/models/cmd"
 	"github.com/getfider/fider/app/models/entity"
 	"github.com/getfider/fider/app/models/enum"
+	"github.com/getfider/fider/app/models/query"
 	. "github.com/getfider/fider/app/pkg/assert"
 	"github.com/getfider/fider/app/pkg/bus"
 	"github.com/getfider/fider/app/pkg/mock"
@@ -116,4 +117,41 @@ func TestOAuthRegister_RateLimited(t *testing.T) {
 	}
 	Expect(last).Equals(http.StatusTooManyRequests)
 	handlers.ResetOAuthRateLimits()
+}
+
+func TestMCPClients_AdminCreateListDelete(t *testing.T) {
+	RegisterT(t)
+	var created *cmd.RegisterOAuthClient
+	deleted := 0
+	bus.AddHandler(func(ctx context.Context, c *cmd.RegisterOAuthClient) error {
+		created = c
+		c.Result = &entity.OAuthClient{ID: 5, ClientID: "cid-new", Name: c.Name, RedirectURIs: c.RedirectURIs, CreatedByAdmin: c.CreatedByAdmin}
+		return nil
+	})
+	bus.AddHandler(func(ctx context.Context, q *query.ListOAuthClients) error {
+		q.Result = []*entity.OAuthClient{{ID: 5, ClientID: "cid-new"}}
+		return nil
+	})
+	bus.AddHandler(func(ctx context.Context, c *cmd.DeleteOAuthClient) error {
+		deleted = c.ID
+		return nil
+	})
+
+	code, res := mock.NewServer().OnTenant(mcpTenant(true, false)).AsUser(mock.JonSnow).
+		ExecutePostAsJSON(handlers.CreateMCPClient(), `{"name":"Team Claude","redirectUris":["https://claude.ai/api/mcp/auth_callback"]}`)
+	Expect(code).Equals(http.StatusOK)
+	Expect(res.String("clientId")).Equals("cid-new")
+	Expect(created.CreatedByAdmin).IsTrue()
+
+	code, _ = mock.NewServer().OnTenant(mcpTenant(true, false)).AsUser(mock.JonSnow).
+		ExecutePost(handlers.CreateMCPClient(), `{"name":"Bad","redirectUris":["javascript:alert(1)"]}`)
+	Expect(code).Equals(http.StatusBadRequest)
+
+	code, list := mock.NewServer().OnTenant(mcpTenant(true, false)).AsUser(mock.JonSnow).ExecuteAsJSON(handlers.ListMCPClients())
+	Expect(code).Equals(http.StatusOK)
+	Expect(list.ArrayLength()).Equals(1)
+
+	code, _ = mock.NewServer().OnTenant(mcpTenant(true, false)).AsUser(mock.JonSnow).AddParam("id", 5).Execute(handlers.DeleteMCPClient())
+	Expect(code).Equals(http.StatusOK)
+	Expect(deleted).Equals(5)
 }

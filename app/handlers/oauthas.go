@@ -423,3 +423,82 @@ func OAuthTokenEndpoint() web.HandlerFunc {
 		})
 	}
 }
+
+// ManageMCPPage renders the admin MCP page (settings ride on the tenant).
+func ManageMCPPage() web.HandlerFunc {
+	return func(c *web.Context) error {
+		clients := &query.ListOAuthClients{}
+		if err := bus.Dispatch(c, clients); err != nil {
+			return c.Failure(err)
+		}
+		return c.Page(http.StatusOK, web.Props{
+			Page:  "Administration/pages/ManageMCP.page",
+			Title: "MCP · Site Settings",
+			Data:  web.Map{"clients": clients.Result, "mcpUrl": MCPResourceURL(c)},
+		})
+	}
+}
+
+// ListMCPClients lists registered MCP clients (admin).
+func ListMCPClients() web.HandlerFunc {
+	return func(c *web.Context) error {
+		if !c.User().IsAdministrator() {
+			return c.Forbidden()
+		}
+		clients := &query.ListOAuthClients{}
+		if err := bus.Dispatch(c, clients); err != nil {
+			return c.Failure(err)
+		}
+		return c.Ok(clients.Result)
+	}
+}
+
+// CreateMCPClient pre-registers a client (admin), e.g. when self-registration is off.
+func CreateMCPClient() web.HandlerFunc {
+	return func(c *web.Context) error {
+		if !c.User().IsAdministrator() {
+			return c.Forbidden()
+		}
+		var input struct {
+			Name         string   `json:"name"`
+			RedirectURIs []string `json:"redirectUris"`
+		}
+		if err := json.Unmarshal([]byte(c.Request.Body), &input); err != nil {
+			return c.BadRequest(web.Map{"error": "invalid request"})
+		}
+		name := strings.TrimSpace(input.Name)
+		if name == "" || len(name) > 100 {
+			return c.BadRequest(web.Map{"name": "Name is required (up to 100 characters)."})
+		}
+		if len(input.RedirectURIs) == 0 || len(input.RedirectURIs) > 10 {
+			return c.BadRequest(web.Map{"redirectUris": "Provide 1 to 10 redirect URIs."})
+		}
+		for _, uri := range input.RedirectURIs {
+			if len(uri) > 2000 || !oauthas.ValidRedirectURI(uri) {
+				return c.BadRequest(web.Map{"redirectUris": "Redirect URIs must be https, http on a loopback host, or a native app scheme, without a fragment."})
+			}
+		}
+		reg := &cmd.RegisterOAuthClient{Name: name, RedirectURIs: input.RedirectURIs, CreatedByAdmin: true}
+		if err := bus.Dispatch(c, reg); err != nil {
+			return c.Failure(err)
+		}
+		return c.Ok(reg.Result)
+	}
+}
+
+// DeleteMCPClient removes a client and revokes everything issued to it (admin).
+func DeleteMCPClient() web.HandlerFunc {
+	return func(c *web.Context) error {
+		if !c.User().IsAdministrator() {
+			return c.Forbidden()
+		}
+		id, err := c.ParamAsInt("id")
+		if err != nil {
+			return c.NotFound()
+		}
+		if err := bus.Dispatch(c, &cmd.DeleteOAuthClient{ID: id}); err != nil {
+			return c.Failure(err)
+		}
+		return c.Ok(web.Map{})
+	}
+}

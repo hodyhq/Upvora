@@ -26,6 +26,9 @@ export interface Tenant {
   isModerationEnabled: boolean
   membersPrivateIdeas: boolean
   membersCanPublishPrivate: boolean
+  mcpEnabled: boolean
+  mcpMinRole: "visitor" | "collaborator" | "administrator"
+  mcpDcrEnabled: boolean
   isPro: boolean
   // Custom status catalogue for this tenant; populated by the server on every
   // request. Undefined for old Fider builds / unmigrated tenants — runtime
