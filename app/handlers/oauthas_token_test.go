@@ -14,6 +14,7 @@ import (
 	"github.com/getfider/fider/app/models/query"
 	. "github.com/getfider/fider/app/pkg/assert"
 	"github.com/getfider/fider/app/pkg/bus"
+	"github.com/getfider/fider/app/pkg/jsonq"
 	"github.com/getfider/fider/app/pkg/jwt"
 	"github.com/getfider/fider/app/pkg/mock"
 	"github.com/getfider/fider/app/pkg/oauthas"
@@ -200,4 +201,36 @@ func TestOAuthToken_RateLimited(t *testing.T) {
 	}
 	Expect(last).Equals(http.StatusTooManyRequests)
 	handlers.ResetOAuthRateLimits()
+}
+
+// Codes and refresh tokens are bound to the address they were issued on, and
+// the access token's audience is that address's /mcp.
+func TestOAuthToken_BoundToTheRequestAddress(t *testing.T) {
+	RegisterT(t)
+	withMCPOrigin(t)
+	handlers.ResetOAuthRateLimits()
+	m := mockTokenEndpoint(mock.AryaStark)
+	post := func(base string, form url.Values) (int, *jsonq.Query) {
+		return mock.NewSingleTenantServer().OnTenant(mcpTenantMinRole(enum.RoleVisitor)).
+			WithURL(base+"/oauth2/token").ExecutePostAsJSON(handlers.OAuthTokenEndpoint(), form.Encode())
+	}
+
+	code, res := post(mcpBase, codeForm(nil))
+	Expect(code).Equals(http.StatusOK)
+	Expect(m.consumed.Origin).Equals(mcpBase)
+	Expect(m.consumed.AllowUnbound).IsFalse()
+	Expect(m.saved[0].Origin).Equals(mcpBase)
+	claims, err := jwt.DecodeMCPAccessClaims(res.String("access_token"), mcpBase+"/mcp")
+	Expect(err).IsNil()
+	Expect(claims.UserID).Equals(mock.AryaStark.ID)
+
+	code, _ = post(boardBase, codeForm(nil))
+	Expect(code).Equals(http.StatusOK)
+	Expect(m.consumed.Origin).Equals(boardBase)
+	Expect(m.consumed.AllowUnbound).IsTrue()
+
+	code, _ = post(mcpBase, url.Values{"grant_type": {"refresh_token"}, "refresh_token": {testRefresh}, "client_id": {testClientID}})
+	Expect(code).Equals(http.StatusOK)
+	Expect(m.rotated.Origin).Equals(mcpBase)
+	Expect(m.rotated.AllowUnbound).IsFalse()
 }

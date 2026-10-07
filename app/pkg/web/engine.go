@@ -132,7 +132,7 @@ func (e *Engine) Start(address string) {
 		WriteTimeout: env.Config.HTTP.WriteTimeout,
 		IdleTimeout:  env.Config.HTTP.IdleTimeout,
 		Addr:         address,
-		Handler:      e.mux,
+		Handler:      MCPOriginGate(e.mux),
 		TLSConfig:    getDefaultTLSConfig(env.Config.TLS.Automatic),
 	}
 
@@ -269,7 +269,7 @@ func (e *Engine) register(method, path string, middlewares []MiddlewareFunc, han
 // the engine can be used as an http.Handler: in tests, and to replay MCP tool
 // calls in-process against /api/v1.
 func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	e.mux.ServeHTTP(w, r)
+	MCPOriginGate(e.mux).ServeHTTP(w, r)
 }
 
 // Routes returns every registered route as "METHOD path".

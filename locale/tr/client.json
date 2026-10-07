@@ -248,6 +248,7 @@
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",
+  "oauth.consent.through": "",
   "oauth.consent.title": "",
   "page.backhome": "Beni <0>{0}</0> ana sayfaya götür.",
   "page.pendingactivation.didntreceive": "E-postayı almadınız mı?",

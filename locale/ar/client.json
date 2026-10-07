@@ -248,6 +248,7 @@
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",
+  "oauth.consent.through": "",
   "oauth.consent.title": "",
   "page.backhome": "خذني إلى <0>{0}</0> الصفحة الرئيسية.",
   "page.pendingactivation.didntreceive": "لم تستلم البريد الإلكتروني؟",

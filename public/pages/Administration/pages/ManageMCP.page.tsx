@@ -7,6 +7,34 @@ import { AdminBasePage } from "../components/AdminBasePage"
 interface ManageMCPPageProps {
   clients: MCPClient[]
   mcpUrl: string
+  publicMcpUrls?: string[]
+}
+
+// MCPConnectAddresses shows where clients connect: this site's own address,
+// and any MCP-only public addresses (MCP_ORIGINS) for a board that is not
+// reachable from the internet.
+export const MCPConnectAddresses = (props: { mcpUrl: string; publicMcpUrls?: string[] }) => {
+  const publicUrls = props.publicMcpUrls || []
+  return (
+    <>
+      <p className="text-muted mt-1">
+        When on, MCP clients such as Claude can connect at <code>{props.mcpUrl}</code>. Each person signs in with this site&apos;s normal sign-in and approves
+        the connection; the client can then do only what that person can do.
+      </p>
+      {publicUrls.length > 0 && (
+        <p className="text-muted mt-1">
+          For assistants that cannot reach this site (they connect from the internet), use the public MCP address:{" "}
+          {publicUrls.map((url, i) => (
+            <React.Fragment key={url}>
+              {i > 0 && ", "}
+              <code>{url}</code>
+            </React.Fragment>
+          ))}
+          . It serves only the MCP connection; people still sign in here, on this site, the first time they connect.
+        </p>
+      )}
+    </>
+  )
 }
 
 interface ManageMCPPageState extends MCPSettings {
@@ -91,10 +119,7 @@ export default class ManageMCPPage extends AdminBasePage<ManageMCPPageProps, Man
       <Form>
         <Field label="Enable MCP">
           <Toggle active={this.state.enabled} onToggle={(v) => this.updateSettings({ enabled: v })} />
-          <p className="text-muted mt-1">
-            When on, MCP clients such as Claude can connect at <code>{this.props.mcpUrl}</code>. Each person signs in with this site&apos;s normal sign-in and
-            approves the connection; the client can then do only what that person can do.
-          </p>
+          <MCPConnectAddresses mcpUrl={this.props.mcpUrl} publicMcpUrls={this.props.publicMcpUrls} />
         </Field>
         <Select
           key={this.state.minRole}

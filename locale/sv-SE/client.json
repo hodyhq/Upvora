@@ -248,6 +248,7 @@
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",
+  "oauth.consent.through": "",
   "oauth.consent.title": "",
   "page.backhome": "Ta mig tillbaka till <0>{0}</0> hemsida.",
   "page.pendingactivation.didntreceive": "Fick du inte e-postmeddelandet?",

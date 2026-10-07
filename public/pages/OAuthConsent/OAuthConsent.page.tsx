@@ -15,6 +15,8 @@ interface OAuthConsentPageProps {
   codeChallenge?: string
   codeChallengeMethod?: string
   state?: string
+  // Set when the connection goes through an MCP-only public address.
+  connectingThrough?: string
 }
 
 // isSafeRedirect refuses schemes a browser would execute. The server already
@@ -88,6 +90,13 @@ const OAuthConsentPage = (props: OAuthConsentPageProps) => {
             <p className="p-oauth-consent__text text-muted">
               <Trans id="oauth.consent.redirect">After you choose, you will return to {props.redirectHost}.</Trans>
             </p>
+            {props.connectingThrough && (
+              <p className="p-oauth-consent__text text-muted">
+                <Trans id="oauth.consent.through">
+                  You are connecting through {props.connectingThrough}, this site&apos;s public address for AI assistants.
+                </Trans>
+              </p>
+            )}
             {failed && (
               <p className="p-oauth-consent__error" role="alert">
                 <Trans id="oauth.consent.failed">Something went wrong. Please try again, or close this page and reconnect from your app.</Trans>

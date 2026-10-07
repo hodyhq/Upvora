@@ -248,6 +248,7 @@
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",
+  "oauth.consent.through": "",
   "oauth.consent.title": "",
   "page.backhome": "帶我回到<0>{0}</0>首頁。",
   "page.pendingactivation.didntreceive": "沒有收到電子郵件？",

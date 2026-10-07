@@ -22,3 +22,10 @@ type OAuthGrant struct {
 	CodeChallenge string
 	FamilyID      string
 }
+
+// OAuthSignInHandoff is a redeemed sign-in handoff: who signed in, and the
+// authorization request to resume on the MCP-only address.
+type OAuthSignInHandoff struct {
+	UserID int
+	Query  string
+}

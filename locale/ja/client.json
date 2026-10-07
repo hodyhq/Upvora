@@ -248,6 +248,7 @@
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",
+  "oauth.consent.through": "",
   "oauth.consent.title": "",
   "page.backhome": "<0>{0}</0>のホームページに戻ります。",
   "page.pendingactivation.didntreceive": "メールが届きませんか？",

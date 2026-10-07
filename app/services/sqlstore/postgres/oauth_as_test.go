@@ -209,3 +209,81 @@ func TestOAuth_PurgeStaleData(t *testing.T) {
 	Expect(count("SELECT COUNT(*) FROM oauth_clients WHERE client_id = '" + admin.Result.ClientID + "'")).Equals(1)
 	Expect(count("SELECT COUNT(*) FROM oauth_clients WHERE client_id = '" + used + "'")).Equals(1) // has tokens
 }
+
+const mcpOrigin = "https://mcp.demo.test"
+
+func TestOAuthSignInHandoff_SingleUseScopedAndExpiring(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	save := func(hash string, expires time.Time) {
+		Expect(bus.Dispatch(demoTenantCtx, &cmd.SaveOAuthSignInHandoff{
+			CodeHash: hash, UserID: aryaStark.ID, Origin: mcpOrigin, Query: "client_id=c&state=s", ExpiresAt: expires,
+		})).IsNil()
+	}
+	save("ho-1", time.Now().Add(2*time.Minute))
+
+	wrongOrigin := &cmd.RedeemOAuthSignInHandoff{CodeHash: "ho-1", Origin: "https://other.demo.test"}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, wrongOrigin))).Equals(app.ErrNotFound)
+	wrongTenant := &cmd.RedeemOAuthSignInHandoff{CodeHash: "ho-1", Origin: mcpOrigin}
+	Expect(errors.Cause(bus.Dispatch(avengersTenantCtx, wrongTenant))).Equals(app.ErrNotFound)
+
+	first := &cmd.RedeemOAuthSignInHandoff{CodeHash: "ho-1", Origin: mcpOrigin}
+	Expect(bus.Dispatch(demoTenantCtx, first)).IsNil()
+	Expect(first.Result.UserID).Equals(aryaStark.ID)
+	Expect(first.Result.Query).Equals("client_id=c&state=s")
+
+	again := &cmd.RedeemOAuthSignInHandoff{CodeHash: "ho-1", Origin: mcpOrigin}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, again))).Equals(app.ErrNotFound)
+
+	save("ho-old", time.Now().Add(-time.Second))
+	old := &cmd.RedeemOAuthSignInHandoff{CodeHash: "ho-old", Origin: mcpOrigin}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, old))).Equals(app.ErrNotFound)
+}
+
+func TestOAuthCodes_BoundToOrigin(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	clientID := registerClient(t)
+	Expect(bus.Dispatch(demoTenantCtx, &cmd.SaveOAuthCode{
+		CodeHash: "oc-1", ClientID: clientID, UserID: aryaStark.ID, RedirectURI: "https://claude.ai/api/mcp/auth_callback",
+		Scope: "upvora", CodeChallenge: "challenge", Origin: mcpOrigin, ExpiresAt: time.Now().Add(10 * time.Minute),
+	})).IsNil()
+
+	// Presented on another address: refused, and not burned.
+	elsewhere := &cmd.ConsumeOAuthCode{CodeHash: "oc-1", ClientID: clientID, Origin: "http://demo.test.fider.io", AllowUnbound: true}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, elsewhere))).Equals(app.ErrNotFound)
+	here := &cmd.ConsumeOAuthCode{CodeHash: "oc-1", ClientID: clientID, Origin: mcpOrigin}
+	Expect(bus.Dispatch(demoTenantCtx, here)).IsNil()
+
+	// A code from before this release (no address) works only on the board's own address.
+	saveCode(t, clientID, "oc-legacy", time.Now().Add(10*time.Minute))
+	onMCP := &cmd.ConsumeOAuthCode{CodeHash: "oc-legacy", ClientID: clientID, Origin: mcpOrigin}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, onMCP))).Equals(app.ErrNotFound)
+	onBoard := &cmd.ConsumeOAuthCode{CodeHash: "oc-legacy", ClientID: clientID, Origin: "http://demo.test.fider.io", AllowUnbound: true}
+	Expect(bus.Dispatch(demoTenantCtx, onBoard)).IsNil()
+}
+
+func TestOAuthRefresh_BoundToOriginWithoutRevoking(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	clientID := registerClient(t)
+	Expect(bus.Dispatch(demoTenantCtx, &cmd.SaveOAuthRefreshToken{
+		TokenHash: "ort-1", ClientID: clientID, UserID: aryaStark.ID, Scope: "upvora",
+		FamilyID: "ofam", Origin: mcpOrigin, ExpiresAt: time.Now().Add(time.Hour),
+	})).IsNil()
+
+	elsewhere := &cmd.RotateOAuthRefreshToken{OldHash: "ort-1", NewHash: "ort-x", ClientID: clientID,
+		Origin: "http://demo.test.fider.io", AllowUnbound: true, NewExpiresAt: time.Now().Add(time.Hour)}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, elsewhere))).Equals(app.ErrNotFound)
+
+	// The family survives a wrong-address attempt, and the new token keeps the address.
+	here := &cmd.RotateOAuthRefreshToken{OldHash: "ort-1", NewHash: "ort-2", ClientID: clientID,
+		Origin: mcpOrigin, NewExpiresAt: time.Now().Add(time.Hour)}
+	Expect(bus.Dispatch(demoTenantCtx, here)).IsNil()
+	next := &cmd.RotateOAuthRefreshToken{OldHash: "ort-2", NewHash: "ort-3", ClientID: clientID,
+		Origin: "http://demo.test.fider.io", AllowUnbound: true, NewExpiresAt: time.Now().Add(time.Hour)}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, next))).Equals(app.ErrNotFound)
+	nextHere := &cmd.RotateOAuthRefreshToken{OldHash: "ort-2", NewHash: "ort-3", ClientID: clientID,
+		Origin: mcpOrigin, NewExpiresAt: time.Now().Add(time.Hour)}
+	Expect(bus.Dispatch(demoTenantCtx, nextHere)).IsNil()
+}

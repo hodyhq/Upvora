@@ -13,8 +13,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/getfider/fider/app"
 	"github.com/getfider/fider/app/models/cmd"
 	"github.com/getfider/fider/app/pkg/bus"
+	"github.com/getfider/fider/app/pkg/env"
+	"github.com/getfider/fider/app/pkg/errors"
 	"github.com/getfider/fider/app/pkg/oauthas"
 	"github.com/getfider/fider/app/pkg/ratelimit"
 	"github.com/getfider/fider/app/pkg/web"
@@ -40,6 +43,44 @@ func ResetOAuthRateLimits() {
 
 func mcpEnabled(c *web.Context) bool {
 	return c.Tenant() != nil && c.Tenant().MCPEnabled
+}
+
+// MCPConsentCookie holds the consent-step identity on an MCP-only address.
+const MCPConsentCookie = web.CookieMCPConsentName
+
+const (
+	mcpSignInRequestTTL = 10 * time.Minute // signing in on the board
+	mcpHandoffTTL       = 2 * time.Minute  // the trip back to the MCP-only address
+	mcpConsentTTL       = 15 * time.Minute // the consent step there
+)
+
+// mcpOrigin returns the MCP-only public address (MCP_ORIGINS) this request
+// arrived on, in canonical form.
+func mcpOrigin(c *web.Context) (string, bool) {
+	if !env.IsSingleHostMode() {
+		return "", false
+	}
+	return env.MatchMCPOrigin(c.BaseURL())
+}
+
+// publicMCPURLs are the MCP endpoints on the MCP-only public addresses.
+func publicMCPURLs() []string {
+	urls := []string{}
+	if env.IsSingleHostMode() {
+		for _, origin := range env.Config.MCPOrigins {
+			urls = append(urls, origin+"/mcp")
+		}
+	}
+	return urls
+}
+
+// grantOrigin is the address codes and refresh tokens are bound to: the
+// MCP-only address in canonical form, or this request's own address.
+func grantOrigin(c *web.Context) string {
+	if origin, ok := mcpOrigin(c); ok {
+		return origin
+	}
+	return c.BaseURL()
 }
 
 // MCPResourceURL is the protected resource (and access-token audience) for
@@ -242,6 +283,18 @@ func OAuthAuthorize() web.HandlerFunc {
 		if !mcpEnabled(c) {
 			return c.NotFound()
 		}
+		if !c.IsAuthenticated() {
+			// On an MCP-only address, sign in on the board's own address (which
+			// stays internal) and come back: see OAuthSignInContinue.
+			if origin, ok := mcpOrigin(c); ok {
+				token, err := jwt.EncodeMCPSignInRequest(c.Tenant().ID, origin, c.Request.URL.RawQuery, mcpSignInRequestTTL)
+				if err != nil {
+					return c.Failure(err)
+				}
+				return c.Redirect(web.BaseURL(c) + "/oauth2/continue?request=" + url.QueryEscape(token))
+			}
+			return c.Redirect("/signin?redirect=" + url.QueryEscape(c.Request.URL.RequestURI()))
+		}
 		p := authorizeParams{
 			ClientID:            c.QueryParam("client_id"),
 			RedirectURI:         c.QueryParam("redirect_uri"),
@@ -267,7 +320,12 @@ func OAuthAuthorize() web.HandlerFunc {
 				redirectHost = u.Scheme
 			}
 		}
+		connectingThrough := any(nil)
+		if _, ok := mcpOrigin(c); ok {
+			connectingThrough = c.Request.URL.Host
+		}
 		return consentPage(c, http.StatusOK, web.Map{
+			"connectingThrough":   connectingThrough,
 			"clientName":          check.client.Name,
 			"redirectHost":        redirectHost,
 			"scope":               check.scope,
@@ -299,6 +357,10 @@ func OAuthAuthorizeDecision() web.HandlerFunc {
 		case check.denied:
 			return c.JSON(http.StatusForbidden, web.Map{"error": roleDeniedMessage})
 		}
+		// The consent-step identity on an MCP-only address is spent either way.
+		if _, ok := mcpOrigin(c); ok {
+			c.RemoveCookie(MCPConsentCookie)
+		}
 		if !p.Approve {
 			return c.Ok(web.Map{"redirect": clientRedirect(p.RedirectURI, map[string]string{"error": "access_denied", "state": p.State, "iss": c.BaseURL()})})
 		}
@@ -312,6 +374,7 @@ func OAuthAuthorizeDecision() web.HandlerFunc {
 			Scope:         check.scope,
 			CodeChallenge: p.CodeChallenge,
 			SecurityStamp: c.User().SecurityStamp,
+			Origin:        grantOrigin(c),
 			ExpiresAt:     time.Now().Add(10 * time.Minute),
 		}); err != nil {
 			return c.Failure(err)
@@ -352,9 +415,13 @@ func OAuthTokenEndpoint() web.HandlerFunc {
 		var grant *entity.OAuthGrant
 		var familyID string
 		newRefresh, newRefreshHash := oauthas.NewToken()
+		// Codes and refresh tokens work only on the address they were issued on.
+		// Ones issued before they carried an address work on the board's own.
+		origin := grantOrigin(c)
+		_, onMCP := mcpOrigin(c)
 		switch form.Get("grant_type") {
 		case "authorization_code":
-			consume := &cmd.ConsumeOAuthCode{CodeHash: oauthas.HashToken(form.Get("code")), ClientID: getClient.Result.ClientID}
+			consume := &cmd.ConsumeOAuthCode{CodeHash: oauthas.HashToken(form.Get("code")), ClientID: getClient.Result.ClientID, Origin: origin, AllowUnbound: !onMCP}
 			if bus.Dispatch(c, consume) != nil {
 				return oauthError(c, http.StatusBadRequest, "invalid_grant", "The code is invalid, expired, or already used.")
 			}
@@ -370,6 +437,8 @@ func OAuthTokenEndpoint() web.HandlerFunc {
 				OldHash:      oauthas.HashToken(form.Get("refresh_token")),
 				NewHash:      newRefreshHash,
 				ClientID:     getClient.Result.ClientID,
+				Origin:       origin,
+				AllowUnbound: !onMCP,
 				NewExpiresAt: time.Now().Add(refreshTokenTTL),
 			}
 			if bus.Dispatch(c, rotate) != nil {
@@ -396,6 +465,7 @@ func OAuthTokenEndpoint() web.HandlerFunc {
 				FamilyID:      familyID,
 				SecurityStamp: user.SecurityStamp,
 				FromCodeHash:  oauthas.HashToken(form.Get("code")),
+				Origin:        origin,
 				ExpiresAt:     time.Now().Add(refreshTokenTTL),
 			}); err != nil {
 				return c.Failure(err)
@@ -440,7 +510,7 @@ func ManageMCPPage() web.HandlerFunc {
 		return c.Page(http.StatusOK, web.Props{
 			Page:  "Administration/pages/ManageMCP.page",
 			Title: "MCP · Site Settings",
-			Data:  web.Map{"clients": clients.Result, "mcpUrl": MCPResourceURL(c)},
+			Data:  web.Map{"clients": clients.Result, "mcpUrl": MCPResourceURL(c), "publicMcpUrls": publicMCPURLs()},
 		})
 	}
 }
@@ -506,5 +576,69 @@ func DeleteMCPClient() web.HandlerFunc {
 			return c.Failure(err)
 		}
 		return c.Ok(web.Map{})
+	}
+}
+
+const expiredConnectMessage = "This connection request is invalid or has expired. Start connecting again from your assistant."
+
+// OAuthSignInContinue runs on the board's own address, after its normal
+// sign-in, for a connection started on an MCP-only address. It verifies the
+// signed request, re-checks that its address is configured (never redirecting
+// anywhere else), and sends the browser back there with a single-use code.
+func OAuthSignInContinue() web.HandlerFunc {
+	return func(c *web.Context) error {
+		if _, onMCP := mcpOrigin(c); !mcpEnabled(c) || onMCP {
+			return c.NotFound()
+		}
+		claims, err := jwt.DecodeMCPSignInRequest(c.QueryParam("request"))
+		if err != nil || claims.TenantID != c.Tenant().ID {
+			return consentPage(c, http.StatusBadRequest, web.Map{"error": expiredConnectMessage})
+		}
+		origin, ok := env.MatchMCPOrigin(claims.Origin)
+		if !ok {
+			return consentPage(c, http.StatusBadRequest, web.Map{"error": expiredConnectMessage})
+		}
+		plain, hash := oauthas.NewToken()
+		if err := bus.Dispatch(c, &cmd.SaveOAuthSignInHandoff{
+			CodeHash:      hash,
+			UserID:        c.User().ID,
+			Origin:        origin,
+			Query:         claims.Query,
+			SecurityStamp: c.User().SecurityStamp,
+			ExpiresAt:     time.Now().Add(mcpHandoffTTL),
+		}); err != nil {
+			return c.Failure(err)
+		}
+		return c.Redirect(origin + "/oauth2/resume?code=" + url.QueryEscape(plain))
+	}
+}
+
+// OAuthResume runs on an MCP-only address: it redeems the single-use code from
+// OAuthSignInContinue and sets a short-lived cookie that identifies the person
+// for the consent step only, then resumes the authorization request.
+func OAuthResume() web.HandlerFunc {
+	return func(c *web.Context) error {
+		origin, ok := mcpOrigin(c)
+		if !mcpEnabled(c) || !ok {
+			return c.NotFound()
+		}
+		redeem := &cmd.RedeemOAuthSignInHandoff{CodeHash: oauthas.HashToken(c.QueryParam("code")), Origin: origin}
+		if err := bus.Dispatch(c, redeem); err != nil {
+			if errors.Cause(err) == app.ErrNotFound {
+				return consentPage(c, http.StatusBadRequest, web.Map{"error": expiredConnectMessage})
+			}
+			return c.Failure(err)
+		}
+		getUser := &query.GetUserByID{UserID: redeem.Result.UserID, TenantID: c.Tenant().ID}
+		if bus.Dispatch(c, getUser) != nil || getUser.Result.Status != enum.UserActive {
+			return consentPage(c, http.StatusBadRequest, web.Map{"error": expiredConnectMessage})
+		}
+		user := getUser.Result
+		token, err := jwt.EncodeMCPConsent(user.ID, c.Tenant().ID, user.SecurityStamp, origin, mcpConsentTTL)
+		if err != nil {
+			return c.Failure(err)
+		}
+		c.AddCookie(MCPConsentCookie, token, time.Now().Add(mcpConsentTTL))
+		return c.Redirect("/oauth2/authorize?" + redeem.Result.Query)
 	}
 }

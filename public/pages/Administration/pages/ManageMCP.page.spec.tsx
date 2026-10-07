@@ -1,6 +1,8 @@
 import { http, notify } from "@fider/services"
 import { fiderMock } from "@fider/services/testing"
-import ManageMCPPage from "./ManageMCP.page"
+import React from "react"
+import { render, screen } from "@testing-library/react"
+import ManageMCPPage, { MCPConnectAddresses } from "./ManageMCP.page"
 
 type Pending = { resolve: (ok: boolean, data?: any) => void }
 
@@ -75,5 +77,20 @@ describe("ManageMCP settings", () => {
     await (page as any).deleteClient(3)
     expect(del).toHaveBeenCalledTimes(1)
     expect(page.state.clients).toHaveLength(0)
+  })
+})
+
+describe("MCPConnectAddresses", () => {
+  test("lists the public MCP-only addresses for internal boards", () => {
+    render(<MCPConnectAddresses mcpUrl="https://ideas.internal/mcp" publicMcpUrls={["https://mcp.example.com/mcp"]} />)
+    expect(screen.getByText("https://ideas.internal/mcp")).toBeTruthy()
+    expect(screen.getByText("https://mcp.example.com/mcp")).toBeTruthy()
+    expect(screen.getByText(/assistants that cannot reach this site/)).toBeTruthy()
+  })
+
+  test("shows only this site's address when none are configured", () => {
+    render(<MCPConnectAddresses mcpUrl="https://demo.test/mcp" publicMcpUrls={[]} />)
+    expect(screen.getByText("https://demo.test/mcp")).toBeTruthy()
+    expect(screen.queryByText(/assistants that cannot reach this site/)).toBeNull()
   })
 })

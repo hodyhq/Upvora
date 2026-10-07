@@ -248,6 +248,7 @@
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",
+  "oauth.consent.through": "",
   "oauth.consent.title": "",
   "page.backhome": "Верните меня на домашнюю страницу <0>{0}</0>.",
   "page.pendingactivation.didntreceive": "Не получили письмо?",

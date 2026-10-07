@@ -248,6 +248,7 @@
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",
+  "oauth.consent.through": "",
   "oauth.consent.title": "",
   "page.backhome": "Portami indietro alla <0>{0}</0> pagina principale.",
   "page.pendingactivation.didntreceive": "Non hai ricevuto l'email?",

@@ -13,6 +13,7 @@ import (
 	"github.com/getfider/fider/app/models/query"
 	. "github.com/getfider/fider/app/pkg/assert"
 	"github.com/getfider/fider/app/pkg/bus"
+	"github.com/getfider/fider/app/pkg/env"
 	"github.com/getfider/fider/app/pkg/jwt"
 	"github.com/getfider/fider/app/pkg/mock"
 	"github.com/getfider/fider/app/pkg/oauthas"
@@ -222,4 +223,87 @@ func TestUser_MCPAccessToken_RemovedClientRefused(t *testing.T) {
 	})
 	code, _, _ := runAs(mcpSite(true, enum.RoleVisitor), "POST", "http://demo.test.fider.io/mcp", tok)
 	Expect(code).Equals(http.StatusUnauthorized)
+}
+
+// With MCP off, /mcp must not point clients at sign-in: they would try to
+// register, hit the hidden discovery, and show a misleading error.
+func TestUser_MCPEndpoint_DisabledSaysSoWithoutChallenge(t *testing.T) {
+	RegisterT(t)
+	u := mcpUser()
+	tok := accessToken(u, mock.DemoTenant.ID, "upvora", mcpAudience, "stamp-1")
+	for _, bearer := range []string{"", tok} {
+		code, headers, body := runAs(mcpSite(false, enum.RoleVisitor), "POST", "http://demo.test.fider.io/mcp", bearer)
+		Expect(code).Equals(http.StatusNotFound)
+		Expect(headers.Get("WWW-Authenticate")).Equals("")
+		Expect(body).ContainsSubstring("mcp_disabled")
+		Expect(body).ContainsSubstring("not turned on")
+	}
+}
+
+const (
+	consentBoard = "https://board.demo.test"
+	consentMCP   = "https://mcp.demo.test"
+)
+
+// runOnAddress runs the User middleware as a single-site board at consentBoard
+// that also serves MCP on consentMCP, with the given cookies.
+func runOnAddress(t *testing.T, method, url string, cookies map[string]string) string {
+	mode, base := env.Config.HostMode, env.Config.BaseURL
+	defer func() { env.Config.HostMode, env.Config.BaseURL, env.Config.MCPOrigins = mode, base, nil }()
+	s := mock.NewSingleTenantServer()
+	env.Config.BaseURL, env.Config.MCPOrigins = consentBoard, []string{consentMCP}
+	s.Use(middlewares.User())
+	s = s.OnTenant(mcpSite(true, enum.RoleVisitor)).WithURL(url)
+	for name, value := range cookies {
+		s = s.AddCookie(name, value)
+	}
+	handler := func(c *web.Context) error {
+		if c.User() == nil {
+			return c.String(http.StatusOK, "anonymous")
+		}
+		return c.String(http.StatusOK, c.User().Name)
+	}
+	var body string
+	if method == "POST" {
+		_, res := s.ExecutePost(handler, "{}")
+		body = res.Body.String()
+	} else {
+		_, res := s.Execute(handler)
+		body = res.Body.String()
+	}
+	return body
+}
+
+func consentCookie(user *entity.User, origin, stamp string) map[string]string {
+	token, _ := jwt.EncodeMCPConsent(user.ID, mock.DemoTenant.ID, stamp, origin, time.Minute)
+	return map[string]string{web.CookieMCPConsentName: token}
+}
+
+func TestUser_MCPConsentCookie_OnlyForConsentOnItsAddress(t *testing.T) {
+	RegisterT(t)
+	u := mcpUser()
+	good := consentCookie(u, consentMCP, "stamp-1")
+
+	Expect(runOnAddress(t, "GET", consentMCP+"/oauth2/authorize?x=1", good)).Equals(u.Name)
+	Expect(runOnAddress(t, "POST", consentMCP+"/_api/oauth2/authorize", good)).Equals(u.Name)
+
+	// nowhere else on the MCP address
+	Expect(runOnAddress(t, "GET", consentMCP+"/oauth2/resume", good)).Equals("anonymous")
+	Expect(runOnAddress(t, "POST", consentMCP+"/oauth2/token", good)).Equals("anonymous")
+	// and never on the board itself
+	Expect(runOnAddress(t, "GET", consentBoard+"/oauth2/authorize", good)).Equals("anonymous")
+
+	// minted for another address, or before a role change, block or sign-out
+	Expect(runOnAddress(t, "GET", consentMCP+"/oauth2/authorize", consentCookie(u, "https://other.demo.test", "stamp-1"))).Equals("anonymous")
+	Expect(runOnAddress(t, "GET", consentMCP+"/oauth2/authorize", consentCookie(u, consentMCP, "old-stamp"))).Equals("anonymous")
+}
+
+func TestUser_BoardSessionIgnoredOnMCPAddress(t *testing.T) {
+	RegisterT(t)
+	u := mcpUser()
+	session, _ := jwt.Encode(jwt.FiderClaims{UserID: u.ID, UserName: u.Name})
+	cookie := map[string]string{web.CookieAuthName: session}
+
+	Expect(runOnAddress(t, "GET", consentBoard+"/oauth2/authorize", cookie)).Equals(u.Name)
+	Expect(runOnAddress(t, "GET", consentMCP+"/oauth2/authorize", cookie)).Equals("anonymous")
 }

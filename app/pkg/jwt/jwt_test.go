@@ -180,3 +180,46 @@ func TestJWT_MCPAccess_Expired(t *testing.T) {
 	_, err := jwt.DecodeMCPAccessClaims(token, "https://demo.test/mcp")
 	Expect(err).IsNotNil()
 }
+
+func TestJWT_MCPSignInRequest_RoundTripAndIsolation(t *testing.T) {
+	RegisterT(t)
+	token, err := jwt.EncodeMCPSignInRequest(1, "https://mcp.demo.test", "client_id=c&state=s", time.Minute)
+	Expect(err).IsNil()
+	claims, err := jwt.DecodeMCPSignInRequest(token)
+	Expect(err).IsNil()
+	Expect(claims.TenantID).Equals(1)
+	Expect(claims.Origin).Equals("https://mcp.demo.test")
+	Expect(claims.Query).Equals("client_id=c&state=s")
+
+	// never a session, an MCP access token or a consent token
+	_, err = jwt.DecodeFiderClaims(token)
+	Expect(err).IsNotNil()
+	_, err = jwt.DecodeMCPAccessClaims(token, "https://mcp.demo.test/mcp")
+	Expect(err).IsNotNil()
+	_, err = jwt.DecodeMCPConsent(token, "https://mcp.demo.test")
+	Expect(err).IsNotNil()
+
+	expired, _ := jwt.EncodeMCPSignInRequest(1, "https://mcp.demo.test", "q", -time.Minute)
+	_, err = jwt.DecodeMCPSignInRequest(expired)
+	Expect(err).IsNotNil()
+}
+
+func TestJWT_MCPConsent_BoundToOrigin(t *testing.T) {
+	RegisterT(t)
+	token, err := jwt.EncodeMCPConsent(7, 1, "stamp", "https://mcp.demo.test", time.Minute)
+	Expect(err).IsNil()
+	claims, err := jwt.DecodeMCPConsent(token, "https://mcp.demo.test")
+	Expect(err).IsNil()
+	Expect(claims.UserID).Equals(7)
+	Expect(claims.TenantID).Equals(1)
+	Expect(claims.SecurityStamp).Equals("stamp")
+
+	_, err = jwt.DecodeMCPConsent(token, "https://other.demo.test")
+	Expect(err).IsNotNil()
+	_, err = jwt.DecodeFiderClaims(token)
+	Expect(err).IsNotNil()
+	_, err = jwt.DecodeMCPAccessClaims(token, "https://mcp.demo.test/mcp")
+	Expect(err).IsNotNil()
+	_, err = jwt.DecodeMCPSignInRequest(token)
+	Expect(err).IsNotNil()
+}
