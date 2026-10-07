@@ -24,18 +24,23 @@ import (
 // (always a same-site path, sanitized when set and again when read).
 const SignInReturnCookie = "__signin_return"
 
-// signInReturnURL consumes the remembered return path, defaulting to the root.
-func signInReturnURL(c *web.Context) string {
+// signInReturnPath consumes the remembered same-site return path ("" if none).
+func signInReturnPath(c *web.Context) string {
 	cookie, err := c.Request.Cookie(SignInReturnCookie)
 	if err != nil || cookie.Value == "" {
-		return c.BaseURL()
+		return ""
 	}
 	c.RemoveCookie(SignInReturnCookie)
 	value, err := url.QueryUnescape(cookie.Value)
 	if err != nil {
-		return c.BaseURL() + "/"
+		return "/"
 	}
-	return c.BaseURL() + sanitiseOAuthRedirect(c, value)
+	return sanitiseOAuthRedirect(c, value)
+}
+
+// signInReturnURL is the absolute URL to go to after signing in.
+func signInReturnURL(c *web.Context) string {
+	return c.BaseURL() + signInReturnPath(c)
 }
 
 // SignInPage renders the sign in page
@@ -448,6 +453,9 @@ func CompleteSignInProfile() web.HandlerFunc {
 
 		webutil.AddAuthUserCookie(c, user)
 
+		if path := signInReturnPath(c); path != "" && path != "/" {
+			return c.Ok(web.Map{"redirect": path})
+		}
 		return c.Ok(web.Map{})
 	}
 }

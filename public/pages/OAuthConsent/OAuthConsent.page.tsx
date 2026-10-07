@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useRef, useState } from "react"
 import { Trans } from "@lingui/react/macro"
 import { Button, TenantLogo } from "@fider/components"
 import { actions, Fider } from "@fider/services"
@@ -30,10 +30,17 @@ export const isSafeRedirect = (target: string): boolean => {
 
 const OAuthConsentPage = (props: OAuthConsentPageProps) => {
   const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState(false)
+  // One decision at a time: a ref updates synchronously, so a double click or
+  // Allow-then-Cancel cannot send a second decision while one is in flight.
+  const inFlight = useRef(false)
   const siteName = Fider.session.tenant?.name
 
   const decide = async (approve: boolean) => {
+    if (inFlight.current) return
+    inFlight.current = true
     setBusy(true)
+    setFailed(false)
     const result = await actions.decideOAuthAuthorization({
       clientId: props.clientId || "",
       redirectUri: props.redirectUri || "",
@@ -47,6 +54,8 @@ const OAuthConsentPage = (props: OAuthConsentPageProps) => {
       window.location.href = result.data.redirect
       return
     }
+    inFlight.current = false
+    setFailed(true)
     setBusy(false)
   }
 
@@ -79,6 +88,11 @@ const OAuthConsentPage = (props: OAuthConsentPageProps) => {
             <p className="p-oauth-consent__text text-muted">
               <Trans id="oauth.consent.redirect">After you choose, you will return to {props.redirectHost}.</Trans>
             </p>
+            {failed && (
+              <p className="p-oauth-consent__error" role="alert">
+                <Trans id="oauth.consent.failed">Something went wrong. Please try again, or close this page and reconnect from your app.</Trans>
+              </p>
+            )}
             <div className="p-oauth-consent__actions">
               <Button variant="primary" disabled={busy} onClick={() => decide(true)}>
                 <Trans id="oauth.consent.allow">Allow</Trans>

@@ -244,6 +244,7 @@
   "newpost.modal.title.placeholder": "Κάτι σύντομο και περιεκτικό, συνοψίστε το σε λίγες λέξεις",
   "oauth.consent.allow": "",
   "oauth.consent.cancel": "",
+  "oauth.consent.failed": "",
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",

@@ -22,7 +22,10 @@ const CompleteSignInProfilePage = (props: CompleteSignInProfilePageProps) => {
   const submit = async () => {
     const result = await actions.completeProfile(props.kind, props.k, name)
     if (result.ok) {
-      if (props.c !== undefined) {
+      const redirect = (result.data as { redirect?: string } | undefined)?.redirect
+      if (redirect && redirect.startsWith("/") && !redirect.startsWith("//")) {
+        location.href = redirect
+      } else if (props.c !== undefined) {
         location.href = "/?c=" + props.c
       } else {
         location.href = "/"

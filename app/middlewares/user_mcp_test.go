@@ -140,3 +140,14 @@ func TestUser_MCPEndpoint_ChallengesWithoutToken(t *testing.T) {
 	Expect(code).Equals(http.StatusUnauthorized)
 	Expect(headers.Get("WWW-Authenticate")).Equals(`Bearer resource_metadata="http://demo.test.fider.io/.well-known/oauth-protected-resource"`)
 }
+
+// A stale or foreign auth cookie must not shadow a valid MCP Bearer token.
+func TestUser_MCPAccessToken_WinsOverCookie(t *testing.T) {
+	RegisterT(t)
+	u := mcpUser()
+	tok := accessToken(u, mock.DemoTenant.ID, "upvora", mcpAudience, "stamp-1")
+
+	code, _, body := runAs(mcpSite(true, enum.RoleVisitor), "GET", "http://demo.test.fider.io/api/v1/posts", tok, "Cookie", "auth=not-a-valid-jwt")
+	Expect(code).Equals(http.StatusOK)
+	Expect(body).Equals(u.Name)
+}

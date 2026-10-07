@@ -2,9 +2,13 @@ package handlers_test
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strings"
 	"testing"
+	"unicode/utf8"
 
+	"github.com/getfider/fider/app"
 	"github.com/getfider/fider/app/handlers"
 	"github.com/getfider/fider/app/models/cmd"
 	"github.com/getfider/fider/app/models/entity"
@@ -154,4 +158,35 @@ func TestMCPClients_AdminCreateListDelete(t *testing.T) {
 	code, _ = mock.NewServer().OnTenant(mcpTenant(true, false)).AsUser(mock.JonSnow).AddParam("id", 5).Execute(handlers.DeleteMCPClient())
 	Expect(code).Equals(http.StatusOK)
 	Expect(deleted).Equals(5)
+}
+
+// Long multi-byte names are cut on a character boundary, never mid-character.
+func TestOAuthRegister_NameTruncatedByRunes(t *testing.T) {
+	RegisterT(t)
+	handlers.ResetOAuthRateLimits()
+	var saved *cmd.RegisterOAuthClient
+	bus.AddHandler(func(ctx context.Context, c *cmd.RegisterOAuthClient) error {
+		saved = c
+		c.Result = &entity.OAuthClient{ClientID: "x", Name: c.Name}
+		return nil
+	})
+	name := strings.Repeat("é", 150)
+	mock.NewServer().OnTenant(mcpTenant(true, true)).
+		ExecutePost(handlers.OAuthRegister(), `{"client_name":"`+name+`","redirect_uris":["https://claude.ai/cb"]}`)
+	Expect(utf8.ValidString(saved.Name)).IsTrue()
+	Expect(utf8.RuneCountInString(saved.Name)).Equals(100)
+}
+
+// The token endpoint has a per-site cap on top of the (forgeable) per-IP one.
+func TestOAuthToken_PerSiteCap(t *testing.T) {
+	RegisterT(t)
+	handlers.ResetOAuthRateLimits()
+	bus.AddHandler(func(ctx context.Context, q *query.GetOAuthClient) error { return app.ErrNotFound })
+	last := 0
+	for i := 0; i < 1100; i++ {
+		last, _ = mock.NewServer().OnTenant(mcpTenant(true, true)).AddHeader("CF-Connecting-IP", fmt.Sprintf("198.51.%d.%d", i/250, i%250)).
+			ExecutePost(handlers.OAuthTokenEndpoint(), "grant_type=authorization_code&client_id=x")
+	}
+	Expect(last).Equals(http.StatusTooManyRequests)
+	handlers.ResetOAuthRateLimits()
 }

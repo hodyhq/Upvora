@@ -34,10 +34,19 @@ func User() web.MiddlewareFunc {
 				fromAPIKey       bool
 			)
 
+			// An MCP access token on /api or /mcp is the caller's identity; a
+			// browser cookie sent alongside it is ignored, so a stale cookie
+			// can never shadow or replace the token.
+			bearer, hasBearer := web.ParseBearerToken(c.Request.GetHeader("Authorization"))
+			mcpBearer := hasBearer && isMCPAccessToken(bearer) && (c.Request.IsAPI() || isMCPPath(c))
+
 			cookie, err := c.Request.Cookie(web.CookieAuthName)
+			if mcpBearer {
+				err = http.ErrNoCookie
+			}
 			if err == nil {
 				token = cookie.Value
-			} else {
+			} else if !mcpBearer {
 				// The signup-transfer cookie is domain-wide, so it reaches every tenant
 				// subdomain. We do NOT promote it to a durable host-only auth cookie here:
 				// that only happens later, and only once we have confirmed the token's user
@@ -90,7 +99,7 @@ func User() web.MiddlewareFunc {
 					}
 					return c.Redirect("/signin")
 				}
-			} else if bearer, ok := web.ParseBearerToken(c.Request.GetHeader("Authorization")); ok && isMCPAccessToken(bearer) && (c.Request.IsAPI() || isMCPPath(c)) {
+			} else if mcpBearer {
 				// OAuth access token issued to an MCP client by this site.
 				mcpUser, status := userFromMCPAccessToken(c, bearer)
 				if status != 0 {

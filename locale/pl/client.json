@@ -244,6 +244,7 @@
   "newpost.modal.title.placeholder": "Coś krótkiego i zwięzłego, podsumuj to w kilku słowach",
   "oauth.consent.allow": "",
   "oauth.consent.cancel": "",
+  "oauth.consent.failed": "",
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",

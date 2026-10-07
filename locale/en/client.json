@@ -246,6 +246,7 @@
   "newpost.modal.title.placeholder": "Something short and snappy, sum it up in a few words",
   "oauth.consent.allow": "Allow",
   "oauth.consent.cancel": "Cancel",
+  "oauth.consent.failed": "Something went wrong. Please try again, or close this page and reconnect from your app.",
   "oauth.consent.redirect": "After you choose, you will return to {0}.",
   "oauth.consent.scope.full": "It will be able to do everything you can do here: share and edit ideas, comment, vote, and use any settings your role allows.",
   "oauth.consent.scope.read": "It will be able to read everything you can see here, but not change anything.",

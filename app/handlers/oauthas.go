@@ -27,6 +27,7 @@ var (
 	oauthRegisterPerIP     = ratelimit.New(20, time.Hour)
 	oauthRegisterPerTenant = ratelimit.New(200, time.Hour)
 	oauthTokenPerIP        = ratelimit.New(120, time.Minute)
+	oauthTokenPerTenant    = ratelimit.New(1000, time.Minute)
 )
 
 // ResetOAuthRateLimits clears the limiters (tests only).
@@ -34,6 +35,7 @@ func ResetOAuthRateLimits() {
 	oauthRegisterPerIP = ratelimit.New(20, time.Hour)
 	oauthRegisterPerTenant = ratelimit.New(200, time.Hour)
 	oauthTokenPerIP = ratelimit.New(120, time.Minute)
+	oauthTokenPerTenant = ratelimit.New(1000, time.Minute)
 }
 
 func mcpEnabled(c *web.Context) bool {
@@ -127,8 +129,8 @@ func OAuthRegister() web.HandlerFunc {
 		if name == "" {
 			name = "MCP client"
 		}
-		if len(name) > 100 {
-			name = name[:100]
+		if runes := []rune(name); len(runes) > 100 {
+			name = string(runes[:100])
 		}
 
 		reg := &cmd.RegisterOAuthClient{Name: name, RedirectURIs: input.RedirectURIs}
@@ -334,7 +336,8 @@ func OAuthTokenEndpoint() web.HandlerFunc {
 		}
 		c.Response.Header().Set("Cache-Control", "no-store")
 		c.Response.Header().Set("Pragma", "no-cache")
-		if !oauthTokenPerIP.Allow(strconv.Itoa(c.Tenant().ID) + "|" + c.Request.ClientIP()) {
+		tenantKey := strconv.Itoa(c.Tenant().ID)
+		if !oauthTokenPerIP.Allow(tenantKey+"|"+c.Request.ClientIP()) || !oauthTokenPerTenant.Allow(tenantKey) {
 			return oauthError(c, http.StatusTooManyRequests, "slow_down", "Too many token requests; try again later.")
 		}
 		form, err := url.ParseQuery(c.Request.Body)

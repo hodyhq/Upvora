@@ -244,6 +244,7 @@
   "newpost.modal.title.placeholder": "短くて簡潔なもの、一言でまとめましょう",
   "oauth.consent.allow": "",
   "oauth.consent.cancel": "",
+  "oauth.consent.failed": "",
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",

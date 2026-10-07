@@ -57,4 +57,23 @@ describe("ManageMCP settings", () => {
     await flush()
     expect(page.state.clients.map((c: any) => c.clientId)).toEqual(["cid"])
   })
+
+  test("removing a client needs a confirmation", async () => {
+    const del = jest.fn(() => Promise.resolve({ ok: true }))
+    http.delete = del as any
+    const page = new ManageMCPPage({ clients: [{ id: 3, clientId: "c", name: "n", redirectUris: [], createdByAdmin: false, createdAt: "" }], mcpUrl: "" })
+    page.setState = ((s: any, cb?: () => void) => {
+      page.state = { ...page.state, ...(typeof s === "function" ? s(page.state) : s) }
+      if (cb) cb()
+    }) as any
+
+    ;(page as any).requestRemove(3)
+    await flush()
+    expect(del).not.toHaveBeenCalled()
+    expect(page.state.confirmRemoveId).toBe(3)
+
+    await (page as any).deleteClient(3)
+    expect(del).toHaveBeenCalledTimes(1)
+    expect(page.state.clients).toHaveLength(0)
+  })
 })

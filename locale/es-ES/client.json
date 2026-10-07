@@ -244,6 +244,7 @@
   "newpost.modal.title.placeholder": "Algo corto y conciso, resúmalo en pocas palabras.",
   "oauth.consent.allow": "",
   "oauth.consent.cancel": "",
+  "oauth.consent.failed": "",
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",

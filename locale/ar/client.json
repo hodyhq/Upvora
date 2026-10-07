@@ -244,6 +244,7 @@
   "newpost.modal.title.placeholder": "شيء قصير وموجز، لخصه في بضع كلمات",
   "oauth.consent.allow": "",
   "oauth.consent.cancel": "",
+  "oauth.consent.failed": "",
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",

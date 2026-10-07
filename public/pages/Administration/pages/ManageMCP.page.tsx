@@ -11,6 +11,7 @@ interface ManageMCPPageProps {
 
 interface ManageMCPPageState extends MCPSettings {
   clients: MCPClient[]
+  confirmRemoveId?: number
   newName: string
   newRedirect: string
 }
@@ -73,10 +74,15 @@ export default class ManageMCPPage extends AdminBasePage<ManageMCPPageProps, Man
     }
   }
 
+  // Removing a client disconnects everyone who approved it, so it takes two clicks.
+  private requestRemove = (id: number) => {
+    this.setState({ confirmRemoveId: id } as ManageMCPPageState)
+  }
+
   private deleteClient = async (id: number) => {
     const result = await actions.deleteMCPClient(id)
     if (result.ok) {
-      this.setState((s) => ({ ...s, clients: s.clients.filter((c) => c.id !== id) }))
+      this.setState((s) => ({ ...s, confirmRemoveId: undefined, clients: s.clients.filter((c) => c.id !== id) }))
     }
   }
 
@@ -91,6 +97,7 @@ export default class ManageMCPPage extends AdminBasePage<ManageMCPPageProps, Man
           </p>
         </Field>
         <Select
+          key={this.state.minRole}
           field="minRole"
           label="Who may connect"
           defaultValue={this.state.minRole}
@@ -127,9 +134,20 @@ export default class ManageMCPPage extends AdminBasePage<ManageMCPPageProps, Man
                   </td>
                   <td>{c.redirectUris.join(", ")}</td>
                   <td>
-                    <Button variant="danger" size="small" onClick={() => this.deleteClient(c.id)}>
-                      Remove
-                    </Button>
+                    {this.state.confirmRemoveId === c.id ? (
+                      <>
+                        <Button variant="danger" size="small" onClick={() => this.deleteClient(c.id)}>
+                          Confirm remove
+                        </Button>
+                        <Button variant="tertiary" size="small" onClick={() => this.setState({ confirmRemoveId: undefined } as ManageMCPPageState)}>
+                          Keep
+                        </Button>
+                      </>
+                    ) : (
+                      <Button variant="danger" size="small" onClick={() => this.requestRemove(c.id)}>
+                        Remove
+                      </Button>
+                    )}
                   </td>
                 </tr>
               ))}

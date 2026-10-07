@@ -244,6 +244,7 @@
   "newpost.modal.title.placeholder": "Något kort och rappt, sammanfatta det med några få ord",
   "oauth.consent.allow": "",
   "oauth.consent.cancel": "",
+  "oauth.consent.failed": "",
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",

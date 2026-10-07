@@ -244,6 +244,7 @@
   "newpost.modal.title.placeholder": "Iets kort en krachtigs, vat het samen in een paar woorden",
   "oauth.consent.allow": "",
   "oauth.consent.cancel": "",
+  "oauth.consent.failed": "",
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",

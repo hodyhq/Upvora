@@ -244,6 +244,7 @@
   "newpost.modal.title.placeholder": "Что-то короткое и емкое, изложите это в нескольких словах.",
   "oauth.consent.allow": "",
   "oauth.consent.cancel": "",
+  "oauth.consent.failed": "",
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",

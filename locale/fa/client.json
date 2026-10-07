@@ -244,6 +244,7 @@
   "newpost.modal.title.placeholder": "چیزی کوتاه و مختصر، خلاصه در چند کلمه",
   "oauth.consent.allow": "",
   "oauth.consent.cancel": "",
+  "oauth.consent.failed": "",
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",

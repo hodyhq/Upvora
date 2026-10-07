@@ -60,4 +60,35 @@ describe("<OAuthConsentPage />", () => {
     expect(screen.getByText("This application is not registered on this site.")).toBeTruthy()
     expect(screen.queryAllByRole("button")).toHaveLength(0)
   })
+
+  test("one decision only, even on a double click", async () => {
+    let resolvePost: (v: any) => void = () => undefined
+    const post = jest.fn(() => new Promise((r) => (resolvePost = r)))
+    http.post = post as any
+
+    render(<OAuthConsentPage {...props} />)
+    const [allow, cancel] = screen.getAllByRole("button")
+    await act(async () => {
+      fireEvent.click(allow)
+      fireEvent.click(allow)
+      fireEvent.click(cancel)
+    })
+    expect(post).toHaveBeenCalledTimes(1)
+    await act(async () => resolvePost({ ok: false }))
+  })
+
+  test("a failed decision shows an error and allows a retry", async () => {
+    const post = jest.fn(() => Promise.resolve({ ok: false }))
+    http.post = post as any
+
+    render(<OAuthConsentPage {...props} />)
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole("button")[0])
+    })
+    expect(screen.getByRole("alert")).toBeTruthy()
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole("button")[0])
+    })
+    expect(post).toHaveBeenCalledTimes(2)
+  })
 })

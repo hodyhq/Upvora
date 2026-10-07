@@ -244,6 +244,7 @@
   "newpost.modal.title.placeholder": "Eine kurze und knappe Zusammenfassung in wenigen Worten",
   "oauth.consent.allow": "",
   "oauth.consent.cancel": "",
+  "oauth.consent.failed": "",
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",

@@ -2,10 +2,12 @@ package handlers_test
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
 
+	"github.com/getfider/fider/app"
 	"github.com/getfider/fider/app/handlers"
 	"github.com/getfider/fider/app/models/cmd"
 	"github.com/getfider/fider/app/models/entity"
@@ -65,4 +67,30 @@ func TestVerifySignInKey_ReturnsToRememberedURL(t *testing.T) {
 		AddCookie(handlers.SignInReturnCookie, "https%3A%2F%2Fevil.example%2F").
 		Execute(handlers.VerifySignInKey(enum.EmailVerificationKindSignIn))
 	Expect(res.Header().Get("Location")).Equals("http://demo.test.fider.io/")
+}
+
+// A new user who completes their profile goes back to the remembered page
+// (e.g. an MCP consent screen), not the home page.
+func TestCompleteSignInProfile_ReturnsRememberedPath(t *testing.T) {
+	RegisterT(t)
+	bus.AddHandler(func(ctx context.Context, c *cmd.RegisterUser) error { return nil })
+	bus.AddHandler(func(ctx context.Context, q *query.GetUserByEmail) error { return app.ErrNotFound })
+	bus.AddHandler(func(ctx context.Context, q *query.GetVerificationByKey) error {
+		q.Result = &entity.EmailVerification{Key: q.Key, Kind: q.Kind, ExpiresAt: time.Now().Add(5 * time.Minute), Email: "hot.pie@got.com"}
+		return nil
+	})
+	bus.AddHandler(func(ctx context.Context, c *cmd.SetKeyAsVerified) error { return nil })
+
+	body := fmt.Sprintf(`{"name": "Hot Pie", "kind": %d, "key": "1234567890"}`, enum.EmailVerificationKindSignIn)
+	code, res := mock.NewServer().OnTenant(mock.DemoTenant).
+		WithURL("http://demo.test.fider.io/_api/signin/complete").
+		AddCookie(handlers.SignInReturnCookie, "%2Foauth2%2Fauthorize%3Fclient_id%3Dabc").
+		ExecutePostAsJSON(handlers.CompleteSignInProfile(), body)
+	Expect(code).Equals(http.StatusOK)
+	Expect(res.String("redirect")).Equals("/oauth2/authorize?client_id=abc")
+
+	// without a remembered page there is no redirect
+	_, res = mock.NewServer().OnTenant(mock.DemoTenant).
+		WithURL("http://demo.test.fider.io/_api/signin/complete").ExecutePostAsJSON(handlers.CompleteSignInProfile(), body)
+	Expect(res.Contains("redirect")).IsFalse()
 }

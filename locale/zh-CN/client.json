@@ -244,6 +244,7 @@
   "newpost.modal.title.placeholder": "简短而活泼，用几句话概括",
   "oauth.consent.allow": "",
   "oauth.consent.cancel": "",
+  "oauth.consent.failed": "",
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",
