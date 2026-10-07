@@ -315,6 +315,7 @@
   "signin.code.placeholder": "اكتب الكود هنا",
   "signin.code.sent": "لقد تم إرسال رمز جديد إلى بريدك الإلكتروني.",
   "signin.email.placeholder": "البريد الإلكتروني",
+  "signin.message.default.title": "",
   "signin.message.email": "متابعة بالبريد الإلكتروني",
   "signin.message.emaildisabled": "تم تعطيل مصادقة البريد الإلكتروني من قبل المسؤول. إذا كان لديك حساب مسؤول وتحتاج إلى تجاوز هذا التقييد، الرجاء <0>انقر هنا </0>.",
   "signin.message.emailsent": "لقد أرسلنا للتو رابط تأكيد إلى <0>{email}</0>. انقر فوق الرابط وسوف تسجل دخولك.",

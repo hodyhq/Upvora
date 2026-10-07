@@ -315,6 +315,7 @@
   "signin.code.placeholder": "Sem zadajte kód",
   "signin.code.sent": "Nový kód bol odoslaný na váš e-mail.",
   "signin.email.placeholder": "Emailová adresa",
+  "signin.message.default.title": "",
   "signin.message.email": "Pokračovať pomocou e-mailu",
   "signin.message.emaildisabled": "Správca zakázal overovanie emailu. Ak máte účet správcu a potrebujete obísť toto obmedzenie, <0>kliknite sem</0>.",
   "signin.message.emailsent": "Práve sme odoslali potvrdzovací odkaz na adresu <0>{email}</0>. Kliknite na odkaz a budete prihlásení.",

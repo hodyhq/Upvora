@@ -17,7 +17,7 @@ interface SocialSignInButtonProps {
 
 export const SocialSignInButton = (props: SocialSignInButtonProps) => {
   const redirectTo = props.redirectTo || window.location.href
-  const href = props.option.url ? `${props.option.url}?redirect=${redirectTo}` : ""
+  const href = props.option.url ? `${props.option.url}?redirect=${encodeURIComponent(redirectTo)}` : ""
 
   const handleClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
     // If there is an onClick then let that run and check it finishes OK before doing the oauth.

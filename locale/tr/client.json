@@ -315,6 +315,7 @@
   "signin.code.placeholder": "Kodu buraya yazın",
   "signin.code.sent": "E-postanıza yeni bir kod gönderildi.",
   "signin.email.placeholder": "E-posta adresi",
+  "signin.message.default.title": "",
   "signin.message.email": "E-postayla devam et",
   "signin.message.emaildisabled": "E-posta doğrulaması bir yönetici tarafından devre dışı bırakıldı. Eğer bir yönetici hesabınız varsa ve bu kısıtı kaldırmak istiyorsanız <0>buraya tıklayın</0>.",
   "signin.message.emailsent": "<0>{email}</0> e bir onay bağlantısı gönderdik. Bağlantıya tıkladığınızda kaydınız tamamlanacak.",

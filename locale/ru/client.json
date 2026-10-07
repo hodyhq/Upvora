@@ -315,6 +315,7 @@
   "signin.code.placeholder": "Введите код здесь",
   "signin.code.sent": "Новый код был отправлен на вашу электронную почту.",
   "signin.email.placeholder": "Адрес электронной почты",
+  "signin.message.default.title": "",
   "signin.message.email": "Продолжить с электронной почтой",
   "signin.message.emaildisabled": "Аутентификация по адресу электронной почты отключена. <0>Я администратор и мне нужно обойти это ограничение</0>.",
   "signin.message.emailsent": "Мы отправили ссылку для подтверждения на <0>{email}</0>. Перейдите по ней, чтобы войти.",

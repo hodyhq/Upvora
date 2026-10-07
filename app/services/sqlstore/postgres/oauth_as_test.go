@@ -123,3 +123,32 @@ func TestOAuthRefresh_WrongClientAndDeletedClient(t *testing.T) {
 	after := &cmd.RotateOAuthRefreshToken{OldHash: "rt-a", NewHash: "rt-b", ClientID: clientID, NewExpiresAt: time.Now().Add(time.Hour)}
 	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, after))).Equals(app.ErrNotFound)
 }
+
+// Rotating the user's security stamp (block, role change, sign-out everywhere)
+// kills outstanding codes and refresh tokens, and revokes the family.
+func TestOAuth_SecurityStampRotationRevokes(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	clientID := registerClient(t)
+	_, err := trx.Execute("UPDATE users SET security_stamp = 'stamp-a' WHERE id = $1", aryaStark.ID)
+	Expect(err).IsNil()
+
+	Expect(bus.Dispatch(demoTenantCtx, &cmd.SaveOAuthCode{CodeHash: "stamp-code", ClientID: clientID, UserID: aryaStark.ID,
+		RedirectURI: "https://claude.ai/api/mcp/auth_callback", Scope: "upvora", CodeChallenge: "c", SecurityStamp: "stamp-a",
+		ExpiresAt: time.Now().Add(time.Minute)})).IsNil()
+	Expect(bus.Dispatch(demoTenantCtx, &cmd.SaveOAuthRefreshToken{TokenHash: "stamp-rt", ClientID: clientID, UserID: aryaStark.ID,
+		Scope: "upvora", FamilyID: "fam-stamp", SecurityStamp: "stamp-a", ExpiresAt: time.Now().Add(time.Hour)})).IsNil()
+
+	_, err = trx.Execute("UPDATE users SET security_stamp = 'stamp-b' WHERE id = $1", aryaStark.ID)
+	Expect(err).IsNil()
+
+	consume := &cmd.ConsumeOAuthCode{CodeHash: "stamp-code", ClientID: clientID}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, consume))).Equals(app.ErrNotFound)
+
+	rot := &cmd.RotateOAuthRefreshToken{OldHash: "stamp-rt", NewHash: "stamp-rt2", ClientID: clientID, NewExpiresAt: time.Now().Add(time.Hour)}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, rot))).Equals(app.ErrNotFound)
+
+	var revoked int
+	Expect(trx.Scalar(&revoked, "SELECT COUNT(*) FROM oauth_refresh_tokens WHERE family_id = 'fam-stamp' AND revoked_at IS NOT NULL")).IsNil()
+	Expect(revoked).Equals(1)
+}

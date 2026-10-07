@@ -315,6 +315,7 @@
   "signin.code.placeholder": "Skriv in koden här",
   "signin.code.sent": "En ny kod har skickats till din e-postadress.",
   "signin.email.placeholder": "E-postadress",
+  "signin.message.default.title": "",
   "signin.message.email": "Fortsätt med e-post",
   "signin.message.emaildisabled": "E-postautentisering har inaktiverats av en administratör. Om du har ett administratörskonto och behöver kringgå denna begränsning, <0>klicka här</0>.",
   "signin.message.emailsent": "Vi har skickat en bekräftelselänk till <0>{email}</0>. Klicka på länken för att logga in.",

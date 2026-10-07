@@ -2,6 +2,7 @@ import React from "react"
 import { SignInControl, TenantLogo, LegalNotice } from "@fider/components"
 import { Trans } from "@lingui/react/macro"
 import { useFider } from "@fider/hooks"
+import { TenantStatus } from "@fider/models"
 
 const Locked = (): JSX.Element => {
   const fider = useFider()
@@ -29,6 +30,24 @@ const Private = (): JSX.Element => {
       <Trans id="signin.message.private.text">If you have an account or an invitation, you may use following options to sign in.</Trans>
     </>
   )
+}
+
+const Default = (): JSX.Element => {
+  const fider = useFider()
+  return (
+    <p className="text-title">
+      <Trans id="signin.message.default.title">
+        Sign in to <strong>{fider.session.tenant.name}</strong> to continue.
+      </Trans>
+    </p>
+  )
+}
+
+// signInIntro picks the message above the sign-in options. A public, active
+// site only reaches this page with ?redirect= (e.g. connecting an MCP client).
+export const signInIntro = (tenant: { isPrivate: boolean; status: TenantStatus }): "locked" | "private" | "default" => {
+  if (tenant.status === TenantStatus.Locked) return "locked"
+  return tenant.isPrivate ? "private" : "default"
 }
 
 export const SignInPage = () => {
@@ -60,7 +79,9 @@ export const SignInPage = () => {
       <div className="h-20 text-center mb-4">
         <TenantLogo size={100} />
       </div>
-      <div className="text-center w-max-4xl mx-auto mb-4">{fider.session.tenant.isPrivate ? <Private /> : <Locked />}</div>
+      <div className="text-center w-max-4xl mx-auto mb-4">
+        {{ locked: <Locked />, private: <Private />, default: <Default /> }[signInIntro(fider.session.tenant)]}
+      </div>
 
       <SignInControl onCodeVerified={onCodeVerified} useEmail={true} redirectTo={getRedirectToUrl()} />
       <LegalNotice />

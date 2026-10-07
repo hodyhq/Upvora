@@ -315,6 +315,7 @@
   "signin.code.placeholder": "Inserisci il codice qui",
   "signin.code.sent": "Un nuovo codice è stato inviato alla tua email.",
   "signin.email.placeholder": "Indirizzo email",
+  "signin.message.default.title": "",
   "signin.message.email": "Continua con l'email",
   "signin.message.emaildisabled": "L'autenticazione email è stata disabilitata da un amministratore. Se hai un account amministratore e hai bisogno di bypassare questa restrizione, per favore <0>clicca qui</0>.",
   "signin.message.emailsent": "Abbiamo appena inviato un link di conferma a <0>{email}</0>. Clicca sul link e ti verrà effettuato l'accesso.",

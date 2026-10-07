@@ -309,6 +309,7 @@ func OAuthAuthorizeDecision() web.HandlerFunc {
 			RedirectURI:   p.RedirectURI,
 			Scope:         check.scope,
 			CodeChallenge: p.CodeChallenge,
+			SecurityStamp: c.User().SecurityStamp,
 			ExpiresAt:     time.Now().Add(10 * time.Minute),
 		}); err != nil {
 			return c.Failure(err)
@@ -385,12 +386,13 @@ func OAuthTokenEndpoint() web.HandlerFunc {
 
 		if familyID != "" {
 			if err := bus.Dispatch(c, &cmd.SaveOAuthRefreshToken{
-				TokenHash: newRefreshHash,
-				ClientID:  grant.ClientID,
-				UserID:    user.ID,
-				Scope:     grant.Scope,
-				FamilyID:  familyID,
-				ExpiresAt: time.Now().Add(refreshTokenTTL),
+				TokenHash:     newRefreshHash,
+				ClientID:      grant.ClientID,
+				UserID:        user.ID,
+				Scope:         grant.Scope,
+				FamilyID:      familyID,
+				SecurityStamp: user.SecurityStamp,
+				ExpiresAt:     time.Now().Add(refreshTokenTTL),
 			}); err != nil {
 				return c.Failure(err)
 			}

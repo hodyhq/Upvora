@@ -315,6 +315,7 @@
   "signin.code.placeholder": "Saisissez le code ici",
   "signin.code.sent": "Un nouveau code a été envoyé à votre adresse e-mail.",
   "signin.email.placeholder": "Adresse email",
+  "signin.message.default.title": "",
   "signin.message.email": "Continuer avec une addresse email",
   "signin.message.emaildisabled": "L'authentification par e-mail a été désactivée par un administrateur. Si vous avez un compte administrateur, <0>cliquez ici</0> pour vous connecter.",
   "signin.message.emailsent": "Nous venons d'envoyer un lien de confirmation à <0>{email}</0>. Cliquez sur le lien et vous serez connecté.",

@@ -28,6 +28,7 @@ type SaveOAuthCode struct {
 	RedirectURI   string
 	Scope         string
 	CodeChallenge string
+	SecurityStamp string // user's stamp at issue; a later rotation invalidates the code
 	ExpiresAt     time.Time
 }
 
@@ -47,7 +48,9 @@ type SaveOAuthRefreshToken struct {
 	UserID    int
 	Scope     string
 	FamilyID  string
-	ExpiresAt time.Time
+	// SecurityStamp is the user's stamp at issue; rotating it revokes the family.
+	SecurityStamp string
+	ExpiresAt     time.Time
 }
 
 // RotateOAuthRefreshToken exchanges a live refresh token for a new one in the

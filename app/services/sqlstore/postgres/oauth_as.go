@@ -45,6 +45,7 @@ type dbOAuthGrant struct {
 	RedirectURI   string `db:"redirect_uri"`
 	CodeChallenge string `db:"code_challenge"`
 	FamilyID      string `db:"family_id"`
+	SecurityStamp string `db:"security_stamp"`
 }
 
 func (g *dbOAuthGrant) toModel() *entity.OAuthGrant {
@@ -127,9 +128,9 @@ func deleteOAuthClient(ctx context.Context, c *cmd.DeleteOAuthClient) error {
 func saveOAuthCode(ctx context.Context, c *cmd.SaveOAuthCode) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
 		_, err := trx.Execute(`
-			INSERT INTO oauth_codes (code_hash, tenant_id, client_id, user_id, redirect_uri, scope, code_challenge, expires_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-			c.CodeHash, tenant.ID, c.ClientID, c.UserID, c.RedirectURI, c.Scope, c.CodeChallenge, c.ExpiresAt)
+			INSERT INTO oauth_codes (code_hash, tenant_id, client_id, user_id, redirect_uri, scope, code_challenge, security_stamp, expires_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+			c.CodeHash, tenant.ID, c.ClientID, c.UserID, c.RedirectURI, c.Scope, c.CodeChallenge, c.SecurityStamp, c.ExpiresAt)
 		if err != nil {
 			return errors.Wrap(err, "failed to save OAuth code")
 		}
@@ -144,7 +145,8 @@ func consumeOAuthCode(ctx context.Context, c *cmd.ConsumeOAuthCode) error {
 		err := trx.Get(&row, `
 			UPDATE oauth_codes SET used_at = now()
 			WHERE code_hash = $1 AND tenant_id = $2 AND client_id = $3 AND used_at IS NULL AND expires_at > now()
-			RETURNING user_id, client_id, scope, redirect_uri, code_challenge, '' AS family_id`,
+			  AND security_stamp = (SELECT COALESCE(security_stamp, '') FROM users WHERE id = oauth_codes.user_id AND tenant_id = $2)
+			RETURNING user_id, client_id, scope, redirect_uri, code_challenge, '' AS family_id, security_stamp`,
 			c.CodeHash, tenant.ID, c.ClientID)
 		if err != nil {
 			return errors.Wrap(err, "failed to consume OAuth code")
@@ -157,9 +159,9 @@ func consumeOAuthCode(ctx context.Context, c *cmd.ConsumeOAuthCode) error {
 func saveOAuthRefreshToken(ctx context.Context, c *cmd.SaveOAuthRefreshToken) error {
 	return using(ctx, func(trx *dbx.Trx, tenant *entity.Tenant, _ *entity.User) error {
 		_, err := trx.Execute(`
-			INSERT INTO oauth_refresh_tokens (token_hash, tenant_id, client_id, user_id, scope, family_id, expires_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-			c.TokenHash, tenant.ID, c.ClientID, c.UserID, c.Scope, c.FamilyID, c.ExpiresAt)
+			INSERT INTO oauth_refresh_tokens (token_hash, tenant_id, client_id, user_id, scope, family_id, security_stamp, expires_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+			c.TokenHash, tenant.ID, c.ClientID, c.UserID, c.Scope, c.FamilyID, c.SecurityStamp, c.ExpiresAt)
 		if err != nil {
 			return errors.Wrap(err, "failed to save OAuth refresh token")
 		}
@@ -174,11 +176,12 @@ func rotateOAuthRefreshToken(ctx context.Context, c *cmd.RotateOAuthRefreshToken
 			UPDATE oauth_refresh_tokens SET rotated_at = now()
 			WHERE token_hash = $1 AND tenant_id = $2 AND client_id = $3
 			  AND rotated_at IS NULL AND revoked_at IS NULL AND expires_at > now()
-			RETURNING user_id, client_id, scope, '' AS redirect_uri, '' AS code_challenge, family_id`,
+			  AND security_stamp = (SELECT COALESCE(security_stamp, '') FROM users WHERE id = oauth_refresh_tokens.user_id AND tenant_id = $2)
+			RETURNING user_id, client_id, scope, '' AS redirect_uri, '' AS code_challenge, family_id, security_stamp`,
 			c.OldHash, tenant.ID, c.ClientID)
 		if errors.Cause(err) == app.ErrNotFound {
-			// A rotated or revoked token was presented: treat it as stolen and
-			// revoke its whole family (RFC 9700 refresh token reuse detection).
+			// A rotated, revoked, or stamp-invalidated token was presented: revoke
+			// its whole family (RFC 9700 refresh token reuse detection).
 			if _, rerr := trx.Execute(`
 				UPDATE oauth_refresh_tokens SET revoked_at = now()
 				WHERE tenant_id = $1 AND revoked_at IS NULL AND family_id = (
@@ -192,9 +195,9 @@ func rotateOAuthRefreshToken(ctx context.Context, c *cmd.RotateOAuthRefreshToken
 			return errors.Wrap(err, "failed to rotate OAuth refresh token")
 		}
 		if _, err := trx.Execute(`
-			INSERT INTO oauth_refresh_tokens (token_hash, tenant_id, client_id, user_id, scope, family_id, expires_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-			c.NewHash, tenant.ID, row.ClientID, row.UserID, row.Scope, row.FamilyID, c.NewExpiresAt); err != nil {
+			INSERT INTO oauth_refresh_tokens (token_hash, tenant_id, client_id, user_id, scope, family_id, security_stamp, expires_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+			c.NewHash, tenant.ID, row.ClientID, row.UserID, row.Scope, row.FamilyID, row.SecurityStamp, c.NewExpiresAt); err != nil {
 			return errors.Wrap(err, "failed to save rotated OAuth refresh token")
 		}
 		c.Result = row.toModel()

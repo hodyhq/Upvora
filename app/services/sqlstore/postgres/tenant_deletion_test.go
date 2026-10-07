@@ -174,3 +174,21 @@ func TestTenantDeletion_AdminScheduledHasNoCancelKey(t *testing.T) {
 	Expect(found).IsNotNil()
 	Expect(found.DeletionCancelKey).Equals("")
 }
+
+// A site that used MCP must still be deletable (oauth_* rows reference tenants and users).
+func TestTenantDeletion_WithOAuthClientsAndTokens(t *testing.T) {
+	ctx := SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+
+	reg := &cmd.RegisterOAuthClient{Name: "Claude", RedirectURIs: []string{"https://claude.ai/cb"}}
+	Expect(bus.Dispatch(demoTenantCtx, reg)).IsNil()
+	Expect(bus.Dispatch(demoTenantCtx, &cmd.SaveOAuthCode{CodeHash: "del-code", ClientID: reg.Result.ClientID, UserID: jonSnow.ID,
+		RedirectURI: "https://claude.ai/cb", Scope: "upvora", CodeChallenge: "c", ExpiresAt: time.Now().Add(time.Minute)})).IsNil()
+	Expect(bus.Dispatch(demoTenantCtx, &cmd.SaveOAuthRefreshToken{TokenHash: "del-rt", ClientID: reg.Result.ClientID, UserID: jonSnow.ID,
+		Scope: "upvora", FamilyID: "f", ExpiresAt: time.Now().Add(time.Hour)})).IsNil()
+
+	Expect(bus.Dispatch(ctx, &cmd.DeleteTenant{TenantID: demoTenant.ID})).IsNil()
+	for _, table := range []string{"oauth_clients", "oauth_codes", "oauth_refresh_tokens"} {
+		Expect(countTenantRows(table, demoTenant.ID)).Equals(0)
+	}
+}
