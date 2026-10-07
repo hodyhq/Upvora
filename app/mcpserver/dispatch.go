@@ -204,7 +204,7 @@ func DispatchContext(parent context.Context, engine http.Handler, orig *http.Req
 	if len(query) > 0 {
 		target += "?" + query.Encode()
 	}
-	req, err := http.NewRequestWithContext(ctx, t.Method, target, reader)
+	req, err := http.NewRequestWithContext(context.WithValue(ctx, oauthas.ReplayCtxKey{}, true), t.Method, target, reader)
 	if err != nil {
 		return errResult("Request could not be built.")
 	}

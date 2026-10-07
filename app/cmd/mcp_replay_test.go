@@ -45,13 +45,13 @@ func TestMCPReplay_AuthenticatesThroughRealEngine(t *testing.T) {
 	})
 	engine := routes(web.New())
 
-	// direct REST call with the token
+	// the token is for /mcp: sent straight to the REST API it is refused
 	direct, _ := http.NewRequest("GET", "http://demo.test.fider.io/api/v1/notifications", nil)
 	direct.Header.Set("Authorization", "Bearer "+token)
 	direct.RequestURI = direct.URL.RequestURI()
 	rec := httptest.NewRecorder()
 	engine.ServeHTTP(rec, direct)
-	Expect(rec.Code).Equals(http.StatusOK)
+	Expect(rec.Code).Equals(http.StatusUnauthorized)
 
 	// the same call replayed as an MCP tool
 	orig, _ := http.NewRequest("POST", "http://demo.test.fider.io/mcp", nil)

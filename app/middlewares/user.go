@@ -38,7 +38,12 @@ func User() web.MiddlewareFunc {
 			// browser cookie sent alongside it is ignored, so a stale cookie
 			// can never shadow or replace the token.
 			bearer, hasBearer := web.ParseBearerToken(c.Request.GetHeader("Authorization"))
-			mcpBearer := hasBearer && isMCPAccessToken(bearer) && (c.Request.IsAPI() || isMCPPath(c))
+			isReplay, _ := c.Value(oauthas.ReplayCtxKey{}).(bool)
+			mcpBearer := hasBearer && isMCPAccessToken(bearer) && (isMCPPath(c) || (isReplay && c.Request.IsAPI()))
+			// An MCP token sent straight to /api would skip the MCP budgets and audit.
+			if hasBearer && isMCPAccessToken(bearer) && c.Request.IsAPI() && !isReplay {
+				return mcpUnauthorized(c, http.StatusUnauthorized)
+			}
 
 			// /mcp takes only Bearer tokens: a browser session there would list
 			// tools that then run anonymously.
