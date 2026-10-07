@@ -174,6 +174,10 @@ func routes(r *web.Engine) *web.Engine {
 		ui.Get("/_api/notifications/unread/total", handlers.TotalUnreadNotifications())
 		// Members may publish their own private idea; the handler enforces the rules.
 		ui.Post("/_api/posts/:number/privacy", handlers.SetPostPrivacy())
+		// MCP client authorization: the user is signed in by now (IsAuthenticated
+		// sends them through the site's normal sign-in), then consents here.
+		ui.Get("/oauth2/authorize", handlers.OAuthAuthorize())
+		ui.Post("/_api/oauth2/authorize", handlers.OAuthAuthorizeDecision())
 
 		// From this step, only Collaborators and Administrators are allowed
 		ui.Use(middlewares.IsAuthorized(enum.RoleCollaborator, enum.RoleAdministrator))

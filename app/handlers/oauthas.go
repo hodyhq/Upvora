@@ -2,7 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/getfider/fider/app/models/entity"
+	"github.com/getfider/fider/app/models/query"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -138,5 +141,175 @@ func OAuthRegister() web.HandlerFunc {
 			"response_types":             []string{"code"},
 			"client_id_issued_at":        time.Now().Unix(),
 		})
+	}
+}
+
+// authorizeParams are the authorization request fields, from the query string
+// (GET) or the consent page's JSON (POST). The POST is validated again in full.
+type authorizeParams struct {
+	ClientID            string `json:"clientId"`
+	RedirectURI         string `json:"redirectUri"`
+	ResponseType        string `json:"responseType"`
+	CodeChallenge       string `json:"codeChallenge"`
+	CodeChallengeMethod string `json:"codeChallengeMethod"`
+	Scope               string `json:"scope"`
+	State               string `json:"state"`
+	Approve             bool   `json:"approve"`
+}
+
+// authorizeCheck is the outcome of validating a request: either a page error
+// (client or redirect not verified, so we must not redirect), a protocol error
+// for the verified redirect, a role denial, or a valid request.
+type authorizeCheck struct {
+	client     *entity.OAuthClient
+	scope      string
+	pageError  string // shown on our page, never redirected
+	oauthError string // sent back to the verified redirect_uri
+	denied     bool   // signed-in user's role is below the site's minimum
+}
+
+func checkAuthorize(c *web.Context, p authorizeParams) authorizeCheck {
+	getClient := &query.GetOAuthClient{ClientID: p.ClientID}
+	if p.ClientID == "" || bus.Dispatch(c, getClient) != nil {
+		return authorizeCheck{pageError: "This application is not registered on this site."}
+	}
+	matched := false
+	for _, uri := range getClient.Result.RedirectURIs {
+		if uri == p.RedirectURI {
+			matched = true
+		}
+	}
+	if !matched {
+		return authorizeCheck{pageError: "The application's return address does not match its registration."}
+	}
+	check := authorizeCheck{client: getClient.Result}
+	if p.ResponseType != "code" {
+		check.oauthError = "unsupported_response_type"
+		return check
+	}
+	if p.CodeChallengeMethod != "S256" || !oauthas.ValidChallenge(p.CodeChallenge) {
+		check.oauthError = "invalid_request"
+		return check
+	}
+	scope, ok := oauthas.ParseScope(p.Scope)
+	if !ok {
+		check.oauthError = "invalid_scope"
+		return check
+	}
+	check.scope = scope
+	if c.User().Role < c.Tenant().MCPMinRole {
+		check.denied = true
+	}
+	return check
+}
+
+// clientRedirect appends params to a verified redirect URI, keeping its own query.
+func clientRedirect(redirectURI string, params map[string]string) string {
+	u, err := url.Parse(redirectURI)
+	if err != nil {
+		return redirectURI
+	}
+	q := u.Query()
+	for k, v := range params {
+		if v != "" {
+			q.Set(k, v)
+		}
+	}
+	u.RawQuery = q.Encode()
+	return u.String()
+}
+
+const roleDeniedMessage = "Your role on this site is not allowed to connect MCP clients."
+
+func consentPage(c *web.Context, status int, data web.Map) error {
+	return c.Page(status, web.Props{
+		Page:  "OAuthConsent/OAuthConsent.page",
+		Title: "Connect an application",
+		Data:  data,
+	})
+}
+
+// OAuthAuthorize validates an authorization request and shows the consent
+// screen. Signing in is handled before this by IsAuthenticated (the instance's
+// own sign-in, whatever providers it has).
+func OAuthAuthorize() web.HandlerFunc {
+	return func(c *web.Context) error {
+		if !mcpEnabled(c) {
+			return c.NotFound()
+		}
+		p := authorizeParams{
+			ClientID:            c.QueryParam("client_id"),
+			RedirectURI:         c.QueryParam("redirect_uri"),
+			ResponseType:        c.QueryParam("response_type"),
+			CodeChallenge:       c.QueryParam("code_challenge"),
+			CodeChallengeMethod: c.QueryParam("code_challenge_method"),
+			Scope:               c.QueryParam("scope"),
+			State:               c.QueryParam("state"),
+		}
+		check := checkAuthorize(c, p)
+		switch {
+		case check.pageError != "":
+			return consentPage(c, http.StatusBadRequest, web.Map{"error": check.pageError})
+		case check.oauthError != "":
+			return c.Redirect(clientRedirect(p.RedirectURI, map[string]string{"error": check.oauthError, "state": p.State, "iss": c.BaseURL()}))
+		case check.denied:
+			return consentPage(c, http.StatusForbidden, web.Map{"error": roleDeniedMessage})
+		}
+		redirectHost := ""
+		if u, err := url.Parse(p.RedirectURI); err == nil {
+			redirectHost = u.Host
+			if redirectHost == "" {
+				redirectHost = u.Scheme
+			}
+		}
+		return consentPage(c, http.StatusOK, web.Map{
+			"clientName":          check.client.Name,
+			"redirectHost":        redirectHost,
+			"scope":               check.scope,
+			"clientId":            p.ClientID,
+			"redirectUri":         p.RedirectURI,
+			"codeChallenge":       p.CodeChallenge,
+			"codeChallengeMethod": p.CodeChallengeMethod,
+			"state":               p.State,
+		})
+	}
+}
+
+// OAuthAuthorizeDecision records the user's approve/deny choice (same-origin
+// JSON, CSRF-protected) and returns where the browser should go next.
+func OAuthAuthorizeDecision() web.HandlerFunc {
+	return func(c *web.Context) error {
+		if !mcpEnabled(c) {
+			return c.NotFound()
+		}
+		p := authorizeParams{}
+		if err := json.Unmarshal([]byte(c.Request.Body), &p); err != nil {
+			return c.BadRequest(web.Map{"error": "invalid request"})
+		}
+		p.ResponseType = "code"
+		check := checkAuthorize(c, p)
+		switch {
+		case check.pageError != "" || check.oauthError != "":
+			return c.BadRequest(web.Map{"error": "invalid authorization request"})
+		case check.denied:
+			return c.JSON(http.StatusForbidden, web.Map{"error": roleDeniedMessage})
+		}
+		if !p.Approve {
+			return c.Ok(web.Map{"redirect": clientRedirect(p.RedirectURI, map[string]string{"error": "access_denied", "state": p.State, "iss": c.BaseURL()})})
+		}
+
+		plain, hash := oauthas.NewToken()
+		if err := bus.Dispatch(c, &cmd.SaveOAuthCode{
+			CodeHash:      hash,
+			ClientID:      check.client.ClientID,
+			UserID:        c.User().ID,
+			RedirectURI:   p.RedirectURI,
+			Scope:         check.scope,
+			CodeChallenge: p.CodeChallenge,
+			ExpiresAt:     time.Now().Add(10 * time.Minute),
+		}); err != nil {
+			return c.Failure(err)
+		}
+		return c.Ok(web.Map{"redirect": clientRedirect(p.RedirectURI, map[string]string{"code": plain, "state": p.State, "iss": c.BaseURL()})})
 	}
 }
