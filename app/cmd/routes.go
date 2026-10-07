@@ -319,6 +319,16 @@ func routes(r *web.Engine) *web.Engine {
 		membersApi.Post("/api/v1/posts/:number/subscription", apiv1.Subscribe())
 		membersApi.Delete("/api/v1/posts/:number/subscription", apiv1.Unsubscribe())
 
+		// Self-service and notifications (same handlers as the UI's /_api routes).
+		membersApi.Get("/api/v1/notifications", handlers.GetAllNotifications())
+		membersApi.Get("/api/v1/notifications/unread/total", handlers.TotalUnreadNotifications())
+		membersApi.Post("/api/v1/notifications/read-all", handlers.ReadAllNotifications())
+		membersApi.Post("/api/v1/user/settings", handlers.UpdateUserSettings())
+		membersApi.Post("/api/v1/user/change-email", handlers.ChangeUserEmail())
+		membersApi.Post("/api/v1/user/regenerate-apikey", handlers.RegenerateAPIKey())
+		// Members may publish their own private idea; the handler enforces the rules.
+		membersApi.Post("/api/v1/posts/:number/privacy", handlers.SetPostPrivacy())
+
 		membersApi.Use(middlewares.IsAuthorized(enum.RoleCollaborator, enum.RoleAdministrator))
 		membersApi.Put("/api/v1/posts/:number/status", apiv1.SetResponse())
 	}
@@ -334,6 +344,9 @@ func routes(r *web.Engine) *web.Engine {
 		staffApi.Get("/api/v1/users", apiv1.ListUsers())
 		staffApi.Post("/api/v1/invitations/send", apiv1.SendInvites())
 		staffApi.Post("/api/v1/invitations/sample", apiv1.SendSampleInvite())
+		staffApi.Get("/api/v1/posts/:number/internal-note", handlers.GetInternalNote())
+		staffApi.Get("/api/v1/admin/scorecard-fields", handlers.ListScorecardFields())
+		staffApi.Get("/api/v1/admin/products", handlers.ListProducts())
 
 		staffApi.Use(middlewares.BlockLockedTenants())
 		staffApi.Post("/api/v1/posts/:number/tags/:slug", apiv1.AssignTag())
@@ -343,6 +356,20 @@ func routes(r *web.Engine) *web.Engine {
 		staffApi.Post("/api/v1/tags", apiv1.CreateEditTag())
 		staffApi.Put("/api/v1/tags/:slug", apiv1.CreateEditTag())
 		staffApi.Delete("/api/v1/tags/:slug", apiv1.DeleteTag())
+		staffApi.Put("/api/v1/posts/:number/product", handlers.SetPostProduct())
+		staffApi.Put("/api/v1/posts/:number/internal-note", handlers.SetInternalNote())
+		staffApi.Post("/api/v1/scorecards", handlers.CreateScorecard())
+		staffApi.Put("/api/v1/scorecards/:id", handlers.UpdateScorecard())
+		staffApi.Delete("/api/v1/scorecards/:id", handlers.DeleteScorecard())
+		staffApi.Post("/api/v1/admin/scorecard-fields", handlers.CreateScorecardField())
+		staffApi.Put("/api/v1/admin/scorecard-fields/:id", handlers.UpdateScorecardField())
+		staffApi.Delete("/api/v1/admin/scorecard-fields/:id", handlers.DeleteScorecardField())
+		staffApi.Post("/api/v1/admin/scorecard-settings", handlers.UpdateScorecardSettings())
+		staffApi.Post("/api/v1/admin/settings/theme", handlers.UpdateTenantTheme())
+		// Product handlers enforce admin-only themselves for list and delete.
+		staffApi.Post("/api/v1/admin/products", handlers.CreateProduct())
+		staffApi.Put("/api/v1/admin/products/:id", handlers.UpdateProduct())
+		staffApi.Delete("/api/v1/admin/products/:id", handlers.DeleteProduct())
 	}
 
 	// Operations used to manage a site
@@ -354,6 +381,22 @@ func routes(r *web.Engine) *web.Engine {
 		adminApi.Use(middlewares.IsAuthorized(enum.RoleAdministrator))
 
 		adminApi.Post("/api/v1/users", apiv1.CreateUser())
+		adminApi.Get("/api/v1/posts/:number/brief/transcript", handlers.GetBriefTranscript())
+		adminApi.Get("/api/v1/admin/system/status", handlers.SystemStatus())
+		adminApi.Get("/api/v1/admin/statuses", handlers.ListStatuses())
+		adminApi.Get("/api/v1/admin/webhooks/props/:type", handlers.GetWebhookProps())
+		adminApi.Get("/api/v1/admin/oauth/:provider", handlers.GetOAuthConfig())
+
+		// Billing and site deletion stay reachable on a locked tenant, as in the UI.
+		if env.IsBillingEnabled() {
+			adminApi.Post("/api/v1/admin/billing/portal", handlers.CreateStripePortalSession())
+			adminApi.Post("/api/v1/admin/billing/checkout", handlers.CreateStripeCheckoutSession())
+			adminApi.Post("/api/v1/admin/billing/checkout/annual", handlers.CreateStripeAnnualCheckoutSession())
+		}
+		if !env.IsSingleHostMode() {
+			adminApi.Delete("/api/v1/admin/tenant", handlers.RequestTenantDeletion())
+			adminApi.Post("/api/v1/admin/tenant/cancel-deletion", handlers.CancelTenantDeletionByOwner())
+		}
 
 		// Pro features (available to self-hosters and pro hosted customers)
 		proAdminApi := adminApi.Group()
@@ -367,10 +410,36 @@ func routes(r *web.Engine) *web.Engine {
 			proAdminApi.Post("/api/v1/admin/moderation/comments/:id/decline-and-block", apiv1.DeclineCommentAndBlock())
 			proAdminApi.Post("/api/v1/admin/moderation/comments/:id/approve", apiv1.ApproveComment())
 			proAdminApi.Post("/api/v1/admin/moderation/comments/:id/decline", apiv1.DeclineComment())
+			proAdminApi.Get("/api/v1/admin/moderation/items", handlers.GetModerationItems())
+			proAdminApi.Get("/api/v1/admin/moderation/count", handlers.GetModerationCount())
 		}
 
 		adminApi.Use(middlewares.BlockLockedTenants())
 		adminApi.Delete("/api/v1/posts/:number", apiv1.DeletePost())
+		adminApi.Post("/api/v1/admin/settings/ai", handlers.UpdateAISettings())
+		adminApi.Post("/api/v1/admin/ai/agents", handlers.UpsertAIAgentHandler())
+		adminApi.Post("/api/v1/admin/system/update", handlers.SystemTriggerUpdate())
+		adminApi.Post("/api/v1/admin/settings/general", handlers.UpdateSettings())
+		adminApi.Post("/api/v1/admin/settings/advanced", handlers.UpdateAdvancedSettings())
+		adminApi.Post("/api/v1/admin/settings/privacy", handlers.UpdatePrivacySettings())
+		adminApi.Post("/api/v1/admin/settings/emailauth", handlers.UpdateEmailAuthAllowed())
+		adminApi.Post("/api/v1/admin/settings/site-banner", handlers.UpdateSiteBanner())
+		adminApi.Post("/api/v1/admin/statuses", handlers.CreateStatus())
+		adminApi.Put("/api/v1/admin/statuses/:id", handlers.UpdateStatus())
+		adminApi.Delete("/api/v1/admin/statuses/:id", handlers.DeleteStatus())
+		adminApi.Post("/api/v1/admin/webhooks", handlers.CreateWebhook())
+		adminApi.Put("/api/v1/admin/webhooks/:id", handlers.UpdateWebhook())
+		adminApi.Delete("/api/v1/admin/webhooks/:id", handlers.DeleteWebhook())
+		adminApi.Post("/api/v1/admin/webhooks/test/:id", handlers.TestWebhook())
+		adminApi.Post("/api/v1/admin/webhooks/preview", handlers.PreviewWebhook())
+		adminApi.Post("/api/v1/admin/import/tags", handlers.ImportTagsJSON())
+		adminApi.Post("/api/v1/admin/oauth", handlers.SaveOAuthConfig())
+		adminApi.Post("/api/v1/admin/oauth/:provider/status", handlers.SetSystemProviderStatus())
+		adminApi.Post("/api/v1/admin/roles/:role/users", handlers.ChangeUserRole())
+		adminApi.Put("/api/v1/admin/users/:userID/block", handlers.BlockUser())
+		adminApi.Delete("/api/v1/admin/users/:userID/block", handlers.UnblockUser())
+		adminApi.Put("/api/v1/admin/users/:userID/trust", handlers.TrustUser())
+		adminApi.Delete("/api/v1/admin/users/:userID/trust", handlers.UntrustUser())
 	}
 
 	return r
