@@ -86,6 +86,7 @@ func routes(r *web.Engine) *web.Engine {
 		oauthAS.Get("/.well-known/oauth-protected-resource", handlers.OAuthProtectedResourceMetadata())
 		oauthAS.Get("/.well-known/oauth-protected-resource/mcp", handlers.OAuthProtectedResourceMetadata())
 		oauthAS.Post("/oauth2/register", handlers.OAuthRegister())
+		oauthAS.Post("/oauth2/token", handlers.OAuthTokenEndpoint())
 	}
 
 	r.Use(middlewares.CSRF())

@@ -3,7 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/getfider/fider/app/models/entity"
+	"github.com/getfider/fider/app/models/enum"
 	"github.com/getfider/fider/app/models/query"
+	"github.com/getfider/fider/app/pkg/jwt"
+	"github.com/getfider/fider/app/pkg/rand"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -311,5 +314,112 @@ func OAuthAuthorizeDecision() web.HandlerFunc {
 			return c.Failure(err)
 		}
 		return c.Ok(web.Map{"redirect": clientRedirect(p.RedirectURI, map[string]string{"code": plain, "state": p.State, "iss": c.BaseURL()})})
+	}
+}
+
+const (
+	accessTokenTTL  = time.Hour
+	refreshTokenTTL = 30 * 24 * time.Hour
+)
+
+// OAuthTokenEndpoint exchanges an authorization code (with its PKCE verifier)
+// or a refresh token for an access token. Every failure is an RFC 6749 error
+// response, never a Go error: the request transaction must commit so that a
+// burned code or a revoked refresh family stays revoked.
+func OAuthTokenEndpoint() web.HandlerFunc {
+	return func(c *web.Context) error {
+		if !mcpEnabled(c) {
+			return c.NotFound()
+		}
+		c.Response.Header().Set("Cache-Control", "no-store")
+		c.Response.Header().Set("Pragma", "no-cache")
+		if !oauthTokenPerIP.Allow(strconv.Itoa(c.Tenant().ID) + "|" + c.Request.ClientIP()) {
+			return oauthError(c, http.StatusTooManyRequests, "slow_down", "Too many token requests; try again later.")
+		}
+		form, err := url.ParseQuery(c.Request.Body)
+		if err != nil {
+			return oauthError(c, http.StatusBadRequest, "invalid_request", "Body must be form-encoded.")
+		}
+		getClient := &query.GetOAuthClient{ClientID: form.Get("client_id")}
+		if form.Get("client_id") == "" || bus.Dispatch(c, getClient) != nil {
+			return oauthError(c, http.StatusUnauthorized, "invalid_client", "Unknown client.")
+		}
+
+		var grant *entity.OAuthGrant
+		var familyID string
+		newRefresh, newRefreshHash := oauthas.NewToken()
+		switch form.Get("grant_type") {
+		case "authorization_code":
+			consume := &cmd.ConsumeOAuthCode{CodeHash: oauthas.HashToken(form.Get("code")), ClientID: getClient.Result.ClientID}
+			if bus.Dispatch(c, consume) != nil {
+				return oauthError(c, http.StatusBadRequest, "invalid_grant", "The code is invalid, expired, or already used.")
+			}
+			grant = consume.Result
+			// The code is burned whatever happens next.
+			if form.Get("redirect_uri") != grant.RedirectURI ||
+				!oauthas.VerifyPKCE(form.Get("code_verifier"), grant.CodeChallenge, "S256") {
+				return oauthError(c, http.StatusBadRequest, "invalid_grant", "The redirect URI or code verifier does not match.")
+			}
+			familyID = rand.String(32)
+		case "refresh_token":
+			rotate := &cmd.RotateOAuthRefreshToken{
+				OldHash:      oauthas.HashToken(form.Get("refresh_token")),
+				NewHash:      newRefreshHash,
+				ClientID:     getClient.Result.ClientID,
+				NewExpiresAt: time.Now().Add(refreshTokenTTL),
+			}
+			if bus.Dispatch(c, rotate) != nil {
+				return oauthError(c, http.StatusBadRequest, "invalid_grant", "The refresh token is invalid, expired, or already used.")
+			}
+			grant = rotate.Result
+		default:
+			return oauthError(c, http.StatusBadRequest, "unsupported_grant_type", "Use authorization_code or refresh_token.")
+		}
+
+		// Re-check the user against the site's current rules.
+		getUser := &query.GetUserByID{UserID: grant.UserID, TenantID: c.Tenant().ID}
+		if bus.Dispatch(c, getUser) != nil || getUser.Result.Status != enum.UserActive || getUser.Result.Role < c.Tenant().MCPMinRole {
+			return oauthError(c, http.StatusBadRequest, "invalid_grant", "This account cannot use MCP on this site.")
+		}
+		user := getUser.Result
+
+		if familyID != "" {
+			if err := bus.Dispatch(c, &cmd.SaveOAuthRefreshToken{
+				TokenHash: newRefreshHash,
+				ClientID:  grant.ClientID,
+				UserID:    user.ID,
+				Scope:     grant.Scope,
+				FamilyID:  familyID,
+				ExpiresAt: time.Now().Add(refreshTokenTTL),
+			}); err != nil {
+				return c.Failure(err)
+			}
+		}
+
+		now := time.Now()
+		access, err := jwt.Encode(&jwt.MCPAccessClaims{
+			UserID:        user.ID,
+			TenantID:      c.Tenant().ID,
+			ClientID:      grant.ClientID,
+			Scope:         grant.Scope,
+			SecurityStamp: user.SecurityStamp,
+			Metadata: jwt.Metadata{
+				Issuer:    c.BaseURL(),
+				Subject:   strconv.Itoa(user.ID),
+				Audience:  []string{MCPResourceURL(c)},
+				IssuedAt:  jwt.Time(now),
+				ExpiresAt: jwt.Time(now.Add(accessTokenTTL)),
+			},
+		})
+		if err != nil {
+			return c.Failure(err)
+		}
+		return c.Ok(web.Map{
+			"access_token":  access,
+			"token_type":    "Bearer",
+			"expires_in":    int(accessTokenTTL.Seconds()),
+			"refresh_token": newRefresh,
+			"scope":         grant.Scope,
+		})
 	}
 }
