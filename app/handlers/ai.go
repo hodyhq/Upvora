@@ -449,9 +449,15 @@ func contains(list []string, s string) bool {
 // ComposeBriefContent builds the stored document: a server-owned header with
 // the submitter's name and the email TOKEN (never the real address), then the
 // model's markdown with any literal occurrence of the user's email scrubbed.
-func ComposeBriefContent(user *entity.User, productName string, title string, body string) string {
+// mcpClient is the MCP client's name when an AI assistant ran the interview
+// itself (its transcript is then client-supplied); empty for Vora.
+func ComposeBriefContent(user *entity.User, productName string, title string, body string, mcpClient string) string {
 	body = strings.ReplaceAll(body, user.Email, emailToken)
-	header := fmt.Sprintf("# Idea Brief — %s\n\nPrepared with Vora · Submitted by %s (%s)", title, user.Name, emailToken)
+	preparedBy := "Prepared with Vora"
+	if mcpClient != "" {
+		preparedBy = "Prepared with an AI assistant (" + mcpClient + ") over MCP; any transcript was supplied by the client"
+	}
+	header := fmt.Sprintf("# Idea Brief: %s\n\n%s · Submitted by %s (%s)", title, preparedBy, user.Name, emailToken)
 	if productName != "" {
 		header += " · Product: " + productName
 	}

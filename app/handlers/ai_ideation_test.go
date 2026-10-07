@@ -113,3 +113,13 @@ func TestAISiteRateAllow(t *testing.T) {
 	Expect(handlers.AISiteRateAllow(1)).IsFalse()
 	Expect(handlers.AISiteRateAllow(2)).IsTrue()
 }
+
+// A brief written by an MCP client must not claim it was prepared by Vora.
+func TestComposeBriefContent_Provenance(t *testing.T) {
+	RegisterT(t)
+	vora := handlers.ComposeBriefContent(mock.AryaStark, "", "Dark mode", "## Problem\nx", "")
+	Expect(vora).ContainsSubstring("Prepared with Vora")
+	mcp := handlers.ComposeBriefContent(mock.AryaStark, "", "Dark mode", "## Problem\nx", "Claude")
+	Expect(strings.Contains(mcp, "Prepared with Vora")).IsFalse()
+	Expect(mcp).ContainsSubstring("Prepared with an AI assistant (Claude) over MCP")
+}
