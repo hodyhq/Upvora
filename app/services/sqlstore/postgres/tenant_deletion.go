@@ -131,6 +131,9 @@ var tenantScopedTables = []string{
 	"blobs",
 	"oauth_providers",
 	"tenant_providers",
+	"oauth_refresh_tokens",
+	"oauth_codes",
+	"oauth_clients",
 	"users",
 	"tenants_billing",
 }

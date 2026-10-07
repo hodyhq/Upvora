@@ -465,3 +465,22 @@ func TestTenantStorage_MemberPrivateIdeas_Defaults(t *testing.T) {
 	Expect(getTenant.Result.MembersPrivateIdeas).IsFalse()
 	Expect(getTenant.Result.MembersCanPublishPrivate).IsTrue()
 }
+
+func TestTenantStorage_MCPSettings_DefaultsAndUpdate(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+
+	get := &query.GetTenantByDomain{Domain: "demo"}
+	Expect(bus.Dispatch(demoTenantCtx, get)).IsNil()
+	Expect(get.Result.MCPEnabled).IsFalse()
+	Expect(get.Result.MCPMinRole).Equals(enum.RoleAdministrator)
+	Expect(get.Result.MCPDCREnabled).IsTrue()
+
+	Expect(bus.Dispatch(jonSnowCtx, &cmd.UpdateTenantMCPSettings{Enabled: true, MinRole: enum.RoleVisitor, DCREnabled: false})).IsNil()
+
+	get = &query.GetTenantByDomain{Domain: "demo"}
+	Expect(bus.Dispatch(demoTenantCtx, get)).IsNil()
+	Expect(get.Result.MCPEnabled).IsTrue()
+	Expect(get.Result.MCPMinRole).Equals(enum.RoleVisitor)
+	Expect(get.Result.MCPDCREnabled).IsFalse()
+}

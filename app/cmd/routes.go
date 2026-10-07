@@ -77,6 +77,18 @@ func routes(r *web.Engine) *web.Engine {
 		stripeWh.Post("/webhooks/stripe", webhooks.IncomingStripeWebhook())
 	}
 
+	// OAuth 2.1 authorization server for MCP clients: discovery, registration
+	// and token are called cross-origin without cookies, so they sit before
+	// CSRF. Each handler returns 404 unless MCP is enabled for the site.
+	oauthAS := r.Group()
+	{
+		oauthAS.Get("/.well-known/oauth-authorization-server", handlers.OAuthAuthorizationServerMetadata())
+		oauthAS.Get("/.well-known/oauth-protected-resource", handlers.OAuthProtectedResourceMetadata())
+		oauthAS.Get("/.well-known/oauth-protected-resource/mcp", handlers.OAuthProtectedResourceMetadata())
+		oauthAS.Post("/oauth2/register", handlers.OAuthRegister())
+		oauthAS.Post("/oauth2/token", handlers.OAuthTokenEndpoint())
+	}
+
 	r.Use(middlewares.CSRF())
 
 	r.Get("/terms", handlers.LegalPage("Terms of Service", "terms.md"))
@@ -163,6 +175,10 @@ func routes(r *web.Engine) *web.Engine {
 		ui.Get("/_api/notifications/unread/total", handlers.TotalUnreadNotifications())
 		// Members may publish their own private idea; the handler enforces the rules.
 		ui.Post("/_api/posts/:number/privacy", handlers.SetPostPrivacy())
+		// MCP client authorization: the user is signed in by now (IsAuthenticated
+		// sends them through the site's normal sign-in), then consents here.
+		ui.Get("/oauth2/authorize", handlers.OAuthAuthorize())
+		ui.Post("/_api/oauth2/authorize", handlers.OAuthAuthorizeDecision())
 
 		// From this step, only Collaborators and Administrators are allowed
 		ui.Use(middlewares.IsAuthorized(enum.RoleCollaborator, enum.RoleAdministrator))
@@ -252,6 +268,11 @@ func routes(r *web.Engine) *web.Engine {
 		ui.Post("/_api/admin/settings/general", handlers.UpdateSettings())
 		ui.Post("/_api/admin/settings/advanced", handlers.UpdateAdvancedSettings())
 		ui.Post("/_api/admin/settings/privacy", handlers.UpdatePrivacySettings())
+		ui.Post("/_api/admin/settings/mcp", handlers.UpdateMCPSettings())
+		ui.Get("/admin/mcp", handlers.ManageMCPPage())
+		ui.Get("/_api/admin/mcp/clients", handlers.ListMCPClients())
+		ui.Post("/_api/admin/mcp/clients", handlers.CreateMCPClient())
+		ui.Delete("/_api/admin/mcp/clients/:id", handlers.DeleteMCPClient())
 		ui.Post("/_api/admin/settings/emailauth", handlers.UpdateEmailAuthAllowed())
 		ui.Post("/_api/admin/settings/site-banner", handlers.UpdateSiteBanner())
 		ui.Get("/_api/admin/statuses", handlers.ListStatuses())
@@ -393,6 +414,7 @@ func routes(r *web.Engine) *web.Engine {
 		adminApi.Get("/api/v1/admin/settings/advanced", apiv1.GetAdvancedSettings())
 		adminApi.Get("/api/v1/admin/settings/ai", apiv1.GetAISettings())
 		adminApi.Get("/api/v1/admin/webhooks", apiv1.ListWebhooks())
+		adminApi.Get("/api/v1/admin/mcp/clients", handlers.ListMCPClients())
 
 		// Billing and site deletion stay reachable on a locked tenant, as in the UI.
 		if env.IsBillingEnabled() {
@@ -431,6 +453,9 @@ func routes(r *web.Engine) *web.Engine {
 		adminApi.Post("/api/v1/admin/settings/theme", handlers.UpdateTenantTheme())
 		adminApi.Post("/api/v1/admin/settings/advanced", handlers.UpdateAdvancedSettings())
 		adminApi.Post("/api/v1/admin/settings/privacy", handlers.UpdatePrivacySettings())
+		adminApi.Post("/api/v1/admin/settings/mcp", handlers.UpdateMCPSettings())
+		adminApi.Post("/api/v1/admin/mcp/clients", handlers.CreateMCPClient())
+		adminApi.Delete("/api/v1/admin/mcp/clients/:id", handlers.DeleteMCPClient())
 		adminApi.Post("/api/v1/admin/settings/emailauth", handlers.UpdateEmailAuthAllowed())
 		adminApi.Post("/api/v1/admin/settings/site-banner", handlers.UpdateSiteBanner())
 		adminApi.Post("/api/v1/admin/statuses", handlers.CreateStatus())

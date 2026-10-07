@@ -1,0 +1,40 @@
+@use "~@fider/assets/styles/variables.scss" as *;
+
+#p-oauth-consent {
+  display: flex;
+  justify-content: center;
+  padding-top: 10vh;
+
+  .p-oauth-consent__card {
+    width: 100%;
+    max-width: 440px;
+    padding: 28px;
+    border: 1px solid var(--colors-gray-200);
+    border-radius: 12px;
+    background: var(--colors-white);
+  }
+  .p-oauth-consent__logo {
+    margin-bottom: 16px;
+  }
+  .p-oauth-consent__title {
+    font-size: 18px;
+    line-height: 1.4;
+    margin: 0 0 12px;
+    text-wrap: balance;
+  }
+  .p-oauth-consent__text {
+    font-size: 14px;
+    margin: 0 0 10px;
+  }
+  .p-oauth-consent__error {
+    font-size: 14px;
+    color: var(--colors-red-700);
+    margin: 0;
+  }
+  .p-oauth-consent__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+  }
+}

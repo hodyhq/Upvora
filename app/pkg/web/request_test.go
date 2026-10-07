@@ -168,3 +168,19 @@ func TestRequest_IsCrawler(t *testing.T) {
 		Expect(req.IsCrawler()).Equals(tt.isCrawler)
 	}
 }
+
+func TestRequest_ClientIP(t *testing.T) {
+	RegisterT(t)
+	r, _ := http.NewRequest("GET", "http://demo.test/", nil)
+	r.RemoteAddr = "10.0.0.5:4321"
+	req := web.WrapRequest(r)
+	Expect(req.ClientIP()).Equals("10.0.0.5")
+
+	r.Header.Set("X-Forwarded-For", "203.0.113.9, 10.0.0.1")
+	req = web.WrapRequest(r)
+	Expect(req.ClientIP()).Equals("203.0.113.9")
+
+	r.Header.Set("CF-Connecting-IP", "198.51.100.7")
+	req = web.WrapRequest(r)
+	Expect(req.ClientIP()).Equals("198.51.100.7")
+}

@@ -15,6 +15,17 @@ interface CompleteSignInProfilePageProps {
   c?: string
 }
 
+// sameOriginPath returns a path to navigate to only if it stays on this site.
+export const sameOriginPath = (redirect: string | undefined, origin: string): string | undefined => {
+  if (!redirect || !redirect.startsWith("/")) return undefined
+  try {
+    const u = new URL(redirect, origin)
+    return u.origin === origin ? u.pathname + u.search + u.hash : undefined
+  } catch {
+    return undefined
+  }
+}
+
 const CompleteSignInProfilePage = (props: CompleteSignInProfilePageProps) => {
   const [name, setName] = useState("")
   const [error, setError] = useState<Failure | undefined>()
@@ -22,7 +33,10 @@ const CompleteSignInProfilePage = (props: CompleteSignInProfilePageProps) => {
   const submit = async () => {
     const result = await actions.completeProfile(props.kind, props.k, name)
     if (result.ok) {
-      if (props.c !== undefined) {
+      const redirect = sameOriginPath((result.data as { redirect?: string } | undefined)?.redirect, location.origin)
+      if (redirect) {
+        location.href = redirect
+      } else if (props.c !== undefined) {
         location.href = "/?c=" + props.c
       } else {
         location.href = "/"
