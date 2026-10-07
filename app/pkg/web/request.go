@@ -26,17 +26,9 @@ type Request struct {
 
 // WrapRequest returns Fider wrapper of HTTP Request
 func WrapRequest(request *http.Request) Request {
-	protocol := "http"
-	if request.TLS != nil || request.Header.Get("X-Forwarded-Proto") == "https" {
-		protocol = "https"
-	}
-
-	host := request.Host
-	if request.Header.Get("X-Forwarded-Host") != "" {
-		host = request.Header.Get("X-Forwarded-Host")
-	}
-
-	fullURL := protocol + "://" + host + request.RequestURI
+	origin := requestOrigin(request)
+	protocol := strings.SplitN(origin, "://", 2)[0]
+	fullURL := origin + request.RequestURI
 	u, err := url.Parse(fullURL)
 	if err != nil {
 		panic(errors.Wrap(err, "Failed to parse url '%s'", fullURL))

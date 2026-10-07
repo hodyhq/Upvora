@@ -155,6 +155,12 @@ func routes(r *web.Engine) *web.Engine {
 		r.Get("/admin/danger-zone/cancel", handlers.CancelTenantDeletion())
 	}
 
+	// MCP client authorization. Signed out, the handler sends the person to
+	// sign in: on the board, the normal sign-in; on an MCP-only address, the
+	// board's sign-in and back (/oauth2/continue, then /oauth2/resume).
+	r.Get("/oauth2/authorize", handlers.OAuthAuthorize())
+	r.Get("/oauth2/resume", handlers.OAuthResume())
+
 	// Block if it's private tenant with unauthenticated user
 	r.Use(middlewares.CheckTenantPrivacy())
 
@@ -183,10 +189,12 @@ func routes(r *web.Engine) *web.Engine {
 		ui.Get("/_api/notifications/unread/total", handlers.TotalUnreadNotifications())
 		// Members may publish their own private idea; the handler enforces the rules.
 		ui.Post("/_api/posts/:number/privacy", handlers.SetPostPrivacy())
-		// MCP client authorization: the user is signed in by now (IsAuthenticated
-		// sends them through the site's normal sign-in), then consents here.
-		ui.Get("/oauth2/authorize", handlers.OAuthAuthorize())
+		// MCP client consent decision. On an MCP-only address (MCP_ORIGINS) the
+		// person is identified by the consent-step cookie, not a board session.
 		ui.Post("/_api/oauth2/authorize", handlers.OAuthAuthorizeDecision())
+		// After signing in on the board for a connection started on an MCP-only
+		// address: back to that address with a single-use code.
+		ui.Get("/oauth2/continue", handlers.OAuthSignInContinue())
 
 		// From this step, only Collaborators and Administrators are allowed
 		ui.Use(middlewares.IsAuthorized(enum.RoleCollaborator, enum.RoleAdministrator))

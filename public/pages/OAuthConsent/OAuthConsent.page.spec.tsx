@@ -92,3 +92,24 @@ describe("<OAuthConsentPage />", () => {
     expect(post).toHaveBeenCalledTimes(2)
   })
 })
+
+describe("<OAuthConsentPage /> on an MCP-only address", () => {
+  // Trans renders no text without an i18n provider, so count the notes.
+  const notes = (container: HTMLElement) => container.querySelectorAll(".p-oauth-consent__text.text-muted").length
+
+  test("adds a note naming the address the connection goes through", () => {
+    const { container } = render(<OAuthConsentPage {...props} connectingThrough="mcp.example.com" />)
+    expect(notes(container)).toBe(2)
+  })
+  test("adds nothing on the board itself", () => {
+    const { container } = render(<OAuthConsentPage {...props} />)
+    expect(notes(container)).toBe(1)
+  })
+})
+
+describe("<OAuthConsentPage /> identity", () => {
+  test("shows who is signed in, so a wrong account is visible before allowing", () => {
+    const { container } = render(<OAuthConsentPage {...props} />)
+    expect(container.querySelector(".p-oauth-consent__signed-in")).not.toBeNull()
+  })
+})

@@ -17,6 +17,7 @@ import (
 	"github.com/getfider/fider/app/pkg/validate"
 
 	"github.com/getfider/fider/app"
+	"github.com/getfider/fider/app/pkg/env"
 	"github.com/getfider/fider/app/pkg/errors"
 	"github.com/getfider/fider/app/pkg/jwt"
 	"github.com/getfider/fider/app/pkg/web"
@@ -47,7 +48,10 @@ func User() web.MiddlewareFunc {
 
 			// /mcp takes only Bearer tokens: a browser session there would list
 			// tools that then run anonymously.
-			cookieAllowed := !mcpBearer && !isMCPPath(c)
+			// On an MCP-only public address the board's own sessions never
+			// apply: there, only the consent step identifies the person (below).
+			mcpOnlyOrigin, onMCPOnlyAddress := mcpOnlyAddress(c)
+			cookieAllowed := !mcpBearer && !isMCPPath(c) && !onMCPOnlyAddress
 			cookie, err := c.Request.Cookie(web.CookieAuthName)
 			if !cookieAllowed {
 				err = http.ErrNoCookie
@@ -160,6 +164,14 @@ func User() web.MiddlewareFunc {
 				}
 			}
 
+			if onMCPOnlyAddress && user == nil && !mcpBearer && isMCPConsentPath(c) {
+				consentUser, err := userFromMCPConsent(c, mcpOnlyOrigin)
+				if err != nil {
+					return err
+				}
+				user = consentUser
+			}
+
 			if user != nil && c.Tenant() != nil && user.Tenant.ID == c.Tenant().ID {
 				// blocked users are unable to sign in
 				if user.Status == enum.UserBlocked {
@@ -237,10 +249,60 @@ func userFromMCPAccessToken(c *web.Context, token string) (*entity.User, string,
 }
 
 // mcpUnauthorized refuses an MCP or token request; a 401 carries the RFC 9728
-// pointer clients use to discover how to authorize.
+// pointer clients use to discover how to authorize. With MCP off, /mcp says so
+// instead: the pointer would send clients to discovery that is hidden, and they
+// would report a misleading registration failure.
 func mcpUnauthorized(c *web.Context, status int) error {
+	if isMCPPath(c) && (c.Tenant() == nil || !c.Tenant().MCPEnabled) {
+		return c.JSON(http.StatusNotFound, web.Map{
+			"error":             "mcp_disabled",
+			"error_description": "MCP is not turned on for this site. An administrator can enable it under Admin, MCP.",
+		})
+	}
 	if status == http.StatusUnauthorized {
 		c.Response.Header().Set("WWW-Authenticate", `Bearer resource_metadata="`+c.BaseURL()+`/.well-known/oauth-protected-resource"`)
 	}
 	return c.JSON(status, web.Map{})
+}
+
+// mcpOnlyAddress returns the MCP-only public address (MCP_ORIGINS) the request
+// arrived on, if any.
+func mcpOnlyAddress(c *web.Context) (string, bool) {
+	if !env.IsSingleHostMode() {
+		return "", false
+	}
+	return env.MatchMCPOrigin(c.BaseURL())
+}
+
+// isMCPConsentPath is the consent step: the page and its decision.
+func isMCPConsentPath(c *web.Context) bool {
+	path := c.Request.URL.Path
+	return path == "/oauth2/authorize" || path == "/_api/oauth2/authorize"
+}
+
+// userFromMCPConsent resolves the consent-step cookie set after signing in on
+// the board: issued for this address and site, for an active user whose
+// security stamp is unchanged. Anything else is anonymous.
+func userFromMCPConsent(c *web.Context, origin string) (*entity.User, error) {
+	cookie, err := c.Request.Cookie(web.CookieMCPConsentName)
+	tenant := c.Tenant()
+	if err != nil || tenant == nil {
+		return nil, nil
+	}
+	claims, err := jwt.DecodeMCPConsent(cookie.Value, origin)
+	if err != nil || claims.TenantID != tenant.ID {
+		return nil, nil
+	}
+	getUser := &query.GetUserByID{UserID: claims.UserID, TenantID: tenant.ID}
+	if err := bus.Dispatch(c, getUser); err != nil {
+		if errors.Cause(err) == app.ErrNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	user := getUser.Result
+	if user.Status != enum.UserActive || subtle.ConstantTimeCompare([]byte(user.SecurityStamp), []byte(claims.SecurityStamp)) != 1 {
+		return nil, nil
+	}
+	return user, nil
 }

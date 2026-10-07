@@ -61,6 +61,9 @@ type config struct {
 	HostMode                    string `env:"HOST_MODE,default=single"`
 	HostDomain                  string `env:"HOST_DOMAIN"`
 	BaseURL                     string `env:"BASE_URL"`
+	MCPOriginsRaw               string `env:"MCP_ORIGINS"`
+	MCPPort                     string `env:"MCP_PORT"`
+	MCPOrigins                  []string
 	Locale                      string `env:"LOCALE,default=en"`
 	JWTSecret                   string `env:"JWT_SECRET,required"`
 	PostCreationWithTagsEnabled bool   `env:"POST_CREATION_WITH_TAGS_ENABLED,default=true"`
@@ -192,6 +195,23 @@ func Reload() {
 		if err != nil {
 			panic(errors.Wrap(err, "'%s' is not a valid URL", Config.BaseURL))
 		}
+	}
+
+	// Extra MCP-only public addresses: fail before accepting traffic.
+	if strings.TrimSpace(Config.MCPOriginsRaw) != "" && !IsSingleHostMode() {
+		panic("MCP_ORIGINS is only supported with HOST_MODE=single")
+	}
+	origins, err := ParseMCPOrigins(Config.MCPOriginsRaw, Config.BaseURL, !IsProduction())
+	if err != nil {
+		panic(err)
+	}
+	Config.MCPOrigins = origins
+	metricsPort := ""
+	if Config.Metrics.Enabled {
+		metricsPort = Config.Metrics.Port
+	}
+	if err := ValidateMCPPort(Config.MCPPort, Config.Port, metricsPort, Config.MCPOrigins); err != nil {
+		panic(err)
 	}
 
 	// Email Type can be inferred if absense

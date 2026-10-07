@@ -214,3 +214,19 @@ func TestGetOAuthBaseURL_WithPort(t *testing.T) {
 	env.Config.HostMode = "single"
 	Expect(web.OAuthBaseURL(ctx)).Equals("https://test.fider.io:3000")
 }
+
+// On an MCP-only public address the consent page loads its code from that
+// same address: its CSP allows only its own host, and the board may be
+// unreachable from the browser's network.
+func TestAssetsURL_MCPOrigin(t *testing.T) {
+	RegisterT(t)
+
+	env.Config.HostMode = "single"
+	env.Config.CDN.Host = ""
+	env.Config.MCPOrigins = []string{"https://mcp.theavengers.com"}
+	defer func() { env.Config.MCPOrigins = nil }()
+	ctx := newGetContext("https://mcp.theavengers.com", nil)
+	ctx.SetTenant(&entity.Tenant{ID: 1, Subdomain: "theavengers"})
+
+	Expect(web.AssetsURL(ctx, "/assets/main.js")).Equals("https://mcp.theavengers.com/assets/main.js")
+}

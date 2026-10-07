@@ -29,6 +29,7 @@ type SaveOAuthCode struct {
 	Scope         string
 	CodeChallenge string
 	SecurityStamp string // user's stamp at issue; a later rotation invalidates the code
+	Origin        string // MCP-only address it was issued on ('' on the board); only redeemable there
 	ExpiresAt     time.Time
 }
 
@@ -37,6 +38,11 @@ type SaveOAuthCode struct {
 type ConsumeOAuthCode struct {
 	CodeHash string
 	ClientID string
+	// Origin is the MCP-only address the exchange arrived on, or '' on the
+	// board; a code bound elsewhere is refused (and not burned). AllowUnbound
+	// accepts the board's own unbound codes: set it only off MCP-only addresses.
+	Origin       string
+	AllowUnbound bool
 
 	Result *entity.OAuthGrant
 }
@@ -53,6 +59,7 @@ type SaveOAuthRefreshToken struct {
 	// FromCodeHash links the family to the code that started it, so a replay
 	// of that code revokes it.
 	FromCodeHash string
+	Origin       string // MCP-only address it was issued on ('' on the board); only usable there
 	ExpiresAt    time.Time
 }
 
@@ -63,6 +70,8 @@ type RotateOAuthRefreshToken struct {
 	OldHash      string
 	NewHash      string
 	ClientID     string
+	Origin       string // as ConsumeOAuthCode; a wrong address revokes nothing
+	AllowUnbound bool
 	NewExpiresAt time.Time
 
 	Result *entity.OAuthGrant
@@ -72,4 +81,29 @@ type RotateOAuthRefreshToken struct {
 // self-registered clients that were never used (all tenants).
 type PurgeStaleOAuthData struct {
 	Deleted int
+}
+
+// SaveOAuthSignInHandoff stores a hashed, single-use code that carries a
+// signed-in person from the board's own address back to an MCP-only public
+// address, together with the authorization request to resume there.
+type SaveOAuthSignInHandoff struct {
+	CodeHash      string
+	UserID        int
+	Origin        string
+	Query         string
+	SecurityStamp string
+	// FlowHash is the hash of the flow cookie set on the MCP-only address
+	// when the sign-in started: only that browser can redeem the code.
+	FlowHash  string
+	ExpiresAt time.Time
+}
+
+// RedeemOAuthSignInHandoff burns an unexpired handoff code issued for Origin
+// whose user's security stamp is unchanged; app.ErrNotFound otherwise.
+type RedeemOAuthSignInHandoff struct {
+	CodeHash string
+	Origin   string
+	FlowHash string
+
+	Result *entity.OAuthSignInHandoff
 }

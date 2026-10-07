@@ -248,6 +248,8 @@
   "oauth.consent.redirect": "",
   "oauth.consent.scope.full": "",
   "oauth.consent.scope.read": "",
+  "oauth.consent.signedInAs": "",
+  "oauth.consent.through": "",
   "oauth.consent.title": "",
   "page.backhome": "Επιστρέψτε με στην αρχική σελίδα <0>{0}</0>.",
   "page.pendingactivation.didntreceive": "Δεν λάβατε το email;",

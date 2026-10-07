@@ -47,6 +47,11 @@ services:
       EMAIL_SMTP_PASSWORD: your-smtp-password
       EMAIL_SMTP_ENABLE_STARTTLS: "true"
       UPDATER_SHARED_DIR: /var/upvora-updater
+      # Board on an internal network? Give cloud AI assistants an MCP-only
+      # public address: point your tunnel's public hostname at port 3001 (do
+      # not publish it otherwise). That port serves only the MCP connection.
+      # MCP_ORIGINS: https://mcp.yourdomain.com
+      # MCP_PORT: "3001"
 
   # One-click updates. Self-configuring: it discovers its own compose project
   # name through the Docker socket, so it works whatever your directory is

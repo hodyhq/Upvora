@@ -60,6 +60,15 @@ const CookieSessionName = "user_session_id"
 // CookieAuthName is the name of the cookie that holds the Authentication Token
 const CookieAuthName = "auth"
 
+// CookieMCPConsentName identifies a person on an MCP-only public address for
+// the consent step only, after they signed in on the board's own address.
+// The __Host- prefix makes the browser require Secure, Path=/ and no Domain.
+const CookieMCPConsentName = "__Host-mcp_consent"
+
+// CookieMCPFlowName binds a sign-in started on an MCP-only public address to
+// the browser that started it.
+const CookieMCPFlowName = "__Host-mcp_flow"
+
 // CookieSignUpAuthName is the name of the cookie that holds the temporary Authentication Token
 const CookieSignUpAuthName = "__signup_auth"
 
@@ -600,6 +609,9 @@ func AssetsURL(ctx context.Context, path string, a ...any) string {
 	if env.IsSingleHostMode() {
 		if env.Config.CDN.Host != "" {
 			return request.URL.Scheme + "://" + env.Config.CDN.Host + path
+		}
+		if env.IsMCPOrigin(request.BaseURL()) {
+			return request.BaseURL() + path
 		}
 		return BaseURL(ctx) + path
 	}

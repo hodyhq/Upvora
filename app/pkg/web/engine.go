@@ -77,6 +77,7 @@ type Engine struct {
 	middlewares   []MiddlewareFunc
 	worker        worker.Worker
 	webServer     *http.Server
+	mcpServer     *http.Server
 	metricsServer *http.Server
 	cache         *cache.Cache
 	routes        []string
@@ -132,12 +133,31 @@ func (e *Engine) Start(address string) {
 		WriteTimeout: env.Config.HTTP.WriteTimeout,
 		IdleTimeout:  env.Config.HTTP.IdleTimeout,
 		Addr:         address,
-		Handler:      e.mux,
+		Handler:      MCPOriginGate(e.mux),
 		TLSConfig:    getDefaultTLSConfig(env.Config.TLS.Automatic),
 	}
 
 	for i := 0; i < runtime.NumCPU(); i++ {
 		go e.Worker().Run(strconv.Itoa(i))
+	}
+
+	// The dedicated listener for MCP-only public addresses (MCP_PORT): plain
+	// HTTP behind the tunnel, MCP-only whatever the request's headers say.
+	if env.Config.MCPPort != "" {
+		e.mcpServer = &http.Server{
+			ReadTimeout:  env.Config.HTTP.ReadTimeout,
+			WriteTimeout: env.Config.HTTP.WriteTimeout,
+			IdleTimeout:  env.Config.HTTP.IdleTimeout,
+			Addr:         env.Config.Host + ":" + env.Config.MCPPort,
+			Handler:      MCPListenerHandler(e.mux),
+		}
+		log.Infof(e, "MCP-only listener on port @{Port}", dto.Props{"Port": env.Config.MCPPort})
+		go func() {
+			err := e.mcpServer.ListenAndServe()
+			if err != nil && err != http.ErrServerClosed {
+				panic(errors.Wrap(err, "failed to start MCP listener"))
+			}
+		}()
 	}
 
 	if env.Config.Metrics.Enabled {
@@ -192,6 +212,14 @@ func (e *Engine) Stop() error {
 		log.Info(e, "metrics server has shutdown")
 	}
 
+	// The MCP listener's error is reported after the others have shut down.
+	var mcpErr error
+	if e.mcpServer != nil {
+		if err := e.mcpServer.Shutdown(ctx); err != nil {
+			mcpErr = errors.Wrap(err, "failed to shutdown MCP listener")
+		}
+	}
+
 	if e.webServer != nil {
 		log.Info(e, "web server is shutting down")
 		if err := e.webServer.Shutdown(ctx); err != nil {
@@ -208,7 +236,7 @@ func (e *Engine) Stop() error {
 		log.Info(e, "worker has shutdown")
 	}
 
-	return nil
+	return mcpErr
 }
 
 // Cache returns current cache
@@ -269,7 +297,7 @@ func (e *Engine) register(method, path string, middlewares []MiddlewareFunc, han
 // the engine can be used as an http.Handler: in tests, and to replay MCP tool
 // calls in-process against /api/v1.
 func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	e.mux.ServeHTTP(w, r)
+	MCPOriginGate(e.mux).ServeHTTP(w, r)
 }
 
 // Routes returns every registered route as "METHOD path".
