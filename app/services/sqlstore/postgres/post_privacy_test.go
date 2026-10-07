@@ -313,3 +313,33 @@ func TestMemberPrivate_RoleChangeApplies(t *testing.T) {
 	asMember := &query.GetPostByNumber{Number: 9101}
 	Expect(errors.Cause(bus.Dispatch(sansaStarkCtx, asMember))).Equals(app.ErrNotFound)
 }
+
+// Merging copies content into the original. A member's private idea is visible
+// to its author, so another author's idea must never be merged into it.
+func TestMarkPostAsDuplicate_RefusesCrossMemberPrivate(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	seedMemberPrivate(t)
+
+	arya := &query.GetPostByNumber{Number: 9101}
+	sansa := &query.GetPostByNumber{Number: 9102}
+	Expect(bus.Dispatch(jonSnowCtx, arya)).IsNil()
+	Expect(bus.Dispatch(jonSnowCtx, sansa)).IsNil()
+
+	err := bus.Dispatch(jonSnowCtx, &cmd.MarkPostAsDuplicate{Post: arya.Result, Original: sansa.Result})
+	Expect(err).IsNotNil()
+}
+
+func TestMarkPostAsDuplicate_AllowsSameMemberPrivate(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	now := time.Now()
+	_, err := trx.Execute("INSERT INTO posts (title, slug, number, description, created_at, tenant_id, user_id, status_slug, is_approved, is_private, language) VALUES ('Arya One', 'arya-one', 9111, 'a', $1, 1, 2, 'open', true, true, 'english'), ('Arya Two', 'arya-two', 9112, 'b', $1, 1, 2, 'open', true, true, 'english')", now)
+	Expect(err).IsNil()
+
+	one := &query.GetPostByNumber{Number: 9111}
+	two := &query.GetPostByNumber{Number: 9112}
+	Expect(bus.Dispatch(jonSnowCtx, one)).IsNil()
+	Expect(bus.Dispatch(jonSnowCtx, two)).IsNil()
+	Expect(bus.Dispatch(jonSnowCtx, &cmd.MarkPostAsDuplicate{Post: one.Result, Original: two.Result})).IsNil()
+}

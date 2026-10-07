@@ -200,6 +200,14 @@ func markPostAsDuplicate(ctx context.Context, c *cmd.MarkPostAsDuplicate) error 
 		if c.Post.IsPrivate != c.Original.IsPrivate {
 			return errors.New("cannot merge a private idea with a public one; make both the same privacy first")
 		}
+		// A member's private idea is visible to its author. Merging another
+		// author's idea into it would expose that content to the original's
+		// author, so member-private merges must stay within one author.
+		if c.Original.IsPrivate && c.Original.User != nil && !c.Original.User.IsCollaborator() {
+			if c.Post.User == nil || c.Post.User.ID != c.Original.User.ID {
+				return errors.New("cannot merge another member's idea into a member's private idea")
+			}
+		}
 
 		respondedAt := time.Now()
 		if c.Post.StatusSlug == "duplicate" && c.Post.Response != nil {
