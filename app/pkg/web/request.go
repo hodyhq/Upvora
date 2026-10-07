@@ -2,6 +2,7 @@ package web
 
 import (
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -58,6 +59,25 @@ func WrapRequest(request *http.Request) Request {
 		IsSecure:      protocol == "https",
 		StartTime:     time.Now(),
 	}
+}
+
+// ClientIP returns the caller's address for rate limiting: CF-Connecting-IP
+// (set by Cloudflare), else the first X-Forwarded-For hop, else the socket
+// address. Forwarded headers can be forged when not behind a proxy, so limits
+// keyed on this must be paired with a global cap.
+func (r *Request) ClientIP() string {
+	if ip := strings.TrimSpace(r.instance.Header.Get("CF-Connecting-IP")); ip != "" {
+		return ip
+	}
+	if xff := r.instance.Header.Get("X-Forwarded-For"); xff != "" {
+		if first := strings.TrimSpace(strings.Split(xff, ",")[0]); first != "" {
+			return first
+		}
+	}
+	if host, _, err := net.SplitHostPort(r.instance.RemoteAddr); err == nil {
+		return host
+	}
+	return r.instance.RemoteAddr
 }
 
 // GetHeader returns the value of HTTP header from given key

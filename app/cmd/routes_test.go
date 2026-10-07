@@ -72,6 +72,10 @@ var apiV1Surface = []string{
 	"PUT /api/v1/admin/users/:userID/block", "DELETE /api/v1/admin/users/:userID/block",
 	"PUT /api/v1/admin/users/:userID/trust", "DELETE /api/v1/admin/users/:userID/trust",
 
+	// OAuth authorization server (MCP)
+	"GET /.well-known/oauth-authorization-server", "GET /.well-known/oauth-protected-resource",
+	"GET /.well-known/oauth-protected-resource/mcp", "POST /oauth2/register",
+
 	// admin + pro
 	"GET /api/v1/admin/moderation/items", "GET /api/v1/admin/moderation/count",
 }

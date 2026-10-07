@@ -77,6 +77,17 @@ func routes(r *web.Engine) *web.Engine {
 		stripeWh.Post("/webhooks/stripe", webhooks.IncomingStripeWebhook())
 	}
 
+	// OAuth 2.1 authorization server for MCP clients: discovery, registration
+	// and token are called cross-origin without cookies, so they sit before
+	// CSRF. Each handler returns 404 unless MCP is enabled for the site.
+	oauthAS := r.Group()
+	{
+		oauthAS.Get("/.well-known/oauth-authorization-server", handlers.OAuthAuthorizationServerMetadata())
+		oauthAS.Get("/.well-known/oauth-protected-resource", handlers.OAuthProtectedResourceMetadata())
+		oauthAS.Get("/.well-known/oauth-protected-resource/mcp", handlers.OAuthProtectedResourceMetadata())
+		oauthAS.Post("/oauth2/register", handlers.OAuthRegister())
+	}
+
 	r.Use(middlewares.CSRF())
 
 	r.Get("/terms", handlers.LegalPage("Terms of Service", "terms.md"))
