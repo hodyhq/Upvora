@@ -15,6 +15,9 @@ import (
 	"strings"
 )
 
+// ScopeCtxKey holds the scope of the MCP access token on the request context.
+type ScopeCtxKey struct{}
+
 const (
 	// ScopeFull acts as the user with UI-equivalent permissions.
 	ScopeFull = "upvora"

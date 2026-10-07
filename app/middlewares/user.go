@@ -101,11 +101,12 @@ func User() web.MiddlewareFunc {
 				}
 			} else if mcpBearer {
 				// OAuth access token issued to an MCP client by this site.
-				mcpUser, status := userFromMCPAccessToken(c, bearer)
+				mcpUser, scope, status := userFromMCPAccessToken(c, bearer)
 				if status != 0 {
 					return mcpUnauthorized(c, status)
 				}
 				user = mcpUser
+				c.Set(oauthas.ScopeCtxKey{}, scope)
 			} else if c.Request.IsAPI() {
 				if apiKey, ok := web.ParseBearerToken(c.Request.GetHeader("Authorization")); ok {
 					getUserByAPIKey := &query.GetUserByAPIKey{APIKey: apiKey}
@@ -196,28 +197,28 @@ func isMCPPath(c *web.Context) bool {
 // site and tenant, the security stamp must still match (role change, block or
 // sign-out revoke it), MCP must be on, and the role must meet the minimum.
 // A read-only token may only make safe requests. Returns a status on refusal.
-func userFromMCPAccessToken(c *web.Context, token string) (*entity.User, int) {
+func userFromMCPAccessToken(c *web.Context, token string) (*entity.User, string, int) {
 	tenant := c.Tenant()
 	if tenant == nil || !tenant.MCPEnabled {
-		return nil, http.StatusUnauthorized
+		return nil, "", http.StatusUnauthorized
 	}
 	claims, err := jwt.DecodeMCPAccessClaims(token, c.BaseURL()+"/mcp")
 	if err != nil || claims.TenantID != tenant.ID {
-		return nil, http.StatusUnauthorized
+		return nil, "", http.StatusUnauthorized
 	}
 	getUser := &query.GetUserByID{UserID: claims.UserID, TenantID: tenant.ID}
 	if bus.Dispatch(c, getUser) != nil {
-		return nil, http.StatusUnauthorized
+		return nil, "", http.StatusUnauthorized
 	}
 	user := getUser.Result
 	if subtle.ConstantTimeCompare([]byte(user.SecurityStamp), []byte(claims.SecurityStamp)) != 1 ||
 		user.Status != enum.UserActive || user.Role < tenant.MCPMinRole {
-		return nil, http.StatusUnauthorized
+		return nil, "", http.StatusUnauthorized
 	}
 	if claims.Scope == oauthas.ScopeRead && c.Request.Method != http.MethodGet && c.Request.Method != http.MethodHead {
-		return nil, http.StatusForbidden
+		return nil, "", http.StatusForbidden
 	}
-	return user, 0
+	return user, claims.Scope, 0
 }
 
 // mcpUnauthorized refuses an MCP or token request; a 401 carries the RFC 9728

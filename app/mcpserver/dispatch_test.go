@@ -136,3 +136,18 @@ func TestVisible_RoleScopeAndConditions(t *testing.T) {
 	Expect(mcpserver.Visible(readTool, member, tenant, oauthas.ScopeRead)).IsTrue()
 	Expect(mcpserver.Visible(billingTool, admin, tenant, oauthas.ScopeFull)).IsFalse() // billing disabled in tests
 }
+
+func TestDispatch_RawBodyAndBoth(t *testing.T) {
+	RegisterT(t)
+	importTool := mcpserver.Tool{Name: "upvora_tags_import", Method: "POST", Path: "/api/v1/admin/import/tags",
+		Fields: []mcpserver.Field{{Name: "tags", Type: "array", Items: "object", In: "raw", Required: true}}}
+	res := mcpserver.Dispatch(echoEngine{}, origRequest(), importTool, map[string]any{"tags": []any{map[string]any{"name": "ux"}}})
+	Expect(decode(t, res.Text)["body"]).Equals(`[{"name":"ux"}]`)
+
+	statusTool := mcpserver.Tool{Name: "upvora_oauth_providers_set_status", Method: "POST", Path: "/api/v1/admin/oauth/{provider}/status",
+		Fields: []mcpserver.Field{{Name: "provider", Type: "string", In: "both", Required: true}, {Name: "isEnabled", Type: "boolean", In: "body"}}}
+	res = mcpserver.Dispatch(echoEngine{}, origRequest(), statusTool, map[string]any{"provider": "_abc", "isEnabled": true})
+	got := decode(t, res.Text)
+	Expect(got["path"]).Equals("/api/v1/admin/oauth/_abc/status")
+	Expect(got["body"]).Equals(`{"isEnabled":true,"provider":"_abc"}`)
+}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -212,6 +213,94 @@ func AIIdeate() web.HandlerFunc {
 
 // AIFinalize turns the conversation into {title, description, brief}.
 // The model must answer with strict JSON; anything else is rejected.
+// BriefSections is the Idea Brief structure, shared by server-side Vora
+// (finalize) and MCP clients running the interview themselves.
+var BriefSections = []string{
+	"Problem",
+	"Who's affected & workflow today",
+	"Proposed behavior",
+	"Out of scope (v1)",
+	"Owner & success",
+	"Data & dependencies",
+	"Risks & open questions",
+	"How this conversation went (2-3 sentences)",
+}
+
+// voraInterviewRules are Vora's interview rules, restated for an MCP client
+// that conducts the interview itself.
+var voraInterviewRules = []string{
+	"Ask one or two questions at a time; keep it under about 10 questions.",
+	"Cover the problem, who is affected and their current workflow, the proposed behavior, what is out of scope, who should own it, and how success is measured.",
+	"Never invent facts the user did not give you; anything not discussed goes under Risks & open questions as an open point.",
+	"Stay on idea planning; decline anything else briefly.",
+	"Title: one line, under 90 characters, specific. Description: 2 to 4 sentences summarizing the idea, ending with \"Full plan in the attached brief.\"",
+	"Show the user the title, description and brief, and get their OK before submitting.",
+}
+
+// AIIdeationContext gives an MCP client what Vora uses, so the client can run
+// the interview itself and submit the result with upvora_ai_submit_brief. The
+// admin-authored guidance is shown to the ideating user's client by design
+// (it already reaches an LLM when Vora runs server-side).
+func AIIdeationContext() web.HandlerFunc {
+	return func(c *web.Context) error {
+		productID := 0
+		if raw := c.QueryParam("product"); raw != "" {
+			id, err := strconv.Atoi(raw)
+			if err != nil {
+				return c.BadRequest(web.Map{"product": "Product must be a number."})
+			}
+			productID = id
+		}
+		var product web.Map
+		products := []web.Map{}
+		for _, p := range c.Tenant().Products {
+			if !p.IsActive {
+				continue
+			}
+			products = append(products, web.Map{"id": p.ID, "name": p.Name})
+			if p.ID == productID {
+				product = web.Map{"id": p.ID, "name": p.Name}
+			}
+		}
+		if productID != 0 && product == nil {
+			return c.BadRequest(web.Map{"product": "Unknown or inactive product."})
+		}
+
+		guidance := ""
+		agent := &query.GetAIAgentForProduct{ProductID: productID}
+		if err := bus.Dispatch(c, agent); err == nil && agent.Result != nil && agent.Result.Enabled {
+			guidance = agent.Result.Instructions
+		}
+
+		allTags := &query.GetAllTags{}
+		if err := bus.Dispatch(c, allTags); err != nil {
+			return c.Failure(err)
+		}
+		tags := []web.Map{}
+		for _, t := range allTags.Result {
+			if t.IsPublic {
+				tags = append(tags, web.Map{"name": t.Name, "slug": t.Slug})
+			}
+		}
+
+		data := web.Map{
+			"products":          products,
+			"interviewGuidance": guidance,
+			"interviewRules":    voraInterviewRules,
+			"briefSections":     BriefSections,
+			"briefFormat":       "Markdown with one ## heading per section, in this order. No title header, names or emails: Upvora adds the header with the submitter.",
+			"tags":              tags,
+			"privacyRule":       "Never put an email address or other personal data in the title, description or brief. Upvora records the submitter itself and stores their email only as a token.",
+			"canSubmitPrivate":  c.User().IsCollaborator() || c.Tenant().MembersPrivateIdeas,
+			"submitWith":        "upvora_ai_submit_brief",
+		}
+		if product != nil {
+			data["product"] = product
+		}
+		return c.Ok(data)
+	}
+}
+
 func AIFinalize() web.HandlerFunc {
 	return func(c *web.Context) error {
 		action := new(actions.AIConverse)
@@ -255,7 +344,7 @@ one line, under 90 characters, specific
 ===TAGS===
 ` + tagLine(tagNames) + `
 ===BRIEF===
-a complete markdown document with these sections: Problem; Who's affected & workflow today; Proposed behavior; Out of scope (v1); Owner & success; Data & dependencies; Risks & open questions; How this conversation went (2-3 sentences). Base every statement on what the user actually said — anything not discussed goes under Risks & open questions as an open point, never as an invented decision. Do not include any names, emails or a title header — those are added by the system.`
+a complete markdown document with these sections: ` + strings.Join(BriefSections, "; ") + `. Base every statement on what the user actually said — anything not discussed goes under Risks & open questions as an open point, never as an invented decision. Do not include any names, emails or a title header — those are added by the system.`
 
 		// Providers like Anthropic reject histories that end with an assistant
 		// turn ("prefill"); close the conversation with a user message.

@@ -29,7 +29,7 @@ const (
 type Field struct {
 	Name        string
 	Type        string // integer, number, string, boolean, array, object
-	In          string // path, query, body
+	In          string // path, query, body, both (path and body), raw (the whole body)
 	Description string
 	Required    bool
 	Items       string // element type for arrays
@@ -130,6 +130,7 @@ func Dispatch(engine http.Handler, orig *http.Request, t Tool, args map[string]a
 	path := t.Path
 	query := url.Values{}
 	body := map[string]any{}
+	var rawBody any // a field sent as the whole body (e.g. a JSON array)
 
 	for _, f := range t.Fields {
 		v, present := args[f.Name]
@@ -140,13 +141,18 @@ func Dispatch(engine http.Handler, orig *http.Request, t Tool, args map[string]a
 			continue
 		}
 		switch f.In {
-		case "path":
+		case "path", "both":
 			s, ok := argString(v)
 			// Path templates are fixed; a value may never add segments.
 			if !ok || s == "" || s == "." || strings.Contains(s, "..") {
 				return errResult("Invalid value for %q.", f.Name)
 			}
 			path = strings.Replace(path, "{"+f.Name+"}", url.PathEscape(s), 1)
+			if f.In == "both" {
+				body[f.Name] = v
+			}
+		case "raw":
+			rawBody = v
 		case "query":
 			s, ok := argString(v)
 			if !ok {
@@ -170,7 +176,11 @@ func Dispatch(engine http.Handler, orig *http.Request, t Tool, args map[string]a
 	if t.Method == http.MethodGet || t.Method == http.MethodDelete && len(body) == 0 {
 		reader = bytes.NewReader(nil)
 	} else {
-		raw, err := json.Marshal(body)
+		var payload any = body
+		if rawBody != nil {
+			payload = rawBody
+		}
+		raw, err := json.Marshal(payload)
 		if err != nil {
 			return errResult("Arguments could not be encoded.")
 		}

@@ -342,6 +342,7 @@ func routes(r *web.Engine) *web.Engine {
 		membersApi.Delete("/api/v1/posts/:number/comments/:id", apiv1.DeleteComment())
 		membersApi.Post("/api/v1/ai/ideate", handlers.AIIdeate())
 		membersApi.Post("/api/v1/ai/finalize", handlers.AIFinalize())
+		membersApi.Get("/api/v1/ai/ideation-context", handlers.AIIdeationContext())
 		membersApi.Get("/api/v1/posts/:number/brief", handlers.GetIdeaBriefHandler())
 		membersApi.Post("/api/v1/posts/:number/votes", apiv1.AddVote())
 		membersApi.Delete("/api/v1/posts/:number/votes", apiv1.RemoveVote())

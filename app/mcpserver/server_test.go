@@ -44,3 +44,25 @@ func TestMCPServer_InitializeAndList(t *testing.T) {
 	_, err = session.ListTools(context.Background(), nil)
 	Expect(err).IsNil()
 }
+
+func TestMCPServer_SubmitIdeaPrompt(t *testing.T) {
+	RegisterT(t)
+	ts := newTestServer()
+	defer ts.Close()
+
+	client := sdk.NewClient(&sdk.Implementation{Name: "test", Version: "1"}, nil)
+	session, err := client.Connect(context.Background(), &sdk.StreamableClientTransport{Endpoint: ts.URL + "/mcp"}, nil)
+	Expect(err).IsNil()
+	defer session.Close()
+
+	prompts, err := session.ListPrompts(context.Background(), nil)
+	Expect(err).IsNil()
+	Expect(len(prompts.Prompts)).Equals(1)
+	Expect(prompts.Prompts[0].Name).Equals("submit_idea")
+
+	got, err := session.GetPrompt(context.Background(), &sdk.GetPromptParams{Name: "submit_idea", Arguments: map[string]string{"idea": "dark mode"}})
+	Expect(err).IsNil()
+	text := got.Messages[0].Content.(*sdk.TextContent).Text
+	Expect(text).ContainsSubstring("upvora_ai_ideation_context")
+	Expect(text).ContainsSubstring("dark mode")
+}
