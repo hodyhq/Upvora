@@ -1,0 +1,125 @@
+package postgres_test
+
+import (
+	"testing"
+	"time"
+
+	"github.com/getfider/fider/app"
+	"github.com/getfider/fider/app/models/cmd"
+	"github.com/getfider/fider/app/models/query"
+	. "github.com/getfider/fider/app/pkg/assert"
+	"github.com/getfider/fider/app/pkg/bus"
+	"github.com/getfider/fider/app/pkg/errors"
+)
+
+func registerClient(t *testing.T) string {
+	reg := &cmd.RegisterOAuthClient{Name: "Claude", RedirectURIs: []string{"https://claude.ai/api/mcp/auth_callback"}}
+	Expect(bus.Dispatch(demoTenantCtx, reg)).IsNil()
+	Expect(len(reg.Result.ClientID) >= 32).IsTrue()
+	return reg.Result.ClientID
+}
+
+func TestOAuthClients_RegisterGetListDelete(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	clientID := registerClient(t)
+
+	get := &query.GetOAuthClient{ClientID: clientID}
+	Expect(bus.Dispatch(demoTenantCtx, get)).IsNil()
+	Expect(get.Result.Name).Equals("Claude")
+	Expect(get.Result.RedirectURIs).Equals([]string{"https://claude.ai/api/mcp/auth_callback"})
+
+	// tenant-scoped: another tenant cannot see it
+	other := &query.GetOAuthClient{ClientID: clientID}
+	Expect(errors.Cause(bus.Dispatch(avengersTenantCtx, other))).Equals(app.ErrNotFound)
+
+	list := &query.ListOAuthClients{}
+	Expect(bus.Dispatch(jonSnowCtx, list)).IsNil()
+	Expect(list.Result).HasLen(1)
+
+	Expect(bus.Dispatch(jonSnowCtx, &cmd.DeleteOAuthClient{ID: get.Result.ID})).IsNil()
+	gone := &query.GetOAuthClient{ClientID: clientID}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, gone))).Equals(app.ErrNotFound)
+}
+
+func saveCode(t *testing.T, clientID, hash string, expires time.Time) {
+	Expect(bus.Dispatch(demoTenantCtx, &cmd.SaveOAuthCode{
+		CodeHash: hash, ClientID: clientID, UserID: aryaStark.ID, RedirectURI: "https://claude.ai/api/mcp/auth_callback",
+		Scope: "upvora", CodeChallenge: "challenge", ExpiresAt: expires,
+	})).IsNil()
+}
+
+func TestOAuthCodes_SingleUseAndScoped(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	clientID := registerClient(t)
+	saveCode(t, clientID, "code-hash-1", time.Now().Add(10*time.Minute))
+
+	wrongClient := &cmd.ConsumeOAuthCode{CodeHash: "code-hash-1", ClientID: "someone-else"}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, wrongClient))).Equals(app.ErrNotFound)
+
+	wrongTenant := &cmd.ConsumeOAuthCode{CodeHash: "code-hash-1", ClientID: clientID}
+	Expect(errors.Cause(bus.Dispatch(avengersTenantCtx, wrongTenant))).Equals(app.ErrNotFound)
+
+	first := &cmd.ConsumeOAuthCode{CodeHash: "code-hash-1", ClientID: clientID}
+	Expect(bus.Dispatch(demoTenantCtx, first)).IsNil()
+	Expect(first.Result.UserID).Equals(aryaStark.ID)
+	Expect(first.Result.CodeChallenge).Equals("challenge")
+
+	again := &cmd.ConsumeOAuthCode{CodeHash: "code-hash-1", ClientID: clientID}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, again))).Equals(app.ErrNotFound)
+}
+
+func TestOAuthCodes_Expired(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	clientID := registerClient(t)
+	saveCode(t, clientID, "code-hash-old", time.Now().Add(-time.Minute))
+
+	c := &cmd.ConsumeOAuthCode{CodeHash: "code-hash-old", ClientID: clientID}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, c))).Equals(app.ErrNotFound)
+}
+
+func saveRefresh(t *testing.T, clientID, hash, family string) {
+	Expect(bus.Dispatch(demoTenantCtx, &cmd.SaveOAuthRefreshToken{
+		TokenHash: hash, ClientID: clientID, UserID: aryaStark.ID, Scope: "upvora",
+		FamilyID: family, ExpiresAt: time.Now().Add(30 * 24 * time.Hour),
+	})).IsNil()
+}
+
+func TestOAuthRefresh_RotateAndReuseRevokesFamily(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	clientID := registerClient(t)
+	saveRefresh(t, clientID, "rt-1", "fam-1")
+
+	rot := &cmd.RotateOAuthRefreshToken{OldHash: "rt-1", NewHash: "rt-2", ClientID: clientID, NewExpiresAt: time.Now().Add(time.Hour)}
+	Expect(bus.Dispatch(demoTenantCtx, rot)).IsNil()
+	Expect(rot.Result.UserID).Equals(aryaStark.ID)
+	Expect(rot.Result.Scope).Equals("upvora")
+
+	// replaying the rotated token fails and revokes the whole family
+	replay := &cmd.RotateOAuthRefreshToken{OldHash: "rt-1", NewHash: "rt-x", ClientID: clientID, NewExpiresAt: time.Now().Add(time.Hour)}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, replay))).Equals(app.ErrNotFound)
+
+	// so the newest token in the family no longer works either
+	next := &cmd.RotateOAuthRefreshToken{OldHash: "rt-2", NewHash: "rt-3", ClientID: clientID, NewExpiresAt: time.Now().Add(time.Hour)}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, next))).Equals(app.ErrNotFound)
+}
+
+func TestOAuthRefresh_WrongClientAndDeletedClient(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	clientID := registerClient(t)
+	saveRefresh(t, clientID, "rt-a", "fam-a")
+
+	wrong := &cmd.RotateOAuthRefreshToken{OldHash: "rt-a", NewHash: "rt-b", ClientID: "other", NewExpiresAt: time.Now().Add(time.Hour)}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, wrong))).Equals(app.ErrNotFound)
+
+	get := &query.GetOAuthClient{ClientID: clientID}
+	Expect(bus.Dispatch(demoTenantCtx, get)).IsNil()
+	Expect(bus.Dispatch(jonSnowCtx, &cmd.DeleteOAuthClient{ID: get.Result.ID})).IsNil()
+
+	after := &cmd.RotateOAuthRefreshToken{OldHash: "rt-a", NewHash: "rt-b", ClientID: clientID, NewExpiresAt: time.Now().Add(time.Hour)}
+	Expect(errors.Cause(bus.Dispatch(demoTenantCtx, after))).Equals(app.ErrNotFound)
+}
