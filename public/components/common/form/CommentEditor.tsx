@@ -1,6 +1,6 @@
 import { Editor } from "@tiptap/react"
 import Link from "@tiptap/extension-link"
-import React, { useState, useRef, useEffect } from "react"
+import React, { useState, useRef, useEffect, useLayoutEffect } from "react"
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react"
 import { Placeholder } from "@tiptap/extensions"
 import { i18n } from "@lingui/core"
@@ -276,7 +276,9 @@ const Tiptap: React.FunctionComponent<CommentEditorProps> = (props) => {
   const documentImagesRef = useRef<Map<string, boolean>>(new Map())
   // The paste and drop handlers are created once: read the limit through a ref.
   const maxAttachmentsRef = useRef(props.maxAttachments)
-  maxAttachmentsRef.current = props.maxAttachments
+  useLayoutEffect(() => {
+    maxAttachmentsRef.current = props.maxAttachments
+  }, [props.maxAttachments])
 
   // data: URLs of images attached in this editor session that aren't saved yet, by bkey. The
   // markdown only holds ![](fider-image:<bkey>), so when it's loaded again (switching back from
