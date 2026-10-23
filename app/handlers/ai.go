@@ -135,10 +135,23 @@ func VoraRequiredFor(c *web.Context, productID int) (bool, error) {
 		return false, nil
 	}
 	agent, err := resolveAgent(c, productID)
-	if err != nil {
-		return false, err
+	if err != nil || agent != nil {
+		return agent != nil, err
 	}
-	return agent != nil, nil
+	// On a site with products the form never offers "no product", so choosing
+	// none is no way around Vora while Vora serves any product.
+	if productID == 0 && c.Tenant().AIEnabled && len(c.Tenant().Products) > 0 {
+		agents := &query.ListAIAgents{}
+		if err := bus.Dispatch(c, agents); err != nil {
+			return false, err
+		}
+		for _, a := range agents.Result {
+			if a.Enabled {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
 }
 
 // webSearchAvailable reports whether this agent may search the web — the site

@@ -117,3 +117,30 @@ func TestCreatePost_VoraRequired_OnlyWhereVoraServesTheProduct(t *testing.T) {
 	Expect(code).Equals(http.StatusOK)
 	Expect(*created).IsTrue()
 }
+
+// On a site with products the form never offers "no product": choosing none
+// is not a way around Vora when Vora serves any product.
+func TestCreatePost_VoraRequired_NoProductIsNoWayAround(t *testing.T) {
+	RegisterT(t)
+	tenant, created := voraSite(false) // no agent for "no product"
+	tenant.Products = []*entity.Product{{ID: 3, Name: "Upvora"}}
+	bus.AddHandler(func(ctx context.Context, q *query.ListAIAgents) error {
+		pid := 3
+		q.Result = []*entity.AIAgent{{ProductID: &pid, Enabled: true}}
+		return nil
+	})
+	code, _ := mock.NewServer().OnTenant(tenant).AsUser(mock.JonSnow).ExecutePost(apiv1.CreatePost(), manualIdea)
+	Expect(code).Equals(http.StatusBadRequest)
+	Expect(*created).IsFalse()
+
+	// Vora switched off for the whole site: never required
+	tenant.AIEnabled = false
+	code, _ = mock.NewServer().OnTenant(tenant).AsUser(mock.JonSnow).ExecutePost(apiv1.CreatePost(), manualIdea)
+	Expect(code).Equals(http.StatusOK)
+	tenant.AIEnabled = true
+
+	// a site without products keeps the per-product rule: no agent, plain form
+	tenant.Products = nil
+	code, _ = mock.NewServer().OnTenant(tenant).AsUser(mock.JonSnow).ExecutePost(apiv1.CreatePost(), manualIdea)
+	Expect(code).Equals(http.StatusOK)
+}
