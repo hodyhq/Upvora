@@ -14,20 +14,20 @@ const PdfView = (props: PdfViewProps) => {
 
   useEffect(() => {
     let cancelled = false
-    let doc: { numPages: number; getPage: (n: number) => Promise<any>; destroy: () => void } | undefined
+    // The loading task owns the document and its worker resources: it is
+    // what gets destroyed when the viewer closes.
+    let task: { promise: Promise<any>; destroy: () => Promise<void> } | undefined
     const load = async () => {
       try {
         const pdfjs: any = await import(/* webpackChunkName: "pdfjs" */ "pdfjs-dist")
         if (!pdfjs.GlobalWorkerOptions.workerPort) {
           pdfjs.GlobalWorkerOptions.workerPort = new Worker(new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url), { type: "module" })
         }
-        const loaded = await pdfjs.getDocument({ url: props.url, isEvalSupported: false, enableXfa: false }).promise
-        if (cancelled) {
-          loaded.destroy()
-          return
-        }
-        doc = loaded
+        const loading = pdfjs.getDocument({ url: props.url, isEvalSupported: false, enableXfa: false })
+        task = loading
+        const doc = await loading.promise
         const container = host.current
+        if (cancelled) return
         if (!doc || !container) return
         const width = container.clientWidth || 800
         const ratio = window.devicePixelRatio || 1
@@ -51,7 +51,7 @@ const PdfView = (props: PdfViewProps) => {
     load()
     return () => {
       cancelled = true
-      doc?.destroy()
+      task?.destroy().catch(() => undefined)
     }
   }, [props.url])
 
