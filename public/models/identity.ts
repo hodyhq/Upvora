@@ -25,6 +25,8 @@ export interface Tenant {
   isFeedEnabled: boolean
   isModerationEnabled: boolean
   membersPrivateIdeas: boolean
+  voraRequired: boolean
+  fileAttachmentsEnabled: boolean
   membersCanPublishPrivate: boolean
   mcpEnabled: boolean
   mcpMinRole: "visitor" | "collaborator" | "administrator"

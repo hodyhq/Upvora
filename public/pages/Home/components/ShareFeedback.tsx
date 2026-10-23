@@ -2,6 +2,7 @@ import "./ShareFeedback.scss"
 
 import React, { useEffect, useRef, useState } from "react"
 import { VoraChat } from "@fider/components/VoraChat"
+import { IdeaFilesEditor, fileKind } from "@fider/components/IdeaFiles/IdeaFiles"
 import { SignInControl } from "@fider/components/common/SignInControl"
 import { Modal, CloseIcon, Form, Button, Input, Select, LegalFooter, Toggle } from "@fider/components/common"
 import { Markdown } from "@fider/components/common/Markdown"
@@ -43,16 +44,20 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
   const [productId, setProductId] = useState<number>(props.product?.id ?? tenantProducts[0]?.id ?? 0)
   const [briefMarkdown, setBriefMarkdown] = useState("")
   const [voraTranscript, setVoraTranscript] = useState<AIMessage[]>([])
+  const [voraToken, setVoraToken] = useState("")
   const [isPrivate, setIsPrivate] = useState(false)
   const [voraOpen, setVoraOpen] = useState(false)
   const isStaff = fider.session.isAuthenticated && fider.session.user.isCollaborator
   const canMakePrivate = isStaff || (fider.session.isAuthenticated && fider.session.tenant.membersPrivateIdeas)
   // Vora is available when the feature is on and this product (or the
   // default) has an enabled agent — for signed-in users only.
-  const voraAvailable =
-    fider.session.isAuthenticated &&
-    !!fider.session.tenant.aiEnabled &&
-    !!fider.session.tenant.aiAgents?.some((a) => a.productId === productId || a.productId === null)
+  const voraServesProduct = !!fider.session.tenant.aiEnabled && !!fider.session.tenant.aiAgents?.some((a) => a.productId === productId || a.productId === null)
+  const voraAvailable = fider.session.isAuthenticated && voraServesProduct
+  // Vora-only: where Vora serves the product, ideas from this form start with
+  // Vora; the form appears with Vora's draft. (MCP and API keys are exempt.)
+  const voraRequired = !!fider.session.tenant.voraRequired && voraServesProduct
+  const showForm = !voraRequired || !!briefMarkdown
+  const canAttachFiles = fider.session.isAuthenticated && !!fider.session.tenant.fileAttachmentsEnabled
 
   const getTagsCachedValue = (): Tag[] => {
     if (!canEditTags) {
@@ -212,7 +217,8 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
           productId,
           briefMarkdown,
           voraTranscript,
-          isPrivate
+          isPrivate,
+          voraToken
         ),
         minDelay,
       ])
@@ -234,6 +240,11 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
   }
 
   const onCodeVerified = (): void => {
+    // Signed in, but Vora has not drafted the idea yet: reload signed in to start with Vora.
+    if (!showForm) {
+      location.reload()
+      return
+    }
     // User is authenticated - finalize the feedback submission
     finaliseFeedback()
   }
@@ -269,16 +280,26 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
             <div className="mb-4">
               <button type="button" className="c-vora-cta" onClick={() => setVoraOpen(true)}>
                 <span className="c-vora-cta__title">✦ Talk it through with Vora</span>
-                <span className="c-vora-cta__sub">Not sure how to phrase it? Vora interviews you and drafts the whole idea.</span>
+                <span className="c-vora-cta__sub">
+                  {voraRequired
+                    ? "New ideas on this board start with Vora: it interviews you and drafts the whole idea, which you then review."
+                    : "Not sure how to phrase it? Vora interviews you and drafts the whole idea."}
+                </span>
               </button>
             </div>
+          )}
+          {voraRequired && !fider.session.isAuthenticated && (
+            <p className="mb-4 text-muted">
+              <Trans id="newpost.modal.vora.signin">Sign in to share your idea: new ideas on this board start with Vora.</Trans>
+            </p>
           )}
           {voraOpen && (
             <div className="mb-4">
               <VoraChat
                 productId={productId}
                 onClose={() => setVoraOpen(false)}
-                onDone={(voraTitle, voraDescription, voraBrief, voraTags, transcript) => {
+                onDone={(voraTitle, voraDescription, voraBrief, voraTags, transcript, token) => {
+                  setVoraToken(token)
                   setTitle(voraTitle)
                   setTitleManuallyEdited(true)
                   setDescription(voraDescription)
@@ -298,78 +319,81 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
               anything, then submit.
             </div>
           )}
-          <div className="c-share-feedback-form">
-            <Form error={error}>
-              <div ref={editorRef} className="mb-4">
-                <CommentEditor
-                  key={briefMarkdown ? "vora-filled" : "manual"}
-                  field="description"
-                  onChange={handleDescriptionChange}
-                  onFocus={handleEditorFocus}
-                  initialValue={description}
-                  disabled={fider.isReadOnly}
-                  maxAttachments={3}
-                  maxImageSizeKB={5 * 1024}
-                  placeholder={i18n._({
-                    id: "newpost.modal.description.placeholder",
-                    message: "Tell us about it. Explain it fully, don't hold back, the more information the better.",
-                  })}
-                  onImageUploaded={handleImageUploaded}
-                  onGetImageSrc={getImageSrc}
-                />
-              </div>
-              <SimilarPosts title={title} tags={props.tags} />
-              {tenantProducts.length > 0 && (
-                <Select
-                  field="productId"
-                  label={i18n._({ id: "newpost.modal.product.label", message: "Product" })}
-                  defaultValue={String(productId)}
-                  options={tenantProducts.map((p) => ({ value: String(p.id), label: p.name }))}
-                  onChange={(o) => setProductId(parseInt(o?.value ?? "0", 10) || 0)}
-                />
-              )}
-              <Input
-                field="title"
-                inputRef={titleRef}
-                maxLength={255}
-                label={i18n._({ id: "newpost.modal.title.label", message: "Give your idea a title" })}
-                value={title}
-                disabled={fider.isReadOnly}
-                onChange={handleTitleChange}
-                onKeyDown={handleKeyDown}
-                placeholder={i18n._({ id: "newpost.modal.title.placeholder", message: "Something short and snappy, sum it up in a few words" })}
-              />
-              {canEditTags && (
-                <div className="c-form-field">
-                  <label>
-                    <Trans id="label.tags">Tags</Trans>
-                  </label>
-                  <div className={classSet({ "c-form-field": true })}>
-                    <TagsSelect tags={props.tags} selectionChanged={handleTagsChanged} selected={tags} alwaysEditing={true} canEdit={true} />
-                  </div>
+          {showForm && (
+            <div className="c-share-feedback-form">
+              <Form error={error}>
+                <div ref={editorRef} className="mb-4">
+                  <CommentEditor
+                    key={briefMarkdown ? "vora-filled" : "manual"}
+                    field="description"
+                    onChange={handleDescriptionChange}
+                    onFocus={handleEditorFocus}
+                    initialValue={description}
+                    disabled={fider.isReadOnly}
+                    maxAttachments={3 - attachments.filter((a) => !a.remove && a.upload && fileKind(a.upload.fileName || "")).length}
+                    maxImageSizeKB={5 * 1024}
+                    placeholder={i18n._({
+                      id: "newpost.modal.description.placeholder",
+                      message: "Tell us about it. Explain it fully, don't hold back, the more information the better.",
+                    })}
+                    onImageUploaded={handleImageUploaded}
+                    onGetImageSrc={getImageSrc}
+                  />
                 </div>
-              )}
-              {canMakePrivate && (
-                <div className="c-form-field">
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                    <Toggle active={isPrivate} onToggle={setIsPrivate} ariaLabelledby="make-private-label" ariaDescribedby="make-private-hint" />
-                    <div>
-                      <div id="make-private-label" className="text-medium">
-                        <Trans id="newpost.modal.private.label">Make private</Trans>
-                      </div>
-                      <p id="make-private-hint" className="text-muted text-xs" style={{ margin: "2px 0 0" }}>
-                        {isStaff ? (
-                          <Trans id="newpost.modal.private.hint">Only collaborators and admins can see this idea.</Trans>
-                        ) : (
-                          <Trans id="newpost.modal.private.hint.member">Only you, collaborators and admins can see this idea.</Trans>
-                        )}
-                      </p>
+                {canAttachFiles && <IdeaFilesEditor attachments={attachments} onChange={handleImageUploaded} disabled={fider.isReadOnly} />}
+                <SimilarPosts title={title} tags={props.tags} />
+                {tenantProducts.length > 0 && (
+                  <Select
+                    field="productId"
+                    label={i18n._({ id: "newpost.modal.product.label", message: "Product" })}
+                    defaultValue={String(productId)}
+                    options={tenantProducts.map((p) => ({ value: String(p.id), label: p.name }))}
+                    onChange={(o) => setProductId(parseInt(o?.value ?? "0", 10) || 0)}
+                  />
+                )}
+                <Input
+                  field="title"
+                  inputRef={titleRef}
+                  maxLength={255}
+                  label={i18n._({ id: "newpost.modal.title.label", message: "Give your idea a title" })}
+                  value={title}
+                  disabled={fider.isReadOnly}
+                  onChange={handleTitleChange}
+                  onKeyDown={handleKeyDown}
+                  placeholder={i18n._({ id: "newpost.modal.title.placeholder", message: "Something short and snappy, sum it up in a few words" })}
+                />
+                {canEditTags && (
+                  <div className="c-form-field">
+                    <label>
+                      <Trans id="label.tags">Tags</Trans>
+                    </label>
+                    <div className={classSet({ "c-form-field": true })}>
+                      <TagsSelect tags={props.tags} selectionChanged={handleTagsChanged} selected={tags} alwaysEditing={true} canEdit={true} />
                     </div>
                   </div>
-                </div>
-              )}
-            </Form>
-          </div>
+                )}
+                {canMakePrivate && (
+                  <div className="c-form-field">
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                      <Toggle active={isPrivate} onToggle={setIsPrivate} ariaLabelledby="make-private-label" ariaDescribedby="make-private-hint" />
+                      <div>
+                        <div id="make-private-label" className="text-medium">
+                          <Trans id="newpost.modal.private.label">Make private</Trans>
+                        </div>
+                        <p id="make-private-hint" className="text-muted text-xs" style={{ margin: "2px 0 0" }}>
+                          {isStaff ? (
+                            <Trans id="newpost.modal.private.hint">Only collaborators and admins can see this idea.</Trans>
+                          ) : (
+                            <Trans id="newpost.modal.private.hint.member">Only you, collaborators and admins can see this idea.</Trans>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </Form>
+            </div>
+          )}
         </div>
         {/* For unauthenticated users, always show the sign-in control */}
         {!fider.session.isAuthenticated ? (
@@ -389,6 +413,7 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
           </div>
         ) : (
           /* For authenticated users, only show the submit button container when title is long enough */
+          showForm &&
           showSubmitButton && (
             <div className="c-share-feedback__content animate-fade-in">
               <div className="c-share-feedback-signin">

@@ -19,6 +19,8 @@ type MultiImageUploadOpts struct {
 	MinHeight    int
 	ExactRatio   bool
 	MaxKilobytes int
+	// AllowFiles also accepts PDF, plain text and Markdown (see FileUpload).
+	AllowFiles bool
 }
 
 // ImageUploadOpts arguments to validate given upload
@@ -37,16 +39,35 @@ func MultiImageUpload(ctx context.Context, currentAttachments []string, uploads 
 	}
 
 	totalCount := len(currentAttachments)
+	removed := map[string]bool{}
 
 	for _, upload := range uploads {
 		if upload.Remove {
-			for _, attachment := range currentAttachments {
-				if attachment == upload.BlobKey {
-					totalCount--
+			// Each existing attachment frees one slot, however often it is named.
+			if !removed[upload.BlobKey] {
+				for _, attachment := range currentAttachments {
+					if attachment == upload.BlobKey {
+						totalCount--
+						removed[upload.BlobKey] = true
+						break
+					}
 				}
 			}
 		} else if upload.Upload != nil {
 			totalCount++
+			// A text file may arrive as text (what an assistant writes) instead of bytes.
+			if len(upload.Upload.Content) == 0 && upload.Upload.Text != "" {
+				upload.Upload.Content = []byte(upload.Upload.Text)
+			}
+		}
+
+		if opts.AllowFiles && !upload.Remove && upload.Upload != nil && len(upload.Upload.Content) > 0 {
+			if _, _, isFile := DetectFile(upload.Upload.Content, upload.Upload.FileName); isFile {
+				if messages := FileUpload(ctx, upload, opts.MaxKilobytes); len(messages) > 0 {
+					return messages, nil
+				}
+				continue
+			}
 		}
 
 		messages, err := ImageUpload(ctx, upload, ImageUploadOpts{

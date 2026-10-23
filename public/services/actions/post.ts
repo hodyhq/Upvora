@@ -146,10 +146,11 @@ export const createPost = async (
   productId = 0,
   briefMarkdown = "",
   voraTranscript: AIMessage[] = [],
-  isPrivate = false
+  isPrivate = false,
+  voraToken = ""
 ): Promise<Result<CreatePostResponse>> => {
   return http
-    .post<CreatePostResponse>(`/api/v1/posts`, { title, description, attachments, tags, productId, briefMarkdown, voraTranscript, isPrivate })
+    .post<CreatePostResponse>(`/api/v1/posts`, { title, description, attachments, tags, productId, briefMarkdown, voraTranscript, isPrivate, voraToken })
     .then(http.event("post", "create"))
 }
 

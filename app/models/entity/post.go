@@ -7,23 +7,26 @@ import (
 
 // Post represents an post on a tenant board
 type Post struct {
-	ID            int           `json:"id"`
-	Number        int           `json:"number"`
-	Title         string        `json:"title"`
-	Slug          string        `json:"slug"`
-	Description   string        `json:"description"`
-	CreatedAt     time.Time     `json:"createdAt"`
-	User          *User         `json:"user"`
-	HasVoted      bool          `json:"hasVoted"`
-	VotesCount    int           `json:"votesCount"`
-	CommentsCount int           `json:"commentsCount"`
-	StatusSlug    string        `json:"status"`
-	StatusKind    string        `json:"statusKind"`
-	Response      *PostResponse `json:"response,omitempty"`
-	Tags          []string      `json:"tags"`
-	IsApproved    bool          `json:"isApproved"`
-	IsPrivate     bool          `json:"isPrivate"`
-	Product       *ProductInfo  `json:"product,omitempty"`
+	ID            int       `json:"id"`
+	Number        int       `json:"number"`
+	Title         string    `json:"title"`
+	Slug          string    `json:"slug"`
+	Description   string    `json:"description"`
+	CreatedAt     time.Time `json:"createdAt"`
+	User          *User     `json:"user"`
+	HasVoted      bool      `json:"hasVoted"`
+	VotesCount    int       `json:"votesCount"`
+	CommentsCount int       `json:"commentsCount"`
+	StatusSlug    string    `json:"status"`
+	// Attachments are the blob keys of the idea's images and files; set only
+	// where a single idea is read.
+	Attachments []string      `json:"attachments,omitempty"`
+	StatusKind  string        `json:"statusKind"`
+	Response    *PostResponse `json:"response,omitempty"`
+	Tags        []string      `json:"tags"`
+	IsApproved  bool          `json:"isApproved"`
+	IsPrivate   bool          `json:"isPrivate"`
+	Product     *ProductInfo  `json:"product,omitempty"`
 }
 
 // CanBeVoted returns true if this post can have its vote changed.

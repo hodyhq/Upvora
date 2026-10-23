@@ -28,6 +28,8 @@ type CreateNewPost struct {
 	ProductID   int                `json:"productId"`
 	// BriefMarkdown is Vora's plan document; optional, stored alongside the post.
 	BriefMarkdown string `json:"briefMarkdown"`
+	// VoraToken is Vora's finalize step vouching for BriefMarkdown.
+	VoraToken string `json:"voraToken"`
 	// VoraTranscript is the conversation that produced the brief; admin-viewable.
 	VoraTranscript []entity.AIMessage `json:"voraTranscript"`
 	// IsPrivate marks the idea visible only to its author and collaborators/admins.
@@ -142,6 +144,7 @@ func (action *CreateNewPost) Validate(ctx context.Context, user *entity.User) *v
 		MaxUploads:   3,
 		MaxKilobytes: 5120,
 		ExactRatio:   false,
+		AllowFiles:   fileAttachmentsAllowed(ctx),
 	})
 	if err != nil {
 		return validate.Error(err)
@@ -213,6 +216,7 @@ func (action *UpdatePost) Validate(ctx context.Context, user *entity.User) *vali
 		messages, err := validate.MultiImageUpload(ctx, getAttachments.Result, action.Attachments, validate.MultiImageUploadOpts{
 			MaxUploads:   3,
 			MaxKilobytes: 5120,
+			AllowFiles:   fileAttachmentsAllowed(ctx),
 			ExactRatio:   false,
 		})
 		if err != nil {
@@ -503,4 +507,11 @@ func withoutNilUploads(uploads []*dto.ImageUpload) []*dto.ImageUpload {
 		}
 	}
 	return result
+}
+
+// fileAttachmentsAllowed reports whether ideas on this site may carry PDF,
+// text and Markdown files besides images (comments stay images only).
+func fileAttachmentsAllowed(ctx context.Context) bool {
+	tenant, _ := ctx.Value(app.TenantCtxKey).(*entity.Tenant)
+	return tenant != nil && tenant.FileAttachmentsEnabled
 }

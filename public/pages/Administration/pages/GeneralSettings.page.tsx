@@ -2,6 +2,7 @@ import React, { useState } from "react"
 
 import { Button, ButtonClickEvent, TextArea, Form, Input, ImageUploader, Select } from "@fider/components"
 import { AdminPageContainer } from "../components/AdminBasePage"
+import { SubmissionToggle } from "../components/SubmissionToggle"
 import { actions, Failure, Fider } from "@fider/services"
 import { ImageUpload } from "@fider/models"
 import { useFider } from "@fider/hooks"
@@ -214,6 +215,11 @@ const GeneralSettingsPage = () => {
             </>
           )}
         </Select>
+
+        <SubmissionToggle field="fileAttachmentsEnabled" label="File attachments on ideas">
+          Lets people attach PDF, .txt and .md files to ideas, besides images: up to 3 attachments, 5 MB each, viewed inside the board. PDFs with scripts,
+          embedded files, forms or encryption are refused. Saved immediately.
+        </SubmissionToggle>
 
         <div className="field">
           <Button disabled={!fider.session.user.isAdministrator} variant="primary" onClick={handleSave}>

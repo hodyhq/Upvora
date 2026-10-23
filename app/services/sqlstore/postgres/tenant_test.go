@@ -11,6 +11,7 @@ import (
 	"github.com/getfider/fider/app/models/query"
 
 	"github.com/getfider/fider/app/models/cmd"
+	"github.com/getfider/fider/app/models/entity"
 	"github.com/getfider/fider/app/pkg/bus"
 	"github.com/getfider/fider/app/pkg/env"
 	"github.com/getfider/fider/app/pkg/errors"
@@ -483,4 +484,29 @@ func TestTenantStorage_MCPSettings_DefaultsAndUpdate(t *testing.T) {
 	Expect(get.Result.MCPEnabled).IsTrue()
 	Expect(get.Result.MCPMinRole).Equals(enum.RoleVisitor)
 	Expect(get.Result.MCPDCREnabled).IsFalse()
+}
+
+func TestTenantStorage_SubmissionSettings_OmittedStaysUnchanged(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	on, off := true, false
+	get := func() *entity.Tenant {
+		q := &query.GetTenantByDomain{Domain: "demo"}
+		Expect(bus.Dispatch(demoTenantCtx, q)).IsNil()
+		return q.Result
+	}
+	Expect(get().VoraRequired).IsFalse()
+	Expect(get().FileAttachmentsEnabled).IsFalse()
+
+	Expect(bus.Dispatch(jonSnowCtx, &cmd.UpdateTenantSubmissionSettings{VoraRequired: &on})).IsNil()
+	Expect(get().VoraRequired).IsTrue()
+	Expect(get().FileAttachmentsEnabled).IsFalse()
+
+	Expect(bus.Dispatch(jonSnowCtx, &cmd.UpdateTenantSubmissionSettings{FileAttachmentsEnabled: &on})).IsNil()
+	Expect(get().VoraRequired).IsTrue()
+	Expect(get().FileAttachmentsEnabled).IsTrue()
+
+	Expect(bus.Dispatch(jonSnowCtx, &cmd.UpdateTenantSubmissionSettings{VoraRequired: &off})).IsNil()
+	Expect(get().VoraRequired).IsFalse()
+	Expect(get().FileAttachmentsEnabled).IsTrue()
 }

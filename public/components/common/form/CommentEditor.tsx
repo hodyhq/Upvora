@@ -1,6 +1,6 @@
 import { Editor } from "@tiptap/react"
 import Link from "@tiptap/extension-link"
-import React, { useState, useRef, useEffect } from "react"
+import React, { useState, useRef, useEffect, useLayoutEffect } from "react"
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react"
 import { Placeholder } from "@tiptap/extensions"
 import { i18n } from "@lingui/core"
@@ -274,6 +274,11 @@ const Tiptap: React.FunctionComponent<CommentEditorProps> = (props) => {
   // Use a ref instead of state for tracking document images
   // This avoids the async state update issue and prevents unnecessary re-renders
   const documentImagesRef = useRef<Map<string, boolean>>(new Map())
+  // The paste and drop handlers are created once: read the limit through a ref.
+  const maxAttachmentsRef = useRef(props.maxAttachments)
+  useLayoutEffect(() => {
+    maxAttachmentsRef.current = props.maxAttachments
+  }, [props.maxAttachments])
 
   // data: URLs of images attached in this editor session that aren't saved yet, by bkey. The
   // markdown only holds ![](fider-image:<bkey>), so when it's loaded again (switching back from
@@ -393,11 +398,13 @@ const Tiptap: React.FunctionComponent<CommentEditorProps> = (props) => {
     }
 
     // Check max attachments if specified
-    if (props.maxAttachments) {
-      if (documentImagesRef.current.size >= props.maxAttachments) {
+    // 0 means no room left (files may take every slot), not "no limit".
+    const maxAttachments = maxAttachmentsRef.current
+    if (maxAttachments !== undefined) {
+      if (documentImagesRef.current.size >= maxAttachments) {
         return i18n._({
           id: "validation.custom.maxattachments",
-          values: { number: props.maxAttachments },
+          values: { number: maxAttachments },
           message: "A maximum of {number} attachments are allowed.",
         })
       }
@@ -726,7 +733,7 @@ const Tiptap: React.FunctionComponent<CommentEditorProps> = (props) => {
 }
 
 const CommentEditor = React.memo(Tiptap, (prevProps, nextProps) => {
-  return prevProps.placeholder === nextProps.placeholder
+  return prevProps.placeholder === nextProps.placeholder && prevProps.maxAttachments === nextProps.maxAttachments
 })
 
 export default CommentEditor

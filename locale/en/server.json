@@ -78,5 +78,8 @@
   "feed.comment.response": "Response by {author}",
   "feed.post.title": "# {title}\n{votes, plural, one {# vote} other {# votes}}, {comments, plural, one {# comment} other {# comments}}\n\n---\n",
   "feed.post.footer.response": "Response by {responder} on {date}:\n\n>{response}\n",
-  "feed.post.footer": "\n\n---\n{response_footer}\n{votes, plural, one {# vote} other {# votes}}, {comments, plural, one {# comment} other {# comments}} - view [in the web]({web_link}) or [as a feed]({feed_link})"
+  "feed.post.footer": "\n\n---\n{response_footer}\n{votes, plural, one {# vote} other {# votes}}, {comments, plural, one {# comment} other {# comments}} - view [in the web]({web_link}) or [as a feed]({feed_link})",
+  "validation.custom.maxfilesize": "The file size must be smaller than {kilobytes}KB.",
+  "validation.custom.unsafepdf": "This PDF can't be attached: it contains scripts, embedded files, interactive forms or encryption, or it couldn't be read.",
+  "validation.custom.fileprocessingbusy": "The server is busy checking other files. Please try again in a moment."
 }

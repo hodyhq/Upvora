@@ -82,3 +82,32 @@ func DecodeMCPConsent(token, origin string) (*MCPConsentClaims, error) {
 	}
 	return claims, nil
 }
+
+const voraBriefAudience = "upvora:vora-brief"
+
+// VoraBriefClaims vouches that Vora produced a brief for this person: its
+// hash, so a site requiring Vora can tell a real brief from a typed one.
+type VoraBriefClaims struct {
+	UserID    int    `json:"vorabrief/user_id"`
+	TenantID  int    `json:"vorabrief/tenant_id"`
+	BriefHash string `json:"vorabrief/brief_hash"`
+	Metadata
+}
+
+// EncodeVoraBrief signs a brief's hash for the person who drafted it with Vora.
+func EncodeVoraBrief(userID, tenantID int, briefHash string, ttl time.Duration) (string, error) {
+	return Encode(&VoraBriefClaims{UserID: userID, TenantID: tenantID, BriefHash: briefHash, Metadata: shortLived(voraBriefAudience, ttl)})
+}
+
+// DecodeVoraBrief decodes an unexpired Vora brief token.
+func DecodeVoraBrief(token string) (*VoraBriefClaims, error) {
+	claims := &VoraBriefClaims{}
+	if err := decode(token, claims); err != nil {
+		return nil, errors.Wrap(err, "failed to decode Vora brief token")
+	}
+	if len(claims.Audience) != 1 || claims.Audience[0] != voraBriefAudience || claims.ExpiresAt == nil ||
+		claims.UserID <= 0 || claims.TenantID <= 0 || claims.BriefHash == "" {
+		return nil, errors.New("not a Vora brief token")
+	}
+	return claims, nil
+}

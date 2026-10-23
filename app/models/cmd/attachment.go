@@ -14,9 +14,12 @@ type SetAttachments struct {
 type UploadImage struct {
 	Image  *dto.ImageUpload
 	Folder string
+	// AllowFiles stores validated PDF, text and Markdown files (under files/).
+	AllowFiles bool
 }
 
 type UploadImages struct {
-	Images []*dto.ImageUpload
-	Folder string
+	Images     []*dto.ImageUpload
+	Folder     string
+	AllowFiles bool
 }

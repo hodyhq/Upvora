@@ -31,6 +31,7 @@ import { InternalNotesPanel } from "@fider/components/PostDetails/InternalNotesP
 import { t } from "@lingui/macro"
 import { useFider } from "@fider/hooks"
 import { useAttachments } from "@fider/hooks/useAttachments"
+import { IdeaFilesEditor, IdeaFilesList, fileKind, isFileKey } from "@fider/components/IdeaFiles/IdeaFiles"
 import { FollowButton } from "@fider/pages/ShowPost/components/FollowButton"
 
 interface PostDetailsProps {
@@ -78,6 +79,8 @@ const builtInStatusColors: { [key: string]: string } = {
 export const PostDetails: React.FC<PostDetailsProps> = (props) => {
   // If we have initial data, use it; otherwise we'll fetch
   const [post, setPost] = useState<Post | null>(props.initialPost || null)
+  // From the page, or from the idea itself when it was fetched (board overlay).
+  const attachmentKeys = props.initialAttachments ?? post?.attachments ?? []
   const [subscribed, setSubscribed] = useState(props.initialSubscribed || false)
   const [comments, setComments] = useState<Comment[]>(props.initialComments || [])
   const [tags, setTags] = useState<Tag[]>(props.initialTags || [])
@@ -228,6 +231,11 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
     if (!post) return
     const result = await actions.updatePost(post.number, newTitle, newDescription, attachments)
     if (result.ok) {
+      // Files changed: their keys come from the server, so show the saved idea.
+      if (attachments.some((a) => (a.remove && isFileKey(a.bkey)) || (!a.remove && fileKind(a.upload?.fileName || "")))) {
+        location.reload()
+        return
+      }
       setEditMode(false)
       // Update local state with new values
       setPost({
@@ -448,6 +456,7 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
                   <Trans id="showpost.message.nodescription">No description provided.</Trans>
                 </em>
               )}
+              <IdeaFilesList bkeys={attachmentKeys} />
             </div>
           ) : (
             <div className="p-show-post__description-section">
@@ -466,6 +475,14 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
                   onImageUploaded={handleImageUploaded}
                   onGetImageSrc={getImageSrc}
                 />
+                {(fider.session.tenant.fileAttachmentsEnabled || attachmentKeys.some(isFileKey)) && (
+                  <IdeaFilesEditor
+                    existing={attachmentKeys}
+                    attachments={attachments}
+                    onChange={handleImageUploaded}
+                    allowAdd={!!fider.session.tenant.fileAttachmentsEnabled}
+                  />
+                )}
               </Form>
             </div>
           )}

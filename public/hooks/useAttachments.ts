@@ -32,7 +32,12 @@ export const useAttachments = (options: UseAttachmentsOptions = {}): UseAttachme
   // Cache attachments whenever they change
   useEffect(() => {
     if (cacheKey) {
-      getStorage.set(cacheKey, JSON.stringify(attachments))
+      try {
+        getStorage.set(cacheKey, JSON.stringify(attachments))
+      } catch {
+        // Too large for browser storage (a few MB of files): keep the draft in memory only.
+        getStorage.remove(cacheKey)
+      }
     }
   }, [attachments, cacheKey, getStorage])
 

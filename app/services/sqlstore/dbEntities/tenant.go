@@ -31,6 +31,8 @@ type Tenant struct {
 	IsModerationEnabled        bool           `db:"is_moderation_enabled"`
 	MembersPrivateIdeas        bool           `db:"members_private_ideas"`
 	MembersCanPublishPrivate   bool           `db:"members_can_publish_private"`
+	VoraRequired               bool           `db:"vora_required"`
+	FileAttachmentsEnabled     bool           `db:"file_attachments_enabled"`
 	MCPEnabled                 bool           `db:"mcp_enabled"`
 	MCPMinRole                 int            `db:"mcp_min_role"`
 	MCPDCREnabled              bool           `db:"mcp_dcr_enabled"`
@@ -104,6 +106,8 @@ func (t *Tenant) ToModel() *entity.Tenant {
 		IsModerationEnabled:      isPro && t.IsModerationEnabled,
 		MembersPrivateIdeas:      t.MembersPrivateIdeas,
 		MembersCanPublishPrivate: t.MembersCanPublishPrivate,
+		VoraRequired:             t.VoraRequired,
+		FileAttachmentsEnabled:   t.FileAttachmentsEnabled,
 		MCPEnabled:               t.MCPEnabled,
 		MCPMinRole:               enum.Role(t.MCPMinRole),
 		MCPDCREnabled:            t.MCPDCREnabled,

@@ -124,3 +124,10 @@ type UpdateTenantMCPSettings struct {
 	MinRole    enum.Role
 	DCREnabled bool
 }
+
+// UpdateTenantSubmissionSettings changes how ideas are submitted; a nil field
+// is left as it is, so each admin page sends only its own switch.
+type UpdateTenantSubmissionSettings struct {
+	VoraRequired           *bool
+	FileAttachmentsEnabled *bool
+}

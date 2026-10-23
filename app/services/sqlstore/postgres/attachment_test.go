@@ -3,7 +3,10 @@ package postgres_test
 import (
 	"context"
 	"os"
+	"strings"
 	"testing"
+
+	"github.com/getfider/fider/app"
 
 	"github.com/getfider/fider/app/models/cmd"
 	"github.com/getfider/fider/app/models/dto"
@@ -12,6 +15,7 @@ import (
 	. "github.com/getfider/fider/app/pkg/assert"
 	"github.com/getfider/fider/app/pkg/bus"
 	"github.com/getfider/fider/app/pkg/env"
+	"github.com/getfider/fider/app/pkg/errors"
 	"github.com/getfider/fider/app/services/blob"
 )
 
@@ -171,4 +175,79 @@ func TestUploadMultipleImages(t *testing.T) {
 
 	Expect(uploadImages.Images[1].BlobKey).ContainsSubstring("avatars/")
 	Expect(uploadImages.Images[1].BlobKey).HasLen(73)
+}
+
+func TestUploadImage_FilesOnlyWhenAllowed(t *testing.T) {
+	ctx := SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	var stored *cmd.StoreBlob
+	bus.AddHandler(func(ctx context.Context, c *cmd.StoreBlob) error {
+		stored = c
+		return nil
+	})
+	bus.AddHandler(func(ctx context.Context, q *query.GetBlobByKey) error { return blob.ErrNotFound })
+	pdf := []byte("%PDF-1.7\n...")
+
+	upload := &cmd.UploadImage{Image: &dto.ImageUpload{BlobKey: "attachments/forged.pdf", Upload: &dto.ImageUploadData{FileName: "spec.txt", Content: pdf, ContentType: "image/png"}}, Folder: "attachments"}
+	Expect(bus.Dispatch(ctx, upload)).IsNotNil()
+	Expect(stored).IsNil()
+
+	upload.AllowFiles = true
+	Expect(bus.Dispatch(ctx, upload)).IsNil()
+	Expect(stored.ContentType).Equals("application/pdf")
+	Expect(strings.HasPrefix(stored.Key, "files/")).IsTrue()
+	Expect(strings.HasSuffix(stored.Key, "-spec.pdf")).IsTrue()
+	Expect(upload.Image.BlobKey).Equals(stored.Key)
+	Expect(strings.Contains(stored.Key, "forged")).IsFalse()
+
+	// a client-chosen key inside files/ is not kept either
+	upload.Image.BlobKey = "files/chosen-by-client.pdf"
+	Expect(bus.Dispatch(ctx, upload)).IsNil()
+	Expect(stored.Key == "files/chosen-by-client.pdf").IsFalse()
+}
+
+// A key someone can see elsewhere (say on a private idea) cannot be attached
+// to another idea by naming it: only fresh uploads create attachments.
+func TestSetAttachments_KeyOnlyEntriesAddNothing(t *testing.T) {
+	SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	first := &cmd.AddNewPost{Title: "First idea with a file", Description: "x"}
+	second := &cmd.AddNewPost{Title: "Second idea, public", Description: "y"}
+	Expect(bus.Dispatch(jonSnowCtx, first, second)).IsNil()
+	Expect(bus.Dispatch(jonSnowCtx, &cmd.SetAttachments{Post: first.Result, Attachments: []*dto.ImageUpload{
+		{BlobKey: "files/secret-plan.pdf", Upload: &dto.ImageUploadData{FileName: "plan.pdf", Content: []byte("%PDF-1.7")}},
+	}})).IsNil()
+
+	Expect(bus.Dispatch(aryaStarkCtx, &cmd.SetAttachments{Post: second.Result, Attachments: []*dto.ImageUpload{
+		{BlobKey: "files/secret-plan.pdf"},
+	}})).IsNil()
+	got := &query.GetAttachments{Post: second.Result}
+	Expect(bus.Dispatch(jonSnowCtx, got)).IsNil()
+	Expect(got.Result).HasLen(0)
+
+	// the file still belongs to the first idea
+	owner := &query.GetPostIDByAttachment{BlobKey: "files/secret-plan.pdf"}
+	Expect(bus.Dispatch(jonSnowCtx, owner)).IsNil()
+	Expect(owner.Result).Equals(first.Result.ID)
+	missing := &query.GetPostIDByAttachment{BlobKey: "files/nope.pdf"}
+	Expect(errors.Cause(bus.Dispatch(jonSnowCtx, missing))).Equals(app.ErrNotFound)
+}
+
+// Storage classifies an upload exactly as validation did: text that happens
+// to start like a GIF is stored as the text file it was validated as.
+func TestUploadImage_FilesClassifiedLikeValidation(t *testing.T) {
+	ctx := SetupDatabaseTest(t)
+	defer TeardownDatabaseTest()
+	var stored *cmd.StoreBlob
+	bus.AddHandler(func(ctx context.Context, c *cmd.StoreBlob) error {
+		stored = c
+		return nil
+	})
+	bus.AddHandler(func(ctx context.Context, q *query.GetBlobByKey) error { return blob.ErrNotFound })
+	upload := &cmd.UploadImage{AllowFiles: true, Folder: "attachments", Image: &dto.ImageUpload{
+		Upload: &dto.ImageUploadData{FileName: "notes.txt", Content: []byte("GIF89aAAAAAAA and then plain notes")},
+	}}
+	Expect(bus.Dispatch(ctx, upload)).IsNil()
+	Expect(strings.HasPrefix(stored.Key, "files/")).IsTrue()
+	Expect(stored.ContentType).Equals("text/plain; charset=utf-8")
 }

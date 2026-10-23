@@ -12,6 +12,7 @@ import (
 	"github.com/getfider/fider/app/models/query"
 
 	"github.com/getfider/fider/app/models/cmd"
+	"github.com/getfider/fider/app/models/dto"
 
 	"github.com/getfider/fider/app/handlers/apiv1"
 	"github.com/getfider/fider/app/middlewares"
@@ -357,6 +358,7 @@ func TestCreatePostHandler_WithPublicTagAndPrivateTagAsCollaborator(t *testing.T
 
 func TestGetPostHandler(t *testing.T) {
 	RegisterT(t)
+	bus.AddHandler(func(ctx context.Context, q *query.GetAttachments) error { return nil })
 
 	post := &entity.Post{ID: 5, Number: 5, Title: "My First Post", Description: "Such an amazing description"}
 	bus.AddHandler(func(ctx context.Context, q *query.GetPostByNumber) error {
@@ -1337,4 +1339,29 @@ func TestDeleteCommentHandler_Authorized(t *testing.T) {
 
 	Expect(code).Equals(http.StatusOK)
 	Expect(deleteComment.CommentID).Equals(comment.ID)
+}
+
+// Files are listed with the idea, never embedded in its description as images.
+func TestAppendUnreferencedAttachments_SkipsFiles(t *testing.T) {
+	RegisterT(t)
+	Expect(apiv1.AppendUnreferencedAttachments("See the spec.", []*dto.ImageUpload{{BlobKey: "files/abc-spec.pdf"}, {BlobKey: "attachments/a.png"}})).
+		Equals("See the spec.\n\n![](fider-image:attachments/a.png)")
+}
+
+// The idea's attachment keys come with it, so the board's overlay (which
+// fetches the idea) and MCP clients see its files too.
+func TestGetPost_IncludesAttachmentKeys(t *testing.T) {
+	RegisterT(t)
+	bus.AddHandler(func(ctx context.Context, q *query.GetPostByNumber) error {
+		q.Result = &entity.Post{ID: 9, Number: 4, Title: "With files"}
+		return nil
+	})
+	bus.AddHandler(func(ctx context.Context, q *query.GetAttachments) error {
+		q.Result = []string{"files/a-spec.pdf", "attachments/b-shot.png"}
+		return nil
+	})
+	code, res := mock.NewServer().OnTenant(mock.DemoTenant).AsUser(mock.AryaStark).AddParam("number", 4).ExecuteAsJSON(apiv1.GetPost())
+	Expect(code).Equals(http.StatusOK)
+	Expect(res.String("attachments[0]")).Equals("files/a-spec.pdf")
+	Expect(res.String("attachments[1]")).Equals("attachments/b-shot.png")
 }
