@@ -393,7 +393,8 @@ const Tiptap: React.FunctionComponent<CommentEditorProps> = (props) => {
     }
 
     // Check max attachments if specified
-    if (props.maxAttachments) {
+    // 0 means no room left (files may take every slot), not "no limit".
+    if (props.maxAttachments !== undefined) {
       if (documentImagesRef.current.size >= props.maxAttachments) {
         return i18n._({
           id: "validation.custom.maxattachments",

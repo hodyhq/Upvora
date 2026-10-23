@@ -173,8 +173,18 @@ func findPDFActiveName(xref *model.XRefTable, obj types.Object, depth int) (stri
 // link (only http, https and mailto) and what happens on opening (only going
 // to a page, never fetching a URL).
 func badPDFAction(xref *model.XRefTable, d types.Dict) (string, bool) {
-	if s, ok := d["S"].(types.Name); ok && s.Value() == "URI" {
-		uri := strings.ToLower(strings.TrimSpace(pdfText(d["URI"])))
+	// Values may be indirect references: resolve before judging them.
+	resolve := func(obj types.Object) types.Object {
+		if ref, isRef := obj.(types.IndirectRef); isRef {
+			if resolved, err := xref.Dereference(ref); err == nil {
+				return resolved
+			}
+			return nil
+		}
+		return obj
+	}
+	if s, ok := resolve(d["S"]).(types.Name); ok && s.Value() == "URI" {
+		uri := strings.ToLower(strings.TrimSpace(pdfText(resolve(d["URI"]))))
 		if !strings.HasPrefix(uri, "http://") && !strings.HasPrefix(uri, "https://") && !strings.HasPrefix(uri, "mailto:") {
 			return "link that is not a web or mail address", true
 		}
@@ -190,7 +200,7 @@ func badPDFAction(xref *model.XRefTable, d types.Dict) (string, bool) {
 		switch action := open.(type) {
 		case types.Array: // a destination: open at a page
 		case types.Dict:
-			if s, _ := action["S"].(types.Name); s.Value() != "GoTo" {
+			if s, _ := resolve(action["S"]).(types.Name); s.Value() != "GoTo" {
 				return "action on opening", true
 			}
 		default:

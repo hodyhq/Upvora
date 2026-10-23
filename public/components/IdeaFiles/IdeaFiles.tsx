@@ -2,6 +2,7 @@ import "./IdeaFiles.scss"
 
 import React, { lazy, Suspense, useEffect, useRef, useState } from "react"
 import { Trans } from "@lingui/react/macro"
+import { i18n } from "@lingui/core"
 import { Button, Loader, Markdown, Modal } from "@fider/components"
 import { ImageUpload } from "@fider/models"
 import { Fider, fileToBase64 } from "@fider/services"
@@ -149,15 +150,15 @@ export const IdeaFilesEditor = (props: IdeaFilesEditorProps) => {
     e.target.value = ""
     if (!file) return
     if (full) {
-      setError("An idea can have up to 3 attachments, images included.")
+      setError(i18n._({ id: "ideafiles.error.full", message: "An idea can have up to 3 attachments, images included." }))
       return
     }
     if (!fileKind(file.name)) {
-      setError("Only PDF, .txt and .md files can be attached.")
+      setError(i18n._({ id: "ideafiles.error.type", message: "Only PDF, .txt and .md files can be attached." }))
       return
     }
     if (file.size > hardFileSizeLimit) {
-      setError("The file size must be smaller than 5MB.")
+      setError(i18n._({ id: "ideafiles.error.size", message: "The file size must be smaller than 5MB." }))
       return
     }
     setError(undefined)
@@ -165,7 +166,7 @@ export const IdeaFilesEditor = (props: IdeaFilesEditorProps) => {
     try {
       content = await fileToBase64(file)
     } catch {
-      setError("This file could not be read.")
+      setError(i18n._({ id: "ideafiles.error.read", message: "This file could not be read." }))
       return
     }
     props.onChange({ bkey: `pending-${Math.random().toString(36).slice(2)}`, upload: { fileName: file.name, content, contentType: file.type }, remove: false })
@@ -182,7 +183,12 @@ export const IdeaFilesEditor = (props: IdeaFilesEditorProps) => {
             <li key={bkey} className="c-idea-files__chip">
               <span aria-hidden="true">{icon(fileKind(bkey))}</span> {fileName(bkey)}
               {!props.disabled && (
-                <button type="button" className="c-idea-files__remove" aria-label="Remove" onClick={() => props.onChange({ bkey, remove: true })}>
+                <button
+                  type="button"
+                  className="c-idea-files__remove"
+                  aria-label={i18n._({ id: "ideafiles.remove", message: "Remove" })}
+                  onClick={() => props.onChange({ bkey, remove: true })}
+                >
                   ×
                 </button>
               )}
@@ -192,7 +198,12 @@ export const IdeaFilesEditor = (props: IdeaFilesEditorProps) => {
             <li key={a.bkey} className="c-idea-files__chip">
               <span aria-hidden="true">{icon(fileKind(a.upload?.fileName || ""))}</span> {a.upload?.fileName}
               {!props.disabled && (
-                <button type="button" className="c-idea-files__remove" aria-label="Remove" onClick={() => props.onChange({ bkey: a.bkey, remove: true })}>
+                <button
+                  type="button"
+                  className="c-idea-files__remove"
+                  aria-label={i18n._({ id: "ideafiles.remove", message: "Remove" })}
+                  onClick={() => props.onChange({ bkey: a.bkey, remove: true })}
+                >
                   ×
                 </button>
               )}
@@ -206,7 +217,7 @@ export const IdeaFilesEditor = (props: IdeaFilesEditorProps) => {
         hidden
         accept=".pdf,.txt,.md,.markdown,application/pdf,text/plain,text/markdown"
         onChange={picked}
-        aria-label="Attach a file"
+        aria-label={i18n._({ id: "ideafiles.attach.label", message: "Attach a file" })}
       />
       {!props.disabled && props.allowAdd !== false && (
         <Button

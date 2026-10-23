@@ -7,10 +7,12 @@ interface PdfViewProps {
 
 // PdfView draws a PDF's pages onto canvases with pdf.js: no PDF scripting, no
 // annotation or form layer (links are not clickable), and eval switched off.
-// shortcut: renders every page up front; fine for 5 MB attachments, add page virtualisation if large PDFs become common.
+// shortcut: shows the first maxPages pages only (memory stays bounded); render on scroll if long PDFs become common.
+const maxPages = 30
 const PdfView = (props: PdfViewProps) => {
   const host = useRef<HTMLDivElement>(null)
   const [failed, setFailed] = useState(false)
+  const [truncated, setTruncated] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -31,7 +33,8 @@ const PdfView = (props: PdfViewProps) => {
         if (!doc || !container) return
         const width = container.clientWidth || 800
         const ratio = window.devicePixelRatio || 1
-        for (let n = 1; n <= doc.numPages && !cancelled; n++) {
+        if (doc.numPages > maxPages) setTruncated(doc.numPages)
+        for (let n = 1; n <= Math.min(doc.numPages, maxPages) && !cancelled; n++) {
           const page = await doc.getPage(n)
           const scale = width / page.getViewport({ scale: 1 }).width
           const viewport = page.getViewport({ scale: scale * ratio })
@@ -63,7 +66,18 @@ const PdfView = (props: PdfViewProps) => {
       </p>
     )
   }
-  return <div ref={host} className="c-idea-files__pdf" />
+  return (
+    <>
+      <div ref={host} className="c-idea-files__pdf" />
+      {truncated > 0 && (
+        <p className="text-muted mt-2">
+          <Trans id="ideafiles.pdf.truncated">
+            Showing the first {maxPages} of {truncated} pages. Open it in a new tab to see the rest.
+          </Trans>
+        </p>
+      )}
+    </>
+  )
 }
 
 export default PdfView

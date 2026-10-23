@@ -70,6 +70,8 @@ func TestScanPDF_ActiveContentRefused(t *testing.T) {
 		"page additional actions":      buildPDF("", "/AA << /O << /S /URI /URI (https://tracker.example) >> >>"),
 		"javascript link": buildPDF("", "/Annots [4 0 R]",
 			"<< /Type /Annot /Subtype /Link /Rect [0 0 10 10] /A << /S /URI /URI (javascript:alert(1)) >> >>"),
+		"javascript link, indirect action type": buildPDF("", "/Annots [4 0 R]",
+			"<< /Type /Annot /Subtype /Link /Rect [0 0 10 10] /A << /S 5 0 R /URI 6 0 R >> >>", "/URI", "(javascript:alert(1))"),
 		"file link": buildPDF("", "/Annots [4 0 R]",
 			"<< /Type /Annot /Subtype /Link /Rect [0 0 10 10] /A << /S /URI /URI (file:///etc/passwd) >> >>"),
 		"not a pdf":     []byte("%PDF-1.7\nthis is not really a pdf"),

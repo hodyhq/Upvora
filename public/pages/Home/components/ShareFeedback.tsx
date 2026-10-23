@@ -2,7 +2,7 @@ import "./ShareFeedback.scss"
 
 import React, { useEffect, useRef, useState } from "react"
 import { VoraChat } from "@fider/components/VoraChat"
-import { IdeaFilesEditor } from "@fider/components/IdeaFiles/IdeaFiles"
+import { IdeaFilesEditor, fileKind } from "@fider/components/IdeaFiles/IdeaFiles"
 import { SignInControl } from "@fider/components/common/SignInControl"
 import { Modal, CloseIcon, Form, Button, Input, Select, LegalFooter, Toggle } from "@fider/components/common"
 import { Markdown } from "@fider/components/common/Markdown"
@@ -330,7 +330,7 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
                     onFocus={handleEditorFocus}
                     initialValue={description}
                     disabled={fider.isReadOnly}
-                    maxAttachments={3}
+                    maxAttachments={3 - attachments.filter((a) => !a.remove && a.upload && fileKind(a.upload.fileName || "")).length}
                     maxImageSizeKB={5 * 1024}
                     placeholder={i18n._({
                       id: "newpost.modal.description.placeholder",
