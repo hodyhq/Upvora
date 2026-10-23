@@ -20,6 +20,7 @@ const PdfView = (props: PdfViewProps) => {
     const load = async () => {
       try {
         const pdfjs: any = await import(/* webpackChunkName: "pdfjs" */ "pdfjs-dist")
+        if (cancelled) return
         if (!pdfjs.GlobalWorkerOptions.workerPort) {
           pdfjs.GlobalWorkerOptions.workerPort = new Worker(new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url), { type: "module" })
         }
