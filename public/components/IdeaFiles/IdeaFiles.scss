@@ -1,0 +1,64 @@
+.c-idea-files {
+  margin-top: 12px;
+
+  &__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    list-style: none;
+    margin: 0 0 8px;
+    padding: 0;
+  }
+
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--colors-gray-200);
+    border-radius: 999px;
+    background: var(--colors-gray-50);
+    font-size: 13px;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  &__remove {
+    border: 0;
+    background: none;
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+    color: var(--colors-gray-600);
+  }
+
+  &__error {
+    color: var(--colors-red-700);
+    font-size: 13px;
+  }
+
+  &__text {
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 13px;
+    max-height: 70vh;
+    overflow: auto;
+  }
+
+  &__pdf {
+    max-height: 75vh;
+    overflow: auto;
+  }
+
+  &__page {
+    display: block;
+    width: 100%;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  }
+
+  &__open {
+    margin-right: auto;
+    font-size: 13px;
+  }
+}

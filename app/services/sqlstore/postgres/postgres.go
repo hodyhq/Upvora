@@ -73,6 +73,7 @@ func (s Service) Init() {
 
 	bus.AddHandler(setAttachments)
 	bus.AddHandler(getAttachments)
+	bus.AddHandler(getPostIDByAttachment)
 	bus.AddHandler(uploadImage)
 	bus.AddHandler(uploadImages)
 
@@ -130,6 +131,7 @@ func (s Service) Init() {
 	bus.AddHandler(isSubdomainAvailable)
 	bus.AddHandler(isCNAMEAvailable)
 	bus.AddHandler(updateTenantSettings)
+	bus.AddHandler(updateTenantSubmissionSettings)
 	bus.AddHandler(updateTenantPrivacySettings)
 	bus.AddHandler(updateTenantMCPSettings)
 	bus.AddHandler(registerOAuthClient)

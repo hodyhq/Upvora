@@ -64,6 +64,16 @@ const emptySVG = {
   },
 }
 
+// The PDF viewer (pdf.js, a web worker) only ever runs in the browser, after
+// a click: the server render gets an empty component instead.
+const clientOnly = {
+  name: "client-only-stubs",
+  setup(build) {
+    build.onResolve({ filter: /IdeaFiles\/PdfView$|^\.\/PdfView$/ }, (args) => ({ path: args.path, namespace: "client-only" }))
+    build.onLoad({ filter: /.*/, namespace: "client-only" }, () => ({ contents: "export default function PdfView() { return null }", loader: "js" }))
+  },
+}
+
 esbuild
   .build({
     entryPoints: ["./public/ssr.tsx"],
@@ -79,6 +89,6 @@ esbuild
     },
     // Only our own TypeScript needs babel (lingui macros), same as babel-loader in webpack.
     // babel.config.json also applies to node_modules, and dependencies must not be re-transpiled.
-    plugins: [emptyCSS, emptySVG, babelPlugin({ filter: /\.tsx?$/ })],
+    plugins: [clientOnly, emptyCSS, emptySVG, babelPlugin({ filter: /\.tsx?$/ })],
   })
   .catch(() => process.exit(1))

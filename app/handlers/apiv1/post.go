@@ -29,7 +29,8 @@ func appendUnreferencedAttachments(description string, attachments []*dto.ImageU
 	seen := map[string]bool{}
 	refs := make([]string, 0, len(attachments))
 	for _, a := range attachments {
-		if a == nil || a.Remove || a.BlobKey == "" || seen[a.BlobKey] {
+		// Files (PDF, text, Markdown) are listed with the idea, not embedded.
+		if a == nil || a.Remove || a.BlobKey == "" || seen[a.BlobKey] || strings.HasPrefix(a.BlobKey, "files/") {
 			continue
 		}
 		seen[a.BlobKey] = true
@@ -114,8 +115,17 @@ func CreatePost() web.HandlerFunc {
 		if result := c.BindTo(action); !result.Ok {
 			return c.HandleValidation(result)
 		}
+		// A brief alone proves nothing (anyone can type one): Vora's finalize
+		// step vouches for the brief it produced with a token.
+		required, err := handlers.VoraRequiredFor(c, action.ProductID)
+		if err != nil {
+			return c.Failure(err)
+		}
+		if required && (strings.TrimSpace(action.BriefMarkdown) == "" || !handlers.VoraBriefValid(c, action.VoraToken, action.BriefMarkdown)) {
+			return c.BadRequest(web.Map{"message": "This site asks that new ideas go through Vora. Talk it through with Vora to submit your idea."})
+		}
 
-		if err := bus.Dispatch(c, &cmd.UploadImages{Images: action.Attachments, Folder: "attachments"}); err != nil {
+		if err := bus.Dispatch(c, &cmd.UploadImages{Images: action.Attachments, Folder: "attachments", AllowFiles: c.Tenant().FileAttachmentsEnabled}); err != nil {
 			return c.Failure(err)
 		}
 
@@ -125,7 +135,7 @@ func CreatePost() web.HandlerFunc {
 			ProductID:   action.ProductID,
 			IsPrivate:   action.IsPrivate,
 		}
-		err := bus.Dispatch(c, newPost)
+		err = bus.Dispatch(c, newPost)
 		if err != nil {
 			return c.Failure(err)
 		}
@@ -212,7 +222,7 @@ func UpdatePost() web.HandlerFunc {
 		}
 
 		// Upload first so blob keys are finalized before building the description.
-		if err := bus.Dispatch(c, &cmd.UploadImages{Images: action.Attachments, Folder: "attachments"}); err != nil {
+		if err := bus.Dispatch(c, &cmd.UploadImages{Images: action.Attachments, Folder: "attachments", AllowFiles: c.Tenant().FileAttachmentsEnabled}); err != nil {
 			return c.Failure(err)
 		}
 
@@ -650,3 +660,6 @@ func addOrRemove(c *web.Context, getCommand func(post *entity.Post, user *entity
 
 	return c.Ok(web.Map{})
 }
+
+// AppendUnreferencedAttachments is exported for tests.
+var AppendUnreferencedAttachments = appendUnreferencedAttachments

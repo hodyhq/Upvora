@@ -2,6 +2,7 @@ import React from "react"
 import { Button, Form, Input, TextArea, Toggle } from "@fider/components"
 import { actions, notify, Fider } from "@fider/services"
 import { AdminBasePage } from "../components/AdminBasePage"
+import { SubmissionToggle } from "../components/SubmissionToggle"
 import { HStack, VStack } from "@fider/components/layout"
 
 interface AgentConfig {
@@ -180,6 +181,11 @@ export default class ManageAIPage extends AdminBasePage<ManageAIPageProps, Manag
             </span>
           </HStack>
         </div>
+
+        <SubmissionToggle field="voraRequired" label="Require Vora for new ideas">
+          New ideas from the board&apos;s form start with Vora, admins included: people review and edit Vora&apos;s draft, then submit. Applies to products
+          where an agent is on; others keep the plain form. Assistants connected over MCP, and integrations using an API key, can still submit directly.
+        </SubmissionToggle>
 
         <div>
           <h2>Provider</h2>

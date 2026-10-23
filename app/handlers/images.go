@@ -170,6 +170,11 @@ func Favicon() web.HandlerFunc {
 func ViewUploadedImage() web.HandlerFunc {
 	return func(c *web.Context) error {
 		bkey := c.Param("bkey")
+		// This route has no access check: idea files live under files/ and are
+		// served only by ViewAttachmentFile; anything else here must be an image.
+		if strings.HasPrefix(bkey, "files/") {
+			return c.NotFound()
+		}
 
 		size, err := c.QueryParamAsInt("size")
 		if err != nil {
@@ -182,6 +187,9 @@ func ViewUploadedImage() web.HandlerFunc {
 		err = bus.Dispatch(c, q)
 		if err != nil {
 			return c.Failure(err)
+		}
+		if !strings.HasPrefix(q.Result.ContentType, "image/") {
+			return c.NotFound()
 		}
 
 		if size == 0 {

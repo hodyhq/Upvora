@@ -6,6 +6,8 @@ export interface AIFinalizeResponse {
   description: string
   brief: string
   tags: string[]
+  // Vouches that Vora produced this brief (required where the site requires Vora).
+  voraToken?: string
 }
 
 export const aiIdeate = async (productId: number, messages: AIMessage[]): Promise<Result<{ reply: string; ready: boolean }>> => {

@@ -29,7 +29,7 @@ upvora_users_untrust upvora_users_set_role upvora_users_taggable
 upvora_webhooks_list upvora_webhooks_create upvora_webhooks_update upvora_webhooks_delete upvora_webhooks_preview upvora_webhooks_test
 upvora_oauth_providers_list upvora_oauth_providers_set upvora_oauth_providers_set_status upvora_settings_general_get upvora_settings_general_set
 upvora_settings_theme_get upvora_settings_theme_set upvora_settings_advanced_get upvora_settings_advanced_set upvora_settings_privacy_get
-upvora_settings_privacy_set upvora_settings_emailauth_get upvora_settings_emailauth_set upvora_settings_banner_set upvora_settings_mcp_get upvora_settings_mcp_set
+upvora_settings_privacy_set upvora_settings_submission_get upvora_settings_submission_set upvora_settings_emailauth_get upvora_settings_emailauth_set upvora_settings_banner_set upvora_settings_mcp_get upvora_settings_mcp_set
 upvora_billing_get_subscription upvora_billing_create_checkout upvora_billing_create_annual_checkout upvora_billing_create_portal
 upvora_system_status upvora_system_update upvora_tenant_get upvora_tenant_update upvora_tenant_cancel_deletion upvora_tenant_delete
 upvora_account_get_settings upvora_account_update_settings upvora_account_change_email
@@ -73,7 +73,7 @@ func TestCatalogAnnotations(t *testing.T) {
 		"upvora_oauth_providers_set_status": true, "upvora_settings_privacy_set": true, "upvora_settings_mcp_set": true,
 		"upvora_settings_advanced_set": true, "upvora_settings_emailauth_set": true, "upvora_settings_general_set": true,
 		"upvora_tenant_update": true, "upvora_system_update": true, "upvora_webhooks_create": true, "upvora_webhooks_update": true,
-		"upvora_ai_settings_set": true,
+		"upvora_ai_settings_set": true, "upvora_settings_submission_set": true,
 	}
 	openWorld := map[string]bool{
 		"upvora_webhooks_create": true, "upvora_webhooks_update": true, "upvora_webhooks_test": true,

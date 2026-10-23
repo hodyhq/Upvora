@@ -164,6 +164,9 @@ func routes(r *web.Engine) *web.Engine {
 	// Block if it's private tenant with unauthenticated user
 	r.Use(middlewares.CheckTenantPrivacy())
 
+	// Files attached to ideas, served only to those who can see the idea.
+	r.Get("/static/files/*bkey", handlers.ViewAttachmentFile())
+
 	r.Get("/", handlers.Index())
 	r.Get("/p/:productSlug", handlers.ProductBoard())
 	r.Get("/roadmap", handlers.RoadmapPage())
@@ -284,6 +287,7 @@ func routes(r *web.Engine) *web.Engine {
 		ui.Post("/_api/admin/settings/general", handlers.UpdateSettings())
 		ui.Post("/_api/admin/settings/advanced", handlers.UpdateAdvancedSettings())
 		ui.Post("/_api/admin/settings/privacy", handlers.UpdatePrivacySettings())
+		ui.Post("/_api/admin/settings/submission", handlers.UpdateSubmissionSettings())
 		ui.Post("/_api/admin/settings/mcp", handlers.UpdateMCPSettings())
 		ui.Get("/admin/mcp", handlers.ManageMCPPage())
 		ui.Get("/_api/admin/mcp/clients", handlers.ListMCPClients())
@@ -470,6 +474,7 @@ func routes(r *web.Engine) *web.Engine {
 		adminApi.Post("/api/v1/admin/settings/theme", handlers.UpdateTenantTheme())
 		adminApi.Post("/api/v1/admin/settings/advanced", handlers.UpdateAdvancedSettings())
 		adminApi.Post("/api/v1/admin/settings/privacy", handlers.UpdatePrivacySettings())
+		adminApi.Post("/api/v1/admin/settings/submission", handlers.UpdateSubmissionSettings())
 		adminApi.Post("/api/v1/admin/settings/mcp", handlers.UpdateMCPSettings())
 		adminApi.Post("/api/v1/admin/mcp/clients", handlers.CreateMCPClient())
 		adminApi.Delete("/api/v1/admin/mcp/clients/:id", handlers.DeleteMCPClient())

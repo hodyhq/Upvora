@@ -12,4 +12,7 @@ type ImageUploadData struct {
 	FileName    string `json:"fileName"`
 	ContentType string `json:"contentType"`
 	Content     []byte `json:"content"`
+	// Text is the content of a text or Markdown file given as text rather
+	// than base64 bytes (used when Content is empty).
+	Text string `json:"text,omitempty"`
 }

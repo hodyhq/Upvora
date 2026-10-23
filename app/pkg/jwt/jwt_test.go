@@ -224,3 +224,21 @@ func TestJWT_MCPConsent_BoundToOrigin(t *testing.T) {
 	_, err = jwt.DecodeMCPSignInRequest(token)
 	Expect(err).IsNotNil()
 }
+
+func TestJWT_VoraBrief_BoundToUserAndBrief(t *testing.T) {
+	RegisterT(t)
+	token, err := jwt.EncodeVoraBrief(7, 1, "brief-hash", time.Minute)
+	Expect(err).IsNil()
+	claims, err := jwt.DecodeVoraBrief(token)
+	Expect(err).IsNil()
+	Expect(claims.UserID).Equals(7)
+	Expect(claims.TenantID).Equals(1)
+	Expect(claims.BriefHash).Equals("brief-hash")
+	_, err = jwt.DecodeFiderClaims(token)
+	Expect(err).IsNotNil()
+	_, err = jwt.DecodeMCPConsent(token, "https://x.test")
+	Expect(err).IsNotNil()
+	expired, _ := jwt.EncodeVoraBrief(7, 1, "h", -time.Minute)
+	_, err = jwt.DecodeVoraBrief(expired)
+	Expect(err).IsNotNil()
+}

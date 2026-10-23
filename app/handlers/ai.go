@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"crypto/subtle"
 	"encoding/json"
 	"fmt"
 	"github.com/getfider/fider/app"
@@ -18,7 +19,9 @@ import (
 	"github.com/getfider/fider/app/models/entity"
 	"github.com/getfider/fider/app/models/query"
 	"github.com/getfider/fider/app/pkg/bus"
+	"github.com/getfider/fider/app/pkg/jwt"
 	"github.com/getfider/fider/app/pkg/log"
+	"github.com/getfider/fider/app/pkg/oauthas"
 	"github.com/getfider/fider/app/pkg/web"
 )
 
@@ -108,6 +111,34 @@ func resolveAgent(c *web.Context, productID int) (*entity.AIAgent, error) {
 		return nil, err
 	}
 	return q.Result, nil
+}
+
+// voraBriefTTL is how long a finalized brief may wait before submission.
+const voraBriefTTL = 6 * time.Hour
+
+// VoraBriefValid reports whether token vouches for brief: issued by Vora's
+// finalize step to this person on this site, for exactly this brief.
+func VoraBriefValid(c *web.Context, token, brief string) bool {
+	claims, err := jwt.DecodeVoraBrief(token)
+	return err == nil && c.User() != nil && claims.UserID == c.User().ID && claims.TenantID == c.Tenant().ID &&
+		subtle.ConstantTimeCompare([]byte(claims.BriefHash), []byte(oauthas.HashToken(brief))) == 1
+}
+
+// VoraRequiredFor reports whether a new idea for productID must arrive with a
+// Vora brief: the site requires Vora and an enabled agent serves that product.
+// MCP tool calls and API-key integrations are never held to it.
+func VoraRequiredFor(c *web.Context, productID int) (bool, error) {
+	if c.Tenant() == nil || !c.Tenant().VoraRequired || c.IsAuthenticatedByAPIKey() {
+		return false, nil
+	}
+	if replay, _ := c.Value(oauthas.ReplayCtxKey{}).(bool); replay {
+		return false, nil
+	}
+	agent, err := resolveAgent(c, productID)
+	if err != nil {
+		return false, err
+	}
+	return agent != nil, nil
 }
 
 // webSearchAvailable reports whether this agent may search the web — the site
@@ -414,7 +445,12 @@ a complete markdown document with these sections: ` + strings.Join(BriefSections
 		if title == "" || brief == "" {
 			return c.BadRequest(web.Map{"message": "Vora couldn't format the summary — try 'wrap it up' once more."})
 		}
-		return c.Ok(web.Map{"title": title, "description": description, "brief": brief, "tags": matchTags(section(raw, "TAGS"), publicTags)})
+		// Vouch for this brief, so a site requiring Vora can tell it from a typed one.
+		voraToken, err := jwt.EncodeVoraBrief(c.User().ID, c.Tenant().ID, oauthas.HashToken(brief), voraBriefTTL)
+		if err != nil {
+			return c.Failure(err)
+		}
+		return c.Ok(web.Map{"title": title, "description": description, "brief": brief, "tags": matchTags(section(raw, "TAGS"), publicTags), "voraToken": voraToken})
 	}
 }
 

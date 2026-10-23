@@ -121,6 +121,23 @@ func UpdateSiteBanner() web.HandlerFunc {
 	}
 }
 
+// UpdateSubmissionSettings changes Vora-only submission and file attachments.
+func UpdateSubmissionSettings() web.HandlerFunc {
+	return func(c *web.Context) error {
+		action := new(actions.UpdateTenantSubmissionSettings)
+		if result := c.BindTo(action); !result.Ok {
+			return c.HandleValidation(result)
+		}
+		if err := bus.Dispatch(c, &cmd.UpdateTenantSubmissionSettings{
+			VoraRequired:           action.VoraRequired,
+			FileAttachmentsEnabled: action.FileAttachmentsEnabled,
+		}); err != nil {
+			return c.Failure(err)
+		}
+		return c.Ok(web.Map{})
+	}
+}
+
 // UpdatePrivacySettings update current tenant's privacy settings
 func UpdatePrivacySettings() web.HandlerFunc {
 	return func(c *web.Context) error {

@@ -38,6 +38,12 @@ const (
 
 // Catalog is every MCP tool. Each replays one /api/v1 route as the caller, so
 // that route's own authorization and validation apply.
+// attachmentsField lets an assistant attach files to a new idea, validated
+// exactly like the web form (types, size, and PDF safety checks).
+var attachmentsField = arr("attachments", "object",
+	"Optional, up to 3 files, 5 MB each: [{upload: {fileName, content}}] with content base64; or for a .txt or .md file [{upload: {fileName, text}}]. "+
+		"Images always; PDF, .txt and .md only when the site allows file attachments (upvora_settings_submission_get). PDFs with scripts, embedded files, forms or encryption are refused.")
+
 var Catalog = []Tool{
 	// Ideas
 	{Name: "upvora_ideas_search", Method: "GET", Path: "/api/v1/posts", MinRole: member, Paged: true,
@@ -65,6 +71,7 @@ var Catalog = []Tool{
 			arr("tags", "string", "Tag slugs (only if the site allows tags at creation)."),
 			b("productId", "integer", "Product id (omit for General)."),
 			b("isPrivate", "boolean", "Private idea (staff always; members only if the site allows it)."),
+			attachmentsField,
 		}},
 	{Name: "upvora_ideas_update", Method: "PUT", Path: "/api/v1/posts/{number}", MinRole: member,
 		Description: "Edit an idea's title and description (authors within 1 hour; staff any time).",
@@ -187,7 +194,8 @@ var Catalog = []Tool{
 		Fields: []Field{req(b("title", "string", "10 to 100 characters.")), b("description", "string", "Short summary."),
 			req(b("briefMarkdown", "string", "The Idea Brief, following the structure from upvora_ai_ideation_context.")),
 			arr("tags", "string", "Tag slugs."), b("productId", "integer", ""), b("isPrivate", "boolean", ""),
-			arr("voraTranscript", "object", "Optional interview transcript: [{role: user|assistant, content}], up to 60 messages.")}},
+			arr("voraTranscript", "object", "Optional interview transcript: [{role: user|assistant, content}], up to 60 messages."),
+			attachmentsField}},
 	{Name: "upvora_ai_ideate", OpenWorld: true, Method: "POST", Path: "/api/v1/ai/ideate", MinRole: member,
 		Description: "Delegate one interview turn to the site's own Vora agent (uses the site's AI provider).",
 		Fields:      []Field{b("productId", "integer", ""), {Name: "messages", Type: "array", Items: "object", In: "body", Required: true, Description: "[{role: user|assistant, content}], 1 to 60."}}},
@@ -261,6 +269,10 @@ var Catalog = []Tool{
 		Description: "Set privacy settings, e.g. make the whole board private." + adminWarn + " Send every field.",
 		Fields: []Field{b("isPrivate", "boolean", ""), b("isFeedEnabled", "boolean", "Cannot be true while private."), b("isModerationEnabled", "boolean", ""),
 			b("membersPrivateIdeas", "boolean", ""), b("membersCanPublishPrivate", "boolean", "")}},
+	{Name: "upvora_settings_submission_get", Method: "GET", Path: "/api/v1/tenant", MinRole: admin, Description: "Get idea submission settings (voraRequired: the web form goes through Vora; fileAttachmentsEnabled: ideas may carry PDF, text and Markdown files)." + readOnlyNo},
+	{Name: "upvora_settings_submission_set", Destructive: true, Method: "POST", Path: "/api/v1/admin/settings/submission", MinRole: admin,
+		Description: "Set idea submission settings (admin): require Vora for ideas from the web form (MCP is never blocked), allow file attachments on ideas. Omit a field to leave it unchanged." + adminWarn,
+		Fields:      []Field{b("voraRequired", "boolean", ""), b("fileAttachmentsEnabled", "boolean", "")}},
 	{Name: "upvora_settings_emailauth_get", Method: "GET", Path: "/api/v1/tenant", MinRole: admin, Description: "Get whether email sign-in is allowed (isEmailAuthAllowed)." + readOnlyNo},
 	{Name: "upvora_settings_emailauth_set", Destructive: true, Method: "POST", Path: "/api/v1/admin/settings/emailauth", MinRole: admin,
 		Description: "Allow or disallow email sign-in (admin). Needs another active sign-in provider.", Fields: []Field{req(b("isEmailAuthAllowed", "boolean", ""))}},

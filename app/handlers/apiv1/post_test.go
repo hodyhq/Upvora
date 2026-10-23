@@ -12,6 +12,7 @@ import (
 	"github.com/getfider/fider/app/models/query"
 
 	"github.com/getfider/fider/app/models/cmd"
+	"github.com/getfider/fider/app/models/dto"
 
 	"github.com/getfider/fider/app/handlers/apiv1"
 	"github.com/getfider/fider/app/middlewares"
@@ -1337,4 +1338,11 @@ func TestDeleteCommentHandler_Authorized(t *testing.T) {
 
 	Expect(code).Equals(http.StatusOK)
 	Expect(deleteComment.CommentID).Equals(comment.ID)
+}
+
+// Files are listed with the idea, never embedded in its description as images.
+func TestAppendUnreferencedAttachments_SkipsFiles(t *testing.T) {
+	RegisterT(t)
+	Expect(apiv1.AppendUnreferencedAttachments("See the spec.", []*dto.ImageUpload{{BlobKey: "files/abc-spec.pdf"}, {BlobKey: "attachments/a.png"}})).
+		Equals("See the spec.\n\n![](fider-image:attachments/a.png)")
 }
