@@ -240,6 +240,11 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
   }
 
   const onCodeVerified = (): void => {
+    // Signed in, but Vora has not drafted the idea yet: reload signed in to start with Vora.
+    if (!showForm) {
+      location.reload()
+      return
+    }
     // User is authenticated - finalize the feedback submission
     finaliseFeedback()
   }

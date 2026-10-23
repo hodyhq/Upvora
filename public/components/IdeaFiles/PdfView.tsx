@@ -14,17 +14,16 @@ const PdfView = (props: PdfViewProps) => {
 
   useEffect(() => {
     let cancelled = false
-    // The loading task owns the document and its worker resources: it is
-    // what gets destroyed when the viewer closes.
+    // Each viewer has its own worker and loading task, both ended on close,
+    // so one viewer closing never disturbs another.
     let task: { promise: Promise<any>; destroy: () => Promise<void> } | undefined
+    let worker: Worker | undefined
     const load = async () => {
       try {
         const pdfjs: any = await import(/* webpackChunkName: "pdfjs" */ "pdfjs-dist")
         if (cancelled) return
-        if (!pdfjs.GlobalWorkerOptions.workerPort) {
-          pdfjs.GlobalWorkerOptions.workerPort = new Worker(new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url), { type: "module" })
-        }
-        const loading = pdfjs.getDocument({ url: props.url, isEvalSupported: false, enableXfa: false })
+        worker = new Worker(new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url), { type: "module" })
+        const loading = pdfjs.getDocument({ url: props.url, isEvalSupported: false, enableXfa: false, worker: new pdfjs.PDFWorker({ port: worker }) })
         task = loading
         const doc = await loading.promise
         const container = host.current
@@ -52,7 +51,8 @@ const PdfView = (props: PdfViewProps) => {
     load()
     return () => {
       cancelled = true
-      task?.destroy().catch(() => undefined)
+      const ending = task ? task.destroy().catch(() => undefined) : Promise.resolve()
+      ending.then(() => worker?.terminate())
     }
   }, [props.url])
 

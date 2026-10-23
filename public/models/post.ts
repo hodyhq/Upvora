@@ -22,6 +22,8 @@ export interface Status {
 
 export interface Post {
   id: number
+  // Blob keys of the idea's images and files (single-idea reads only).
+  attachments?: string[]
   number: number
   slug: string
   title: string

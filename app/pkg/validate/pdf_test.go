@@ -149,19 +149,23 @@ func TestScanPDF_EncryptedRefused(t *testing.T) {
 // withHiddenObject inserts an object definition just before the xref table,
 // which still points where it did: readers that rebuild the table find it.
 func withHiddenObject(pdf []byte, object string) []byte {
-	at := bytes.Index(pdf, []byte("xref"))
+	at := bytes.Index(pdf, []byte("\nxref\n")) + 1
 	out := append(append(append([]byte{}, pdf[:at]...), []byte(object)...), pdf[at:]...)
-	xref := bytes.LastIndex(out, []byte("xref"))
+	xref := bytes.Index(out, []byte("\nxref\n")) + 1 // the table, not the "xref" inside "startxref"
 	return append(out[:bytes.LastIndex(out, []byte("startxref"))], []byte(fmt.Sprintf("startxref\n%d\n%%%%EOF\n", xref))...)
 }
 
-// A second definition of an object (what a rebuilding reader would use) is
-// read as the reader would, and refused.
-func TestScanPDF_ShadowedObjectRefused(t *testing.T) {
+// A second, hidden definition of an object (what a reader that rebuilds the
+// cross-reference table could use) never reaches the stored file: the scan
+// reads the table, and the stored copy is the re-written document.
+func TestScanPDF_ShadowedObjectDropped(t *testing.T) {
 	RegisterT(t)
 	pdf := buildPDF("/OpenAction 4 0 R", "", "<< /S /GoTo /D [3 0 R /Fit] >>")
-	_, err := validate.ScanPDF(context.Background(), withHiddenObject(pdf, "4 0 obj\n<< /S /JavaScript /JS (app.alert(1)) >>\nendobj\n"))
-	Expect(err).IsNotNil()
+	shadowed := withHiddenObject(pdf, "4 0 obj\n<< /S /JavaScript /JS (app.alert(1)) >>\nendobj\n")
+	Expect(bytes.Contains(shadowed, []byte("JavaScript"))).IsTrue()
+	clean, err := validate.ScanPDF(context.Background(), shadowed)
+	Expect(err).IsNil()
+	Expect(bytes.Contains(clean, []byte("JavaScript"))).IsFalse()
 }
 
 // What is stored is the scanned document re-written. A dictionary with a key

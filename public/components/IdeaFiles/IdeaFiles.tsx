@@ -161,7 +161,13 @@ export const IdeaFilesEditor = (props: IdeaFilesEditorProps) => {
       return
     }
     setError(undefined)
-    const content = await fileToBase64(file)
+    let content: string
+    try {
+      content = await fileToBase64(file)
+    } catch {
+      setError("This file could not be read.")
+      return
+    }
     props.onChange({ bkey: `pending-${Math.random().toString(36).slice(2)}`, upload: { fileName: file.name, content, contentType: file.type }, remove: false })
   }
 
@@ -203,7 +209,14 @@ export const IdeaFilesEditor = (props: IdeaFilesEditorProps) => {
         aria-label="Attach a file"
       />
       {!props.disabled && props.allowAdd !== false && (
-        <Button variant="secondary" size="small" disabled={full} onClick={() => input.current?.click()}>
+        <Button
+          variant="secondary"
+          size="small"
+          disabled={full}
+          onClick={() => {
+            if (!full) input.current?.click()
+          }}
+        >
           <Trans id="ideafiles.attach">Attach a PDF, text or Markdown file</Trans>
         </Button>
       )}

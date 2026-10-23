@@ -208,6 +208,11 @@ func GetPost() web.HandlerFunc {
 		if err := bus.Dispatch(c, getPost); err != nil {
 			return c.Failure(err)
 		}
+		attachments := &query.GetAttachments{Post: getPost.Result}
+		if err := bus.Dispatch(c, attachments); err != nil {
+			return c.Failure(err)
+		}
+		getPost.Result.Attachments = attachments.Result
 
 		return c.Ok(getPost.Result)
 	}

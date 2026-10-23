@@ -79,6 +79,8 @@ const builtInStatusColors: { [key: string]: string } = {
 export const PostDetails: React.FC<PostDetailsProps> = (props) => {
   // If we have initial data, use it; otherwise we'll fetch
   const [post, setPost] = useState<Post | null>(props.initialPost || null)
+  // From the page, or from the idea itself when it was fetched (board overlay).
+  const attachmentKeys = props.initialAttachments ?? post?.attachments ?? []
   const [subscribed, setSubscribed] = useState(props.initialSubscribed || false)
   const [comments, setComments] = useState<Comment[]>(props.initialComments || [])
   const [tags, setTags] = useState<Tag[]>(props.initialTags || [])
@@ -454,7 +456,7 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
                   <Trans id="showpost.message.nodescription">No description provided.</Trans>
                 </em>
               )}
-              <IdeaFilesList bkeys={props.initialAttachments} />
+              <IdeaFilesList bkeys={attachmentKeys} />
             </div>
           ) : (
             <div className="p-show-post__description-section">
@@ -473,9 +475,9 @@ export const PostDetails: React.FC<PostDetailsProps> = (props) => {
                   onImageUploaded={handleImageUploaded}
                   onGetImageSrc={getImageSrc}
                 />
-                {(fider.session.tenant.fileAttachmentsEnabled || (props.initialAttachments || []).some(isFileKey)) && (
+                {(fider.session.tenant.fileAttachmentsEnabled || attachmentKeys.some(isFileKey)) && (
                   <IdeaFilesEditor
-                    existing={props.initialAttachments}
+                    existing={attachmentKeys}
                     attachments={attachments}
                     onChange={handleImageUploaded}
                     allowAdd={!!fider.session.tenant.fileAttachmentsEnabled}
