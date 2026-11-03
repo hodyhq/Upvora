@@ -137,6 +137,21 @@ func TestChatCompletion_CustomProvider_StopsWhenTheCallerGoesAway(t *testing.T) 
 	Expect(time.Since(start) < 450*time.Millisecond).IsTrue()
 }
 
+// A reply cut off at the token cap is an error, never a half brief or a
+// half question passed off as complete.
+func TestChatCompletion_CustomProvider_RejectsATruncatedReply(t *testing.T) {
+	RegisterT(t)
+	srv, _ := fakeProvider(t, func(map[string]interface{}) (int, string) {
+		return 200, `{"choices":[{"finish_reason":"length","message":{"content":"===TITLE===\nHalf"}}]}`
+	})
+
+	c := &cmd.AIChatCompletion{Messages: []entity.AIMessage{{Role: "user", Content: "hi"}}, MaxTokens: 100}
+	err := chatCompletion(customTenantCtx(srv.URL), c)
+
+	Expect(err).IsNotNil()
+	Expect(c.Result).Equals("")
+}
+
 // Any other failure is reported once, without a second request.
 func TestChatCompletion_CustomProvider_DoesNotRetryServerErrors(t *testing.T) {
 	RegisterT(t)

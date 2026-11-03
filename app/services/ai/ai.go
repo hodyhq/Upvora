@@ -235,7 +235,8 @@ func openaiCall(ctx context.Context, c *cmd.AIChatCompletion, key, baseURL, mode
 
 	var parsed struct {
 		Choices []struct {
-			Message struct {
+			FinishReason string `json:"finish_reason"`
+			Message      struct {
 				Content string `json:"content"`
 			} `json:"message"`
 		} `json:"choices"`
@@ -245,6 +246,10 @@ func openaiCall(ctx context.Context, c *cmd.AIChatCompletion, key, baseURL, mode
 	}
 	if len(parsed.Choices) == 0 {
 		return errors.New("ai: provider returned no choices")
+	}
+	// A reply cut off at the cap would pass as a complete brief or question.
+	if parsed.Choices[0].FinishReason == "length" {
+		return errors.New("ai: provider stopped at the %d-token limit", c.MaxTokens)
 	}
 	c.Result = strings.TrimSpace(parsed.Choices[0].Message.Content)
 	if c.Result == "" {
