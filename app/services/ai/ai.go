@@ -214,6 +214,9 @@ func openaiCall(ctx context.Context, c *cmd.AIChatCompletion, key, baseURL, mode
 	}
 	status, respBody, err := send(request)
 	if err == nil && len(extra) > 0 && (status == http.StatusBadRequest || status == http.StatusUnprocessableEntity) {
+		// Plain on purpose, max_tokens dropped too: if thinking cannot be turned
+		// off, a max_tokens cap can be spent entirely on hidden reasoning and
+		// leave an empty reply. The previous request is the safe fallback.
 		status, respBody, err = send(plain)
 	}
 	if err != nil {
