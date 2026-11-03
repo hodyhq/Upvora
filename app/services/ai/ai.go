@@ -49,8 +49,8 @@ func (s Service) Init() {
 // a big conversation can take a minute) — providers get their own client.
 var aiHTTP = &http.Client{Timeout: 90 * time.Second}
 
-func aiPost(url string, headers map[string]string, body []byte) (int, []byte, error) {
-	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
+func aiPost(ctx context.Context, url string, headers map[string]string, body []byte) (int, []byte, error) {
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
 	if err != nil {
 		return 0, nil, err
 	}
@@ -85,6 +85,9 @@ var openaiModels = map[string]string{
 	"terra": "gpt-5.6-terra",
 }
 
+// chatCompletion answers c with the tenant's configured provider (Claude,
+// OpenAI, or a custom OpenAI-compatible server) and leaves the reply in
+// c.Result. MaxTokens outside 1-4000 falls back to 1200.
 func chatCompletion(ctx context.Context, c *cmd.AIChatCompletion) error {
 	tenant, ok := ctx.Value(app.TenantCtxKey).(*entity.Tenant)
 	if !ok || tenant == nil {
@@ -141,7 +144,7 @@ func anthropicCall(ctx context.Context, c *cmd.AIChatCompletion, key, model stri
 		return errors.Wrap(err, "ai: failed to marshal request")
 	}
 
-	status, respBody, err := aiPost("https://api.anthropic.com/v1/messages", map[string]string{
+	status, respBody, err := aiPost(context.Background(), "https://api.anthropic.com/v1/messages", map[string]string{
 		"Content-Type":      "application/json",
 		"x-api-key":         key,
 		"anthropic-version": "2023-06-01",
@@ -191,12 +194,15 @@ func openaiCall(ctx context.Context, c *cmd.AIChatCompletion, key, baseURL, mode
 		"max_completion_tokens": c.MaxTokens,
 		"messages":              messages,
 	}
+	// One deadline for both attempts: the fallback never doubles the wait.
+	deadline, cancel := context.WithTimeout(context.Background(), aiHTTP.Timeout)
+	defer cancel()
 	send := func(fields map[string]interface{}) (int, []byte, error) {
 		body, err := json.Marshal(fields)
 		if err != nil {
 			return 0, nil, errors.Wrap(err, "ai: failed to marshal request")
 		}
-		return aiPost(baseURL+"/chat/completions", map[string]string{
+		return aiPost(deadline, baseURL+"/chat/completions", map[string]string{
 			"Content-Type":  "application/json",
 			"Authorization": "Bearer " + key,
 		}, body)

@@ -50,7 +50,7 @@ func serperSearch(c *cmd.AIWebSearch, query, key string) error {
 	if err != nil {
 		return errors.Wrap(err, "ai: failed to marshal serper request")
 	}
-	status, respBody, err := aiPost("https://google.serper.dev/search", map[string]string{
+	status, respBody, err := aiPost(context.Background(), "https://google.serper.dev/search", map[string]string{
 		"Content-Type": "application/json",
 		"X-API-KEY":    key,
 	}, body)
