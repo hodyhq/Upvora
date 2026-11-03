@@ -194,8 +194,9 @@ func openaiCall(ctx context.Context, c *cmd.AIChatCompletion, key, baseURL, mode
 		"max_completion_tokens": c.MaxTokens,
 		"messages":              messages,
 	}
-	// One deadline for both attempts: the fallback never doubles the wait.
-	deadline, cancel := context.WithTimeout(context.Background(), aiHTTP.Timeout)
+	// One deadline for both attempts, so the fallback never doubles the wait,
+	// and a caller that goes away (browser closed) stops the generation.
+	deadline, cancel := context.WithTimeout(ctx, aiHTTP.Timeout)
 	defer cancel()
 	send := func(fields map[string]interface{}) (int, []byte, error) {
 		body, err := json.Marshal(fields)

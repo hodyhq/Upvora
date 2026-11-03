@@ -118,6 +118,25 @@ func TestChatCompletion_CustomProvider_RetryKeepsTheOneDeadline(t *testing.T) {
 	Expect(len(seen()) >= 1).IsTrue()
 }
 
+// A caller that goes away (the browser closed) stops the provider call, so an
+// abandoned generation does not keep a single-slot local server busy.
+func TestChatCompletion_CustomProvider_StopsWhenTheCallerGoesAway(t *testing.T) {
+	RegisterT(t)
+	srv, _ := fakeProvider(t, func(map[string]interface{}) (int, string) {
+		time.Sleep(500 * time.Millisecond)
+		return 200, okReply
+	})
+
+	ctx, cancel := context.WithTimeout(customTenantCtx(srv.URL), 100*time.Millisecond)
+	defer cancel()
+	c := &cmd.AIChatCompletion{Messages: []entity.AIMessage{{Role: "user", Content: "hi"}}, MaxTokens: 100}
+	start := time.Now()
+	err := chatCompletion(ctx, c)
+
+	Expect(err).IsNotNil()
+	Expect(time.Since(start) < 450*time.Millisecond).IsTrue()
+}
+
 // Any other failure is reported once, without a second request.
 func TestChatCompletion_CustomProvider_DoesNotRetryServerErrors(t *testing.T) {
 	RegisterT(t)
