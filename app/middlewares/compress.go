@@ -68,10 +68,23 @@ func (w *gzipResponseWriter) Write(b []byte) (int, error) {
 	return w.Writer.Write(b)
 }
 
-func (r gzipResponseWriter) Flush() {
-	r.Writer.(http.Flusher).Flush()
+// Flush pushes the compressed bytes written so far to the client. Streaming
+// responses (the MCP SDK's event stream) depend on it. Writer is the
+// *gzip.Writer, which is not an http.Flusher: asserting it was one panicked on
+// an SDK goroutine, beyond CatchPanic, and took the whole process down.
+func (w *gzipResponseWriter) Flush() {
+	if gw, ok := w.Writer.(*gzip.Writer); ok {
+		_ = gw.Flush()
+	}
+	if f, ok := w.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
 }
 
-func (r gzipResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	return r.Writer.(http.Hijacker).Hijack()
+// Hijack hands over the underlying connection when it supports that.
+func (w *gzipResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if h, ok := w.ResponseWriter.(http.Hijacker); ok {
+		return h.Hijack()
+	}
+	return nil, nil, http.ErrNotSupported
 }

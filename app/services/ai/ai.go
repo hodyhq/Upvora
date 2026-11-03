@@ -109,7 +109,7 @@ func chatCompletion(ctx context.Context, c *cmd.AIChatCompletion) error {
 		if !ok {
 			model = openaiModels["luna"]
 		}
-		return openaiCall(ctx, c, tenant.AIAPIKey, "https://api.openai.com/v1", model)
+		return openaiCall(ctx, c, tenant.AIAPIKey, "https://api.openai.com/v1", model, nil)
 	case "custom":
 		base := strings.TrimSuffix(tenant.AICustomBaseURL, "/")
 		if !isAllowedBaseURL(base) {
@@ -118,7 +118,14 @@ func chatCompletion(ctx context.Context, c *cmd.AIChatCompletion) error {
 		if tenant.AICustomModel == "" {
 			return errors.New("ai: custom model is not set")
 		}
-		return openaiCall(ctx, c, tenant.AIAPIKey, base, tenant.AICustomModel)
+		// Local servers: Ollama ignores max_completion_tokens (it honours
+		// max_tokens), and a thinking model (gemma, qwen) spends most of the
+		// budget on hidden reasoning that is thrown away: a finalize ran 5,000+
+		// tokens for a 400-token brief and hit the 90s timeout.
+		return openaiCall(ctx, c, tenant.AIAPIKey, base, tenant.AICustomModel, map[string]interface{}{
+			"max_tokens":       c.MaxTokens,
+			"reasoning_effort": "none",
+		})
 	}
 	return errors.New("ai: unknown provider '%s'", tenant.AIProvider)
 }
@@ -168,7 +175,10 @@ func anthropicCall(ctx context.Context, c *cmd.AIChatCompletion, key, model stri
 	return nil
 }
 
-func openaiCall(ctx context.Context, c *cmd.AIChatCompletion, key, baseURL, model string) error {
+// openaiCall sends an OpenAI-style chat completion. Fields in extra are added
+// to the request; a server that refuses them (400/422) is asked once more with
+// the plain request.
+func openaiCall(ctx context.Context, c *cmd.AIChatCompletion, key, baseURL, model string, extra map[string]interface{}) error {
 	messages := make([]map[string]string, 0, len(c.Messages)+1)
 	if c.System != "" {
 		messages = append(messages, map[string]string{"role": "system", "content": c.System})
@@ -176,19 +186,36 @@ func openaiCall(ctx context.Context, c *cmd.AIChatCompletion, key, baseURL, mode
 	for _, m := range c.Messages {
 		messages = append(messages, map[string]string{"role": m.Role, "content": m.Content})
 	}
-	body, err := json.Marshal(map[string]interface{}{
+	plain := map[string]interface{}{
 		"model":                 model,
 		"max_completion_tokens": c.MaxTokens,
 		"messages":              messages,
-	})
-	if err != nil {
-		return errors.Wrap(err, "ai: failed to marshal request")
+	}
+	send := func(fields map[string]interface{}) (int, []byte, error) {
+		body, err := json.Marshal(fields)
+		if err != nil {
+			return 0, nil, errors.Wrap(err, "ai: failed to marshal request")
+		}
+		return aiPost(baseURL+"/chat/completions", map[string]string{
+			"Content-Type":  "application/json",
+			"Authorization": "Bearer " + key,
+		}, body)
 	}
 
-	status, respBody, err := aiPost(baseURL+"/chat/completions", map[string]string{
-		"Content-Type":  "application/json",
-		"Authorization": "Bearer " + key,
-	}, body)
+	request := plain
+	if len(extra) > 0 {
+		request = make(map[string]interface{}, len(plain)+len(extra))
+		for k, v := range plain {
+			request[k] = v
+		}
+		for k, v := range extra {
+			request[k] = v
+		}
+	}
+	status, respBody, err := send(request)
+	if err == nil && len(extra) > 0 && (status == http.StatusBadRequest || status == http.StatusUnprocessableEntity) {
+		status, respBody, err = send(plain)
+	}
 	if err != nil {
 		return errors.Wrap(err, "ai: openai-compatible request failed")
 	}
