@@ -148,7 +148,7 @@ func anthropicCall(ctx context.Context, c *cmd.AIChatCompletion, key, model stri
 		return errors.Wrap(err, "ai: failed to marshal request")
 	}
 
-	status, respBody, err := aiPost(context.Background(), "https://api.anthropic.com/v1/messages", map[string]string{
+	status, respBody, err := aiPost(ctx, "https://api.anthropic.com/v1/messages", map[string]string{
 		"Content-Type":      "application/json",
 		"x-api-key":         key,
 		"anthropic-version": "2023-06-01",
