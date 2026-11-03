@@ -390,6 +390,9 @@ func AIIdeationContext() web.HandlerFunc {
 	}
 }
 
+// AIFinalize ends a Vora interview: it asks the model for the title,
+// description, tags and brief, and returns them with a token vouching for
+// the brief, which a site that requires Vora checks on submission.
 func AIFinalize() web.HandlerFunc {
 	return func(c *web.Context) error {
 		action := new(actions.AIConverse)
@@ -449,7 +452,8 @@ a complete markdown document with these sections: ` + strings.Join(BriefSections
 			return c.Failure(err)
 		}
 
-		raw := strings.TrimSpace(chat.Result)
+		// The interview's internal marker, which some models repeat here.
+		raw := strings.TrimSpace(strings.ReplaceAll(chat.Result, "<<DRAFT>>", ""))
 		raw = strings.TrimPrefix(raw, "```")
 		raw = strings.TrimSuffix(raw, "```")
 		title := strings.Trim(section(raw, "TITLE"), "#* \"")

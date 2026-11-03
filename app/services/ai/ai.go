@@ -49,8 +49,10 @@ func (s Service) Init() {
 // a big conversation can take a minute) — providers get their own client.
 var aiHTTP = &http.Client{Timeout: 90 * time.Second}
 
-func aiPost(url string, headers map[string]string, body []byte) (int, []byte, error) {
-	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
+// aiPost POSTs body to url with the AI client, bound to ctx, and returns the
+// status and up to 4MB of the response body.
+func aiPost(ctx context.Context, url string, headers map[string]string, body []byte) (int, []byte, error) {
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
 	if err != nil {
 		return 0, nil, err
 	}
@@ -85,6 +87,9 @@ var openaiModels = map[string]string{
 	"terra": "gpt-5.6-terra",
 }
 
+// chatCompletion answers c with the tenant's configured provider (Claude,
+// OpenAI, or a custom OpenAI-compatible server) and leaves the reply in
+// c.Result. MaxTokens outside 1-4000 falls back to 1200.
 func chatCompletion(ctx context.Context, c *cmd.AIChatCompletion) error {
 	tenant, ok := ctx.Value(app.TenantCtxKey).(*entity.Tenant)
 	if !ok || tenant == nil {
@@ -109,7 +114,7 @@ func chatCompletion(ctx context.Context, c *cmd.AIChatCompletion) error {
 		if !ok {
 			model = openaiModels["luna"]
 		}
-		return openaiCall(ctx, c, tenant.AIAPIKey, "https://api.openai.com/v1", model)
+		return openaiCall(ctx, c, tenant.AIAPIKey, "https://api.openai.com/v1", model, nil)
 	case "custom":
 		base := strings.TrimSuffix(tenant.AICustomBaseURL, "/")
 		if !isAllowedBaseURL(base) {
@@ -118,11 +123,20 @@ func chatCompletion(ctx context.Context, c *cmd.AIChatCompletion) error {
 		if tenant.AICustomModel == "" {
 			return errors.New("ai: custom model is not set")
 		}
-		return openaiCall(ctx, c, tenant.AIAPIKey, base, tenant.AICustomModel)
+		// Local servers: Ollama ignores max_completion_tokens (it honours
+		// max_tokens), and a thinking model (gemma, qwen) spends most of the
+		// budget on hidden reasoning that is thrown away: a finalize ran 5,000+
+		// tokens for a 400-token brief and hit the 90s timeout.
+		return openaiCall(ctx, c, tenant.AIAPIKey, base, tenant.AICustomModel, map[string]interface{}{
+			"max_tokens":       c.MaxTokens,
+			"reasoning_effort": "none",
+		})
 	}
 	return errors.New("ai: unknown provider '%s'", tenant.AIProvider)
 }
 
+// anthropicCall sends c to Anthropic's Messages API and joins the reply's
+// text blocks into c.Result.
 func anthropicCall(ctx context.Context, c *cmd.AIChatCompletion, key, model string) error {
 	body, err := json.Marshal(map[string]interface{}{
 		"model":      model,
@@ -134,7 +148,7 @@ func anthropicCall(ctx context.Context, c *cmd.AIChatCompletion, key, model stri
 		return errors.Wrap(err, "ai: failed to marshal request")
 	}
 
-	status, respBody, err := aiPost("https://api.anthropic.com/v1/messages", map[string]string{
+	status, respBody, err := aiPost(ctx, "https://api.anthropic.com/v1/messages", map[string]string{
 		"Content-Type":      "application/json",
 		"x-api-key":         key,
 		"anthropic-version": "2023-06-01",
@@ -168,7 +182,10 @@ func anthropicCall(ctx context.Context, c *cmd.AIChatCompletion, key, model stri
 	return nil
 }
 
-func openaiCall(ctx context.Context, c *cmd.AIChatCompletion, key, baseURL, model string) error {
+// openaiCall sends an OpenAI-style chat completion. Fields in extra are added
+// to the request; a server that refuses them (400/422) is asked once more with
+// the plain request.
+func openaiCall(ctx context.Context, c *cmd.AIChatCompletion, key, baseURL, model string, extra map[string]interface{}) error {
 	messages := make([]map[string]string, 0, len(c.Messages)+1)
 	if c.System != "" {
 		messages = append(messages, map[string]string{"role": "system", "content": c.System})
@@ -176,19 +193,43 @@ func openaiCall(ctx context.Context, c *cmd.AIChatCompletion, key, baseURL, mode
 	for _, m := range c.Messages {
 		messages = append(messages, map[string]string{"role": m.Role, "content": m.Content})
 	}
-	body, err := json.Marshal(map[string]interface{}{
+	plain := map[string]interface{}{
 		"model":                 model,
 		"max_completion_tokens": c.MaxTokens,
 		"messages":              messages,
-	})
-	if err != nil {
-		return errors.Wrap(err, "ai: failed to marshal request")
+	}
+	// One deadline for both attempts, so the fallback never doubles the wait,
+	// and a caller that goes away (browser closed) stops the generation.
+	deadline, cancel := context.WithTimeout(ctx, aiHTTP.Timeout)
+	defer cancel()
+	send := func(fields map[string]interface{}) (int, []byte, error) {
+		body, err := json.Marshal(fields)
+		if err != nil {
+			return 0, nil, errors.Wrap(err, "ai: failed to marshal request")
+		}
+		return aiPost(deadline, baseURL+"/chat/completions", map[string]string{
+			"Content-Type":  "application/json",
+			"Authorization": "Bearer " + key,
+		}, body)
 	}
 
-	status, respBody, err := aiPost(baseURL+"/chat/completions", map[string]string{
-		"Content-Type":  "application/json",
-		"Authorization": "Bearer " + key,
-	}, body)
+	request := plain
+	if len(extra) > 0 {
+		request = make(map[string]interface{}, len(plain)+len(extra))
+		for k, v := range plain {
+			request[k] = v
+		}
+		for k, v := range extra {
+			request[k] = v
+		}
+	}
+	status, respBody, err := send(request)
+	if err == nil && len(extra) > 0 && (status == http.StatusBadRequest || status == http.StatusUnprocessableEntity) {
+		// Plain on purpose, max_tokens dropped too: if thinking cannot be turned
+		// off, a max_tokens cap can be spent entirely on hidden reasoning and
+		// leave an empty reply. The previous request is the safe fallback.
+		status, respBody, err = send(plain)
+	}
 	if err != nil {
 		return errors.Wrap(err, "ai: openai-compatible request failed")
 	}
@@ -198,7 +239,8 @@ func openaiCall(ctx context.Context, c *cmd.AIChatCompletion, key, baseURL, mode
 
 	var parsed struct {
 		Choices []struct {
-			Message struct {
+			FinishReason string `json:"finish_reason"`
+			Message      struct {
 				Content string `json:"content"`
 			} `json:"message"`
 		} `json:"choices"`
@@ -208,6 +250,10 @@ func openaiCall(ctx context.Context, c *cmd.AIChatCompletion, key, baseURL, mode
 	}
 	if len(parsed.Choices) == 0 {
 		return errors.New("ai: provider returned no choices")
+	}
+	// A reply cut off at the cap would pass as a complete brief or question.
+	if parsed.Choices[0].FinishReason == "length" {
+		return errors.New("ai: provider stopped at the %d-token limit", c.MaxTokens)
 	}
 	c.Result = strings.TrimSpace(parsed.Choices[0].Message.Content)
 	if c.Result == "" {

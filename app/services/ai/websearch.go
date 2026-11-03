@@ -42,6 +42,8 @@ func webSearch(ctx context.Context, c *cmd.AIWebSearch) error {
 	return errors.New("ai: unknown web search provider '%s'", tenant.AIWebSearchProvider)
 }
 
+// serperSearch runs query through Serper's Google search API and stores up
+// to maxWebResults results on c.
 func serperSearch(c *cmd.AIWebSearch, query, key string) error {
 	if key == "" {
 		return errors.New("ai: serper api key is not set")
@@ -50,7 +52,7 @@ func serperSearch(c *cmd.AIWebSearch, query, key string) error {
 	if err != nil {
 		return errors.Wrap(err, "ai: failed to marshal serper request")
 	}
-	status, respBody, err := aiPost("https://google.serper.dev/search", map[string]string{
+	status, respBody, err := aiPost(context.Background(), "https://google.serper.dev/search", map[string]string{
 		"Content-Type": "application/json",
 		"X-API-KEY":    key,
 	}, body)
