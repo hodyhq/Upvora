@@ -42,6 +42,8 @@ func webSearch(ctx context.Context, c *cmd.AIWebSearch) error {
 	return errors.New("ai: unknown web search provider '%s'", tenant.AIWebSearchProvider)
 }
 
+// serperSearch runs query through Serper's Google search API and stores up
+// to maxWebResults results on c.
 func serperSearch(c *cmd.AIWebSearch, query, key string) error {
 	if key == "" {
 		return errors.New("ai: serper api key is not set")

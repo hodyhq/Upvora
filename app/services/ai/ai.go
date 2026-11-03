@@ -49,6 +49,8 @@ func (s Service) Init() {
 // a big conversation can take a minute) — providers get their own client.
 var aiHTTP = &http.Client{Timeout: 90 * time.Second}
 
+// aiPost POSTs body to url with the AI client, bound to ctx, and returns the
+// status and up to 4MB of the response body.
 func aiPost(ctx context.Context, url string, headers map[string]string, body []byte) (int, []byte, error) {
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
 	if err != nil {
@@ -133,6 +135,8 @@ func chatCompletion(ctx context.Context, c *cmd.AIChatCompletion) error {
 	return errors.New("ai: unknown provider '%s'", tenant.AIProvider)
 }
 
+// anthropicCall sends c to Anthropic's Messages API and joins the reply's
+// text blocks into c.Result.
 func anthropicCall(ctx context.Context, c *cmd.AIChatCompletion, key, model string) error {
 	body, err := json.Marshal(map[string]interface{}{
 		"model":      model,
