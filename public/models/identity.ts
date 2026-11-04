@@ -31,6 +31,7 @@ export interface Tenant {
   mcpEnabled: boolean
   mcpMinRole: "visitor" | "collaborator" | "administrator"
   mcpDcrEnabled: boolean
+  isSignUpDisabled: boolean
   isPro: boolean
   // Custom status catalogue for this tenant; populated by the server on every
   // request. Undefined for old Fider builds / unmigrated tenants — runtime

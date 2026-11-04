@@ -133,6 +133,11 @@ func User() web.MiddlewareFunc {
 					user = getUserByAPIKey.Result
 					fromAPIKey = true
 
+					// Check the key owner before impersonation replaces user below.
+					if user.Status == enum.UserBlocked {
+						return c.Unauthorized()
+					}
+
 					if !user.IsCollaborator() {
 						return c.HandleValidation(validate.Failed("API Key is invalid"))
 					}

@@ -188,7 +188,7 @@ export const ShowComment = (props: ShowCommentProps) => {
       <div ref={node} className={`c-comment__card ${classList}${comment.isInternal ? " c-comment__card--internal" : ""}`}>
         <div className="mb-1">
           <HStack justify="between">
-            <HStack align="center">
+            <HStack align="center" className="flex-wrap gap-2">
               <Avatar user={comment.user} size="small" />
               <UserName user={comment.user} />
               {comment.isInternal && (
