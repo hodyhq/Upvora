@@ -75,6 +75,7 @@ export default class PrivacySettingsPage extends AdminBasePage<any, PrivacySetti
             disabled={!Fider.session.user.isAdministrator || this.state.isPrivate}
             active={this.state.isPrivate || this.state.isSignUpDisabled}
             onToggle={(disabled) => this.updatePrivacy({ isSignUpDisabled: disabled })}
+            ariaLabel="Disable Sign-ups"
           />
           <p className="text-muted mt-1">
             Prevents visitors from creating a new account on their own. The board stays publicly visible. <br /> When enabled, only already registered users,
