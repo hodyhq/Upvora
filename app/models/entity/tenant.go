@@ -26,6 +26,7 @@ type Tenant struct {
 	IsFeedEnabled              bool              `json:"isFeedEnabled"`
 	PreventIndexing            bool              `json:"preventIndexing"`
 	IsModerationEnabled        bool              `json:"isModerationEnabled"`
+	IsSignUpDisabled           bool              `json:"isSignUpDisabled"`
 	MembersPrivateIdeas        bool              `json:"membersPrivateIdeas"`      // members may mark an idea private at submission (visible to them and staff)
 	MembersCanPublishPrivate   bool              `json:"membersCanPublishPrivate"` // members may later make their own private idea public (never the reverse)
 	VoraRequired               bool              `json:"voraRequired"`             // ideas from the web form go through Vora where a product has an enabled agent
@@ -84,6 +85,32 @@ type Tenant struct {
 
 func (t *Tenant) IsDisabled() bool {
 	return t.Status == enum.TenantDisabled
+}
+
+// CanCreateAccountByEmail returns true if completing an email verification of the given kind
+// may create a new account. Invited users can always create their account, everyone else
+// only if the site allows sign-ups and email login is turned on.
+func (t *Tenant) CanCreateAccountByEmail(kind enum.EmailVerificationKind) bool {
+	if kind == enum.EmailVerificationKindUserInvitation {
+		return true
+	}
+	return t.IsEmailAuthAllowed && t.isSignUpAllowed()
+}
+
+// CanCreateAccountByOAuth returns true if signing in with the given OAuth provider may create
+// a new account. Users from trusted providers can always create their account, everyone else
+// only if the site allows sign-ups. Built-in providers have no config and are never trusted.
+func (t *Tenant) CanCreateAccountByOAuth(config *OAuthConfig) bool {
+	if config != nil && config.IsTrusted {
+		return true
+	}
+	return t.isSignUpAllowed()
+}
+
+// isSignUpAllowed returns true if visitors can create a new account on their own,
+// which is neither the case on private sites nor when sign-ups are disabled.
+func (t *Tenant) isSignUpAllowed() bool {
+	return !t.IsPrivate && !t.IsSignUpDisabled
 }
 
 // TenantContact is a reference to an administrator account

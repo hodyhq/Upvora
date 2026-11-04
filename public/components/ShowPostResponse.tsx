@@ -27,7 +27,7 @@ export const ResponseDetails = (props: PostResponseProps): JSX.Element | null =>
       <div className="c-response-details__card">
         <div className="c-response-details__inner">
           <VStack spacing={2}>
-            <HStack spacing={2} align="center">
+            <HStack spacing={2} align="center" className="flex-wrap gap-2">
               <Avatar user={props.response.user} size="small" />
               <UserName user={props.response.user} />
               <span className="text-xs text-gray-600">•</span>

@@ -170,6 +170,13 @@ func setPostResponse(ctx context.Context, c *cmd.SetPostResponse) error {
 			return errors.Wrap(err, "failed to update post's response")
 		}
 
+		if c.StatusSlug == enum.PostDeleted.Name() {
+			_, err = trx.Execute("DELETE FROM notifications WHERE tenant_id = $1 AND post_id = $2", tenant.ID, c.Post.ID)
+			if err != nil {
+				return errors.Wrap(err, "failed to delete notifications of deleted post")
+			}
+		}
+
 		var newKind string
 		if err := trx.Scalar(&newKind, `SELECT kind FROM statuses WHERE tenant_id = $1 AND slug = $2`, tenant.ID, c.StatusSlug); err != nil {
 			// 'deleted' is an internal tombstone with no row in statuses; any

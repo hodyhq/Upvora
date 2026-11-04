@@ -79,7 +79,7 @@ Passwordless email magic links out of the box, plus Google, GitHub, and any OAut
 Send transactional mail through **SMTP**, **Mailgun**, **Amazon SES**, or **Resend**: pick one with a single env var. Magic-link sign-in, notifications, and invites all flow through it.
 
 ### ⚙️ And the whole engine underneath
-Web + email notifications, webhooks, a REST API covering every board and admin action (per-user API keys), CSV export, team invitations, post moderation, GDPR-friendly privacy controls, 30+ languages, single-binary Docker image, migrations on boot. Built on Fider's proven core, kept current with upstream (tracking **Fider v0.38.2**, security releases included).
+Web + email notifications, webhooks, a REST API covering every board and admin action (per-user API keys), CSV export, team invitations, post moderation, GDPR-friendly privacy controls, 30+ languages, single-binary Docker image, migrations on boot. Built on Fider's proven core, kept current with upstream (tracking **Fider v0.39.0**, security releases included).
 
 ## Screenshots
 
@@ -138,7 +138,7 @@ services:
     volumes: [db-data:/var/lib/postgresql/data]
 
   app:
-    image: ghcr.io/hodyhq/upvora:latest   # or pin a release tag, e.g. :v0.38.2.8.1
+    image: ghcr.io/hodyhq/upvora:latest   # or pin a release tag, e.g. :v0.39.0.8.2
     depends_on: [db]
     ports: ["3000:3000"]
     environment:

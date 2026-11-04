@@ -29,6 +29,7 @@ type Tenant struct {
 	IsFeedEnabled              bool           `db:"is_feed_enabled"`
 	PreventIndexing            bool           `db:"prevent_indexing"`
 	IsModerationEnabled        bool           `db:"is_moderation_enabled"`
+	IsSignUpDisabled           bool           `db:"is_signup_disabled"`
 	MembersPrivateIdeas        bool           `db:"members_private_ideas"`
 	MembersCanPublishPrivate   bool           `db:"members_can_publish_private"`
 	VoraRequired               bool           `db:"vora_required"`
@@ -104,6 +105,7 @@ func (t *Tenant) ToModel() *entity.Tenant {
 		IsFeedEnabled:            t.IsFeedEnabled,
 		PreventIndexing:          t.PreventIndexing,
 		IsModerationEnabled:      isPro && t.IsModerationEnabled,
+		IsSignUpDisabled:         t.IsSignUpDisabled,
 		MembersPrivateIdeas:      t.MembersPrivateIdeas,
 		MembersCanPublishPrivate: t.MembersCanPublishPrivate,
 		VoraRequired:             t.VoraRequired,

@@ -9,6 +9,7 @@ export interface PrivacySettingsPageState {
   isModerationEnabled: boolean
   membersPrivateIdeas: boolean
   membersCanPublishPrivate: boolean
+  isSignUpDisabled: boolean
 }
 
 export default class PrivacySettingsPage extends AdminBasePage<any, PrivacySettingsPageState> {
@@ -26,6 +27,7 @@ export default class PrivacySettingsPage extends AdminBasePage<any, PrivacySetti
       isModerationEnabled: Fider.session.tenant.isModerationEnabled,
       membersPrivateIdeas: Fider.session.tenant.membersPrivateIdeas,
       membersCanPublishPrivate: Fider.session.tenant.membersCanPublishPrivate,
+      isSignUpDisabled: Fider.session.tenant.isSignUpDisabled,
     }
     this.confirmed = this.state
   }
@@ -66,6 +68,18 @@ export default class PrivacySettingsPage extends AdminBasePage<any, PrivacySetti
           <p className="text-muted mt-1">
             A private board prevents unauthenticated users from viewing or interacting with its content. <br /> When enabled, only already registered users,
             invited users and users from trusted OAuth providers will have access to this board. Disables the feed feature.
+          </p>
+        </Field>
+        <Field label="Disable Sign-ups">
+          <Toggle
+            disabled={!Fider.session.user.isAdministrator || this.state.isPrivate}
+            active={this.state.isPrivate || this.state.isSignUpDisabled}
+            onToggle={(disabled) => this.updatePrivacy({ isSignUpDisabled: disabled })}
+            ariaLabel="Disable Sign-ups"
+          />
+          <p className="text-muted mt-1">
+            Prevents visitors from creating a new account on their own. The board stays publicly visible. <br /> When enabled, only already registered users,
+            invited users and users from trusted OAuth providers can sign in. Private boards always have sign-ups disabled.
           </p>
         </Field>
         <Field label="ATOM Feed">

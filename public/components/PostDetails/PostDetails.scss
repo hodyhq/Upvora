@@ -59,6 +59,18 @@
     }
   }
 
+  &__post-card .c-dropdown__handle {
+    padding: spacing(2);
+    border-radius: 50%;
+  }
+
+  &__post-card .c-dropdown--open .c-dropdown__handle {
+    background-color: var(--colors-gray-200);
+    @include dark-mode {
+      background-color: var(--colors-gray-400);
+    }
+  }
+
   &__title {
     font-size: 22px;
     font-weight: 800;

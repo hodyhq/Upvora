@@ -21,9 +21,9 @@ import (
 
 // CreateTenant is the input model used to create a tenant
 type CreateTenant struct {
-	Token           string `json:"token"`
-	Name            string `json:"name"`
-	Email           string `json:"email" format:"lower"`
+	Token           string           `json:"token"`
+	Name            string           `json:"name"`
+	Email           string           `json:"email" format:"lower"`
 	VerificationKey string           `json:"-"`
 	TenantName      string           `json:"tenantName"`
 	LegalAgreement  bool             `json:"legalAgreement"`
@@ -191,19 +191,19 @@ func (action *ResendSignUpEmail) GetKind() enum.EmailVerificationKind {
 
 // UpdateTenantSettings is the input model used to update tenant settings
 type UpdateTenantSettings struct {
-	Logo                *dto.ImageUpload `json:"logo"`
-	Title               string           `json:"title"`
-	Invitation          string           `json:"invitation"`
-	WelcomeMessage      string           `json:"welcomeMessage"`
-	WelcomeHeader       string           `json:"welcomeHeader"`
-	DescriptionTemplate string           `json:"descriptionTemplate"`
-	ShareIdeaInstructions string         `json:"shareIdeaInstructions"`
-	RailCtaHeading      string           `json:"railCtaHeading"`
-	RailCtaText         string           `json:"railCtaText"`
-	RailCtaButton       string           `json:"railCtaButton"`
-	DefaultTheme        string           `json:"defaultTheme"`
-	Locale              string           `json:"locale"`
-	CNAME               string           `json:"cname" format:"lower"`
+	Logo                  *dto.ImageUpload `json:"logo"`
+	Title                 string           `json:"title"`
+	Invitation            string           `json:"invitation"`
+	WelcomeMessage        string           `json:"welcomeMessage"`
+	WelcomeHeader         string           `json:"welcomeHeader"`
+	DescriptionTemplate   string           `json:"descriptionTemplate"`
+	ShareIdeaInstructions string           `json:"shareIdeaInstructions"`
+	RailCtaHeading        string           `json:"railCtaHeading"`
+	RailCtaText           string           `json:"railCtaText"`
+	RailCtaButton         string           `json:"railCtaButton"`
+	DefaultTheme          string           `json:"defaultTheme"`
+	Locale                string           `json:"locale"`
+	CNAME                 string           `json:"cname" format:"lower"`
 }
 
 func NewUpdateTenantSettings() *UpdateTenantSettings {
@@ -354,11 +354,12 @@ func (action *UpdateTenantSiteBanner) Validate(ctx context.Context, user *entity
 
 // UpdateTenantPrivacySettings is the input model used to update tenant privacy settings
 type UpdateTenantPrivacySettings struct {
-	IsPrivate           bool `json:"isPrivate"`
-	IsFeedEnabled       bool `json:"isFeedEnabled"`
-	IsModerationEnabled bool `json:"isModerationEnabled"`
-	MembersPrivateIdeas      bool `json:"membersPrivateIdeas"`
-	MembersCanPublishPrivate bool `json:"membersCanPublishPrivate"`
+	IsPrivate                bool  `json:"isPrivate"`
+	IsFeedEnabled            bool  `json:"isFeedEnabled"`
+	IsModerationEnabled      bool  `json:"isModerationEnabled"`
+	MembersPrivateIdeas      bool  `json:"membersPrivateIdeas"`
+	MembersCanPublishPrivate bool  `json:"membersCanPublishPrivate"`
+	IsSignUpDisabled         *bool `json:"isSignUpDisabled"`
 }
 
 // IsAuthorized returns true if current user is authorized to perform this action
