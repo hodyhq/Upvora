@@ -11,6 +11,7 @@ import (
 	"github.com/getfider/fider/app/handlers/apiv1"
 	"github.com/getfider/fider/app/models/cmd"
 	"github.com/getfider/fider/app/models/entity"
+	"github.com/getfider/fider/app/models/enum"
 	"github.com/getfider/fider/app/models/query"
 	. "github.com/getfider/fider/app/pkg/assert"
 	"github.com/getfider/fider/app/pkg/bus"
@@ -102,6 +103,30 @@ func TestCreatePost_VoraRequired_MCPAndAPIKeysExempt(t *testing.T) {
 	code, _ = mock.NewServer().Use(apiKey).OnTenant(tenant).AsUser(mock.JonSnow).ExecutePost(apiv1.CreatePost(), manualIdea)
 	Expect(code).Equals(http.StatusOK)
 	Expect(*created).IsTrue()
+}
+
+// Each bypass switch frees exactly its own role from Vora: admins do not
+// ride on the collaborator switch, nor collaborators on the admin one.
+func TestCreatePost_VoraRequired_RoleBypass(t *testing.T) {
+	RegisterT(t)
+	collaborator := *mock.AryaStark
+	collaborator.Role = enum.RoleCollaborator
+	post := func(tenant *entity.Tenant, user *entity.User) int {
+		code, _ := mock.NewServer().OnTenant(tenant).AsUser(user).ExecutePost(apiv1.CreatePost(), manualIdea)
+		return code
+	}
+
+	tenant, _ := voraSite(true)
+	tenant.VoraBypassAdmins = true
+	Expect(post(tenant, mock.JonSnow)).Equals(http.StatusOK)
+	Expect(post(tenant, &collaborator)).Equals(http.StatusBadRequest)
+	Expect(post(tenant, mock.AryaStark)).Equals(http.StatusBadRequest)
+
+	tenant, _ = voraSite(true)
+	tenant.VoraBypassCollaborators = true
+	Expect(post(tenant, &collaborator)).Equals(http.StatusOK)
+	Expect(post(tenant, mock.JonSnow)).Equals(http.StatusBadRequest)
+	Expect(post(tenant, mock.AryaStark)).Equals(http.StatusBadRequest)
 }
 
 func TestCreatePost_VoraRequired_OnlyWhereVoraServesTheProduct(t *testing.T) {

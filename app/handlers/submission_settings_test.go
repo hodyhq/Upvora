@@ -30,6 +30,13 @@ func TestUpdateSubmissionSettings_SendsOnlyWhatWasGiven(t *testing.T) {
 	Expect(code).Equals(http.StatusOK)
 	Expect(got.VoraRequired).IsNil()
 	Expect(*got.FileAttachmentsEnabled).IsFalse()
+
+	code, _ = mock.NewServer().OnTenant(mock.DemoTenant).AsUser(mock.JonSnow).
+		ExecutePost(handlers.UpdateSubmissionSettings(), `{"voraBypassCollaborators": true}`)
+	Expect(code).Equals(http.StatusOK)
+	Expect(*got.VoraBypassCollaborators).IsTrue()
+	Expect(got.VoraBypassAdmins).IsNil()
+	Expect(got.VoraRequired).IsNil()
 }
 
 func TestUpdateSubmissionSettings_NothingGiven(t *testing.T) {

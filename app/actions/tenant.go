@@ -425,8 +425,10 @@ func (action *UpdateTenantMCPSettings) Validate(ctx context.Context, user *entit
 // UpdateTenantSubmissionSettings changes how ideas are submitted: Vora-only
 // and file attachments. An omitted field stays as it is.
 type UpdateTenantSubmissionSettings struct {
-	VoraRequired           *bool `json:"voraRequired"`
-	FileAttachmentsEnabled *bool `json:"fileAttachmentsEnabled"`
+	VoraRequired            *bool `json:"voraRequired"`
+	VoraBypassAdmins        *bool `json:"voraBypassAdmins"`
+	VoraBypassCollaborators *bool `json:"voraBypassCollaborators"`
+	FileAttachmentsEnabled  *bool `json:"fileAttachmentsEnabled"`
 }
 
 // IsAuthorized checks if current user is authorized to perform this action
@@ -436,7 +438,7 @@ func (action *UpdateTenantSubmissionSettings) IsAuthorized(ctx context.Context, 
 
 // Validate if current model is valid
 func (action *UpdateTenantSubmissionSettings) Validate(ctx context.Context, user *entity.User) *validate.Result {
-	if action.VoraRequired == nil && action.FileAttachmentsEnabled == nil {
+	if action.VoraRequired == nil && action.FileAttachmentsEnabled == nil && action.VoraBypassAdmins == nil && action.VoraBypassCollaborators == nil {
 		return validate.Failed("Nothing to change.")
 	}
 	return validate.Success()

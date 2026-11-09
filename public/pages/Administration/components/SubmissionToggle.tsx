@@ -3,9 +3,10 @@ import { Toggle } from "@fider/components"
 import { actions, Fider, notify } from "@fider/services"
 
 interface SubmissionToggleProps {
-  field: "voraRequired" | "fileAttachmentsEnabled"
+  field: "voraRequired" | "voraBypassAdmins" | "voraBypassCollaborators" | "fileAttachmentsEnabled"
   label: string
   children?: React.ReactNode
+  onChange?: (value: boolean) => void
 }
 
 // SubmissionToggle saves one idea-submission switch as soon as it changes;
@@ -21,6 +22,7 @@ export const SubmissionToggle = (props: SubmissionToggleProps) => {
     setSaving(false)
     if (result.ok) {
       Fider.session.tenant[props.field] = value
+      props.onChange?.(value)
       notify.success("Saved.")
     } else {
       setActive(!value) // http already shows the error

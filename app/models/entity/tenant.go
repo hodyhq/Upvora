@@ -30,6 +30,8 @@ type Tenant struct {
 	MembersPrivateIdeas        bool              `json:"membersPrivateIdeas"`      // members may mark an idea private at submission (visible to them and staff)
 	MembersCanPublishPrivate   bool              `json:"membersCanPublishPrivate"` // members may later make their own private idea public (never the reverse)
 	VoraRequired               bool              `json:"voraRequired"`             // ideas from the web form go through Vora where a product has an enabled agent
+	VoraBypassAdmins           bool              `json:"voraBypassAdmins"`         // administrators may skip Vora while it is required
+	VoraBypassCollaborators    bool              `json:"voraBypassCollaborators"`  // collaborators may skip Vora while it is required
 	FileAttachmentsEnabled     bool              `json:"fileAttachmentsEnabled"`   // ideas may carry PDF, text and Markdown files besides images
 	MCPEnabled                 bool              `json:"mcpEnabled"`               // MCP and its OAuth server are on for this site
 	MCPMinRole                 enum.Role         `json:"mcpMinRole"`               // lowest role allowed to authorize an MCP client

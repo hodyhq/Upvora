@@ -129,8 +129,10 @@ func UpdateSubmissionSettings() web.HandlerFunc {
 			return c.HandleValidation(result)
 		}
 		if err := bus.Dispatch(c, &cmd.UpdateTenantSubmissionSettings{
-			VoraRequired:           action.VoraRequired,
-			FileAttachmentsEnabled: action.FileAttachmentsEnabled,
+			VoraRequired:            action.VoraRequired,
+			VoraBypassAdmins:        action.VoraBypassAdmins,
+			VoraBypassCollaborators: action.VoraBypassCollaborators,
+			FileAttachmentsEnabled:  action.FileAttachmentsEnabled,
 		}); err != nil {
 			return c.Failure(err)
 		}

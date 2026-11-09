@@ -44,6 +44,7 @@ interface ManageAIPageState {
   webSearchApiKey: string
   webSearchBaseUrl: string
   webSearchHasKey: boolean
+  voraRequired: boolean
 }
 
 const claudeModels = [
@@ -90,6 +91,7 @@ export default class ManageAIPage extends AdminBasePage<ManageAIPageProps, Manag
       webSearchApiKey: "",
       webSearchBaseUrl: props.webSearchBaseUrl,
       webSearchHasKey: props.webSearchHasKey,
+      voraRequired: !!Fider.session.tenant.voraRequired,
     }
   }
 
@@ -182,10 +184,17 @@ export default class ManageAIPage extends AdminBasePage<ManageAIPageProps, Manag
           </HStack>
         </div>
 
-        <SubmissionToggle field="voraRequired" label="Require Vora for new ideas">
-          New ideas from the board&apos;s form start with Vora, admins included: people review and edit Vora&apos;s draft, then submit. Applies to products
-          where an agent is on; others keep the plain form. Assistants connected over MCP, and integrations using an API key, can still submit directly.
+        <SubmissionToggle field="voraRequired" label="Require Vora for new ideas" onChange={(voraRequired) => this.setState({ voraRequired })}>
+          New ideas from the board&apos;s form start with Vora, admins included unless they may skip it below: people review and edit Vora&apos;s draft, then
+          submit. Applies to products where an agent is on; others keep the plain form. Assistants connected over MCP, and integrations using an API key, can
+          still submit directly.
         </SubmissionToggle>
+        {s.voraRequired && (
+          <div className="ml-6">
+            <SubmissionToggle field="voraBypassAdmins" label="Admins can skip Vora" />
+            <SubmissionToggle field="voraBypassCollaborators" label="Collaborators can skip Vora" />
+          </div>
+        )}
 
         <div>
           <h2>Provider</h2>

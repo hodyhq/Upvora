@@ -17,6 +17,7 @@ import (
 	"github.com/getfider/fider/app/actions"
 	"github.com/getfider/fider/app/models/cmd"
 	"github.com/getfider/fider/app/models/entity"
+	"github.com/getfider/fider/app/models/enum"
 	"github.com/getfider/fider/app/models/query"
 	"github.com/getfider/fider/app/pkg/bus"
 	"github.com/getfider/fider/app/pkg/jwt"
@@ -126,9 +127,14 @@ func VoraBriefValid(c *web.Context, token, brief string) bool {
 
 // VoraRequiredFor reports whether a new idea for productID must arrive with a
 // Vora brief: the site requires Vora and an enabled agent serves that product.
-// MCP tool calls and API-key integrations are never held to it.
+// MCP tool calls and API-key integrations are never held to it, nor
+// administrators or collaborators whose bypass switch is on.
 func VoraRequiredFor(c *web.Context, productID int) (bool, error) {
 	if c.Tenant() == nil || !c.Tenant().VoraRequired || c.IsAuthenticatedByAPIKey() {
+		return false, nil
+	}
+	if u := c.User(); u != nil && ((u.Role == enum.RoleAdministrator && c.Tenant().VoraBypassAdmins) ||
+		(u.Role == enum.RoleCollaborator && c.Tenant().VoraBypassCollaborators)) {
 		return false, nil
 	}
 	if replay, _ := c.Value(oauthas.ReplayCtxKey{}).(bool); replay {
@@ -427,7 +433,7 @@ func AIFinalize() web.HandlerFunc {
 
 		system := buildSystemPrompt(c, agent, action.ProductID) + `
 
-The interview is over. Respond with ONLY these sections, in exactly this format, no other text before or after:
+The interview is over: the person chose to wrap up now. Never refuse, apologise or ask more questions, however short the interview was; write every section from what was said and list what is missing under Risks & open questions. Respond with ONLY these sections, in exactly this format, no other text before or after:
 
 ===TITLE===
 one line, under 90 characters, specific

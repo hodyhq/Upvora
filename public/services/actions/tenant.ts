@@ -61,7 +61,12 @@ export const updateTenantPrivacy = async (request: PrivacySettingsPageState): Pr
   return await http.post("/_api/admin/settings/privacy", request)
 }
 
-export const updateSubmissionSettings = async (settings: { voraRequired?: boolean; fileAttachmentsEnabled?: boolean }): Promise<Result> => {
+export const updateSubmissionSettings = async (settings: {
+  voraRequired?: boolean
+  voraBypassAdmins?: boolean
+  voraBypassCollaborators?: boolean
+  fileAttachmentsEnabled?: boolean
+}): Promise<Result> => {
   return await http.post("/_api/admin/settings/submission", settings)
 }
 
