@@ -54,8 +54,13 @@ export const ShareFeedback: React.FC<ShareFeedbackProps> = (props) => {
   const voraServesProduct = !!fider.session.tenant.aiEnabled && !!fider.session.tenant.aiAgents?.some((a) => a.productId === productId || a.productId === null)
   const voraAvailable = fider.session.isAuthenticated && voraServesProduct
   // Vora-only: where Vora serves the product, ideas from this form start with
-  // Vora; the form appears with Vora's draft. (MCP and API keys are exempt.)
-  const voraRequired = !!fider.session.tenant.voraRequired && voraServesProduct
+  // Vora; the form appears with Vora's draft. (MCP and API keys are exempt, and
+  // admins or collaborators whose bypass switch is on.)
+  const user = fider.session.isAuthenticated ? fider.session.user : undefined
+  const bypassesVora =
+    (!!user?.isAdministrator && !!fider.session.tenant.voraBypassAdmins) ||
+    (!!user?.isCollaborator && !user.isAdministrator && !!fider.session.tenant.voraBypassCollaborators)
+  const voraRequired = !!fider.session.tenant.voraRequired && voraServesProduct && !bypassesVora
   const showForm = !voraRequired || !!briefMarkdown
   const canAttachFiles = fider.session.isAuthenticated && !!fider.session.tenant.fileAttachmentsEnabled
 

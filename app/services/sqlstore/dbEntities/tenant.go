@@ -33,6 +33,8 @@ type Tenant struct {
 	MembersPrivateIdeas        bool           `db:"members_private_ideas"`
 	MembersCanPublishPrivate   bool           `db:"members_can_publish_private"`
 	VoraRequired               bool           `db:"vora_required"`
+	VoraBypassAdmins           bool           `db:"vora_bypass_admins"`
+	VoraBypassCollaborators    bool           `db:"vora_bypass_collaborators"`
 	FileAttachmentsEnabled     bool           `db:"file_attachments_enabled"`
 	MCPEnabled                 bool           `db:"mcp_enabled"`
 	MCPMinRole                 int            `db:"mcp_min_role"`
@@ -109,6 +111,8 @@ func (t *Tenant) ToModel() *entity.Tenant {
 		MembersPrivateIdeas:      t.MembersPrivateIdeas,
 		MembersCanPublishPrivate: t.MembersCanPublishPrivate,
 		VoraRequired:             t.VoraRequired,
+		VoraBypassAdmins:         t.VoraBypassAdmins,
+		VoraBypassCollaborators:  t.VoraBypassCollaborators,
 		FileAttachmentsEnabled:   t.FileAttachmentsEnabled,
 		MCPEnabled:               t.MCPEnabled,
 		MCPMinRole:               enum.Role(t.MCPMinRole),

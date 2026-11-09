@@ -26,6 +26,8 @@ export interface Tenant {
   isModerationEnabled: boolean
   membersPrivateIdeas: boolean
   voraRequired: boolean
+  voraBypassAdmins: boolean
+  voraBypassCollaborators: boolean
   fileAttachmentsEnabled: boolean
   membersCanPublishPrivate: boolean
   mcpEnabled: boolean

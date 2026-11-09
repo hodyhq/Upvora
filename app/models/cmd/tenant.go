@@ -129,6 +129,8 @@ type UpdateTenantMCPSettings struct {
 // UpdateTenantSubmissionSettings changes how ideas are submitted; a nil field
 // is left as it is, so each admin page sends only its own switch.
 type UpdateTenantSubmissionSettings struct {
-	VoraRequired           *bool
-	FileAttachmentsEnabled *bool
+	VoraRequired            *bool
+	VoraBypassAdmins        *bool
+	VoraBypassCollaborators *bool
+	FileAttachmentsEnabled  *bool
 }

@@ -509,4 +509,14 @@ func TestTenantStorage_SubmissionSettings_OmittedStaysUnchanged(t *testing.T) {
 	Expect(bus.Dispatch(jonSnowCtx, &cmd.UpdateTenantSubmissionSettings{VoraRequired: &off})).IsNil()
 	Expect(get().VoraRequired).IsFalse()
 	Expect(get().FileAttachmentsEnabled).IsTrue()
+
+	Expect(get().VoraBypassAdmins).IsFalse()
+	Expect(get().VoraBypassCollaborators).IsFalse()
+	Expect(bus.Dispatch(jonSnowCtx, &cmd.UpdateTenantSubmissionSettings{VoraBypassAdmins: &on})).IsNil()
+	Expect(get().VoraBypassAdmins).IsTrue()
+	Expect(get().VoraBypassCollaborators).IsFalse()
+	Expect(bus.Dispatch(jonSnowCtx, &cmd.UpdateTenantSubmissionSettings{VoraBypassCollaborators: &on, VoraBypassAdmins: &off})).IsNil()
+	Expect(get().VoraBypassAdmins).IsFalse()
+	Expect(get().VoraBypassCollaborators).IsTrue()
+	Expect(get().FileAttachmentsEnabled).IsTrue()
 }
