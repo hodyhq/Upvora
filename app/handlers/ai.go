@@ -433,7 +433,7 @@ func AIFinalize() web.HandlerFunc {
 
 		system := buildSystemPrompt(c, agent, action.ProductID) + `
 
-The interview is over. Respond with ONLY these sections, in exactly this format, no other text before or after:
+The interview is over: the person chose to wrap up now. Never refuse, apologise or ask more questions, however short the interview was; write every section from what was said and list what is missing under Risks & open questions. Respond with ONLY these sections, in exactly this format, no other text before or after:
 
 ===TITLE===
 one line, under 90 characters, specific
