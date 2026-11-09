@@ -186,8 +186,8 @@ export default class ManageAIPage extends AdminBasePage<ManageAIPageProps, Manag
 
         <SubmissionToggle field="voraRequired" label="Require Vora for new ideas" onChange={(voraRequired) => this.setState({ voraRequired })}>
           New ideas from the board&apos;s form start with Vora, admins included unless they may skip it below: people review and edit Vora&apos;s draft, then
-          submit. Applies to products where an agent is on; others keep the plain form. Assistants connected over MCP, and integrations using an API key,
-          can still submit directly.
+          submit. Applies to products where an agent is on; others keep the plain form. Assistants connected over MCP, and integrations using an API key, can
+          still submit directly.
         </SubmissionToggle>
         {s.voraRequired && (
           <div className="ml-6">
