@@ -29,6 +29,18 @@ jobs:
             VERSION=${{ steps.v.outputs.version }}
             COMMITHASH=${{ steps.v.outputs.sha }}
           tags: |
-            ghcr.io/hodyhq/upvora:beta
-            ghcr.io/hodyhq/upvora:${{ steps.v.outputs.version }}
-            ghcr.io/hodyhq/upvora:${{ steps.v.outputs.sha }}
+            ghcr.io/hodylabs/upvora:beta
+            ghcr.io/hodylabs/upvora:${{ steps.v.outputs.version }}
+            ghcr.io/hodylabs/upvora:${{ steps.v.outputs.sha }}
+
+      # Existing installs pull ghcr.io/hodyhq/upvora (Hody's personal account). Copy
+      # every tag there too, so they keep updating. Needs either a token with
+      # write:packages for hodyhq (secret GHCR_HODYHQ_TOKEN) or this repo granted
+      # write access on that package; without one this step fails loudly.
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with: { registry: ghcr.io, username: "${{ secrets.GHCR_HODYHQ_TOKEN && 'hodyhq' || github.actor }}", password: "${{ secrets.GHCR_HODYHQ_TOKEN || secrets.GITHUB_TOKEN }}" }
+      - name: Copy to the old address
+        run: |
+          for t in beta "${{ steps.v.outputs.version }}" "${{ steps.v.outputs.sha }}"; do
+            docker buildx imagetools create -t "ghcr.io/hodyhq/upvora:$t" "ghcr.io/hodylabs/upvora:$t"
+          done

@@ -17,7 +17,7 @@ import (
 	"github.com/getfider/fider/app/pkg/web"
 )
 
-const releasesURL = "https://api.github.com/repos/hodyhq/Upvora/releases/latest"
+const releasesURL = "https://api.github.com/repos/HodyLabs/Upvora/releases/latest"
 
 // validTag keeps anything GitHub returns from ever reaching the UI unless it
 // looks like one of our version tags.

@@ -34,6 +34,14 @@ while true; do
     echo "running" > "$SHARED/status"
     {
       echo "[updater] $(date -u '+%Y-%m-%d %H:%M:%S') update requested — pulling app image"
+      # Upvora moved from ghcr.io/hodyhq to ghcr.io/hodylabs (2026-11): follow it.
+      # Only this fixed address is rewritten; nothing from the app is used.
+      for f in docker-compose.yml docker-compose.yaml compose.yml compose.yaml; do
+        if [ -f "$f" ] && grep -q 'ghcr.io/hodyhq/upvora' "$f"; then
+          sed -i 's#ghcr.io/hodyhq/upvora#ghcr.io/hodylabs/upvora#g' "$f" &&
+            echo "[updater] Upvora moved: $f now pulls ghcr.io/hodylabs/upvora"
+        fi
+      done
       docker compose pull app &&
         echo "[updater] recreating app container" &&
         docker compose up -d app &&
