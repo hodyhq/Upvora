@@ -29,6 +29,9 @@ jobs:
             VERSION=${{ steps.v.outputs.version }}
             COMMITHASH=${{ steps.v.outputs.sha }}
           tags: |
+            ghcr.io/hodylabs/upvora:beta
             ghcr.io/hodyhq/upvora:beta
+            ghcr.io/hodylabs/upvora:${{ steps.v.outputs.version }}
             ghcr.io/hodyhq/upvora:${{ steps.v.outputs.version }}
+            ghcr.io/hodylabs/upvora:${{ steps.v.outputs.sha }}
             ghcr.io/hodyhq/upvora:${{ steps.v.outputs.sha }}

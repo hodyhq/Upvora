@@ -105,12 +105,20 @@ export const SystemBox = () => {
               {armed ? "Click again to confirm" : "Update now"}
             </button>
           )}
+          <p className="text-muted">
+            Upvora has moved to{" "}
+            <a href="https://github.com/HodyLabs/Upvora" target="_blank" rel="noopener noreferrer">
+              github.com/HodyLabs/Upvora
+            </a>
+            . Images are published at <code>ghcr.io/hodylabs/upvora</code>; the old <code>ghcr.io/hodyhq/upvora</code> keeps receiving every release, so nothing
+            breaks. The latest updater sidecar switches your compose file to the new address on its own.
+          </p>
           {status && !status.updaterConfigured && (
             <details className="c-system-box__recovery">
               <summary>Enable one-click updates</summary>
               <p>
                 Add the <code>updater</code> sidecar from the repo&apos;s{" "}
-                <a href="https://github.com/hodyhq/Upvora/blob/main/docker-compose.example.yml" target="_blank" rel="noopener noreferrer">
+                <a href="https://github.com/HodyLabs/Upvora/blob/main/docker-compose.example.yml" target="_blank" rel="noopener noreferrer">
                   docker-compose.example.yml
                 </a>{" "}
                 to your compose file — copy the <code>updater</code> service, the <code>updater-shared</code> volume, and the two <code>updater</code> lines on

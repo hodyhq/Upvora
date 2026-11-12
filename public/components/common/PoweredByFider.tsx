@@ -22,7 +22,7 @@ export const PoweredByFider = (props: PoweredByFiderProps) => {
 
   return (
     <div className={className}>
-      <a rel="noopener" className="c-powered__brand" href="https://github.com/hodyhq/Upvora" target="_blank">
+      <a rel="noopener" className="c-powered__brand" href="https://github.com/HodyLabs/Upvora" target="_blank">
         <svg className="c-powered__mark" viewBox="0 0 512 512" aria-hidden="true">
           <path
             d="M72 88 H168 V270 C168 346 202 382 256 382 C310 382 344 346 344 270 V88 H440 V276 C440 420 365 476 256 476 C147 476 72 420 72 276 Z"

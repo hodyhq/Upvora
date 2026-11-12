@@ -4,7 +4,7 @@ There are many ways you can contribute to Upvora.
 
 - **Send us a Pull Request** on GitHub. Make sure you read our [Getting Started](#getting-started-with-the-upvora-codebase) guide to learn how to setup the development environment;
 - **Translate Upvora** to your language. See our [translation guide](/locale/README.md) to learn how to add a new language;
-- **Report issues** and bug reports on https://github.com/hodyhq/Upvora/issues;
+- **Report issues** and bug reports on https://github.com/HodyLabs/Upvora/issues;
 - **Give feedback** and vote on features you'd like to see at https://feedback.hody.dev;
 - **Spread the word** by starring us on GitHub. Tweet about the project and show it to your friends. The more people know about Upvora, the bigger the community will be and more contributions will be made;
 
@@ -13,13 +13,13 @@ There are many ways you can contribute to Upvora.
 We love contributions, but please help us keep them reviewable and maintainable. Before writing code for a **new feature**:
 
 - Features start as a suggestion on https://feedback.hody.dev, where the community can discuss and vote on them. This helps us gauge whether a change is valuable to other users.
-- Once a suggestion has enough discussion and support, open a [GitHub Issue](https://github.com/hodyhq/Upvora/issues) referencing it and **wait for a maintainer to confirm it's accepted onto the roadmap** before you start building.
+- Once a suggestion has enough discussion and support, open a [GitHub Issue](https://github.com/HodyLabs/Upvora/issues) referencing it and **wait for a maintainer to confirm it's accepted onto the roadmap** before you start building.
 - **Bug fixes and small technical improvements** don't need a feedback suggestion — an issue is still appreciated so we know what you're working on.
 - Pull Requests for features that weren't discussed and accepted may be closed. This isn't anti-AI — it's about reviewer burden and the long-term maintainability of Upvora.
 
 ## Getting started with the Upvora codebase
 
-Before start working on something that you intend to send a Pull Request, make sure there's an [GitHub Issue](https://github.com/hodyhq/Upvora/issues) open for that or create one yourself. If it's a new feature you're working on, please share your high level thoughts on the ticket so we can agree on a solution that aligns with the overall architecture and future of Upvora.
+Before start working on something that you intend to send a Pull Request, make sure there's an [GitHub Issue](https://github.com/HodyLabs/Upvora/issues) open for that or create one yourself. If it's a new feature you're working on, please share your high level thoughts on the ticket so we can agree on a solution that aligns with the overall architecture and future of Upvora.
 
 If you have any question or need help, leave a comment on the issue and we'll do our best to help you out.
 

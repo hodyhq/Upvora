@@ -116,7 +116,7 @@ Want the smallest tool with the largest community? Use Fider. It's great. Want e
 One image, one Postgres, and one-click updates included:
 
 ```bash
-curl -LO https://raw.githubusercontent.com/hodyhq/Upvora/main/docker-compose.example.yml
+curl -LO https://raw.githubusercontent.com/HodyLabs/Upvora/main/docker-compose.example.yml
 mv docker-compose.example.yml docker-compose.yml
 # edit BASE_URL, secrets and SMTP, then:
 docker compose up -d
@@ -138,7 +138,7 @@ services:
     volumes: [db-data:/var/lib/postgresql/data]
 
   app:
-    image: ghcr.io/hodyhq/upvora:latest   # or pin a release tag, e.g. :v0.39.0.8.3
+    image: ghcr.io/hodylabs/upvora:latest   # or pin a release tag, e.g. :v0.39.0.8.4
     depends_on: [db]
     ports: ["3000:3000"]
     environment:

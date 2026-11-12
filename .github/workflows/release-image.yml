@@ -1,6 +1,7 @@
 # Builds and publishes the Upvora Docker image when a release tag lands on
 # GitHub (primary CI is GitHub).
-# Self-hosters pull ghcr.io/hodyhq/upvora — no local build required.
+# Self-hosters pull ghcr.io/hodylabs/upvora. Older installs pull ghcr.io/hodyhq/upvora,
+# which still gets every release so they keep updating. No local build required.
 name: release-image
 
 on:
@@ -33,5 +34,7 @@ jobs:
             VERSION=${{ github.ref_name }}
             COMMITHASH=${{ github.sha }}
           tags: |
+            ghcr.io/hodylabs/upvora:${{ github.ref_name }}
             ghcr.io/hodyhq/upvora:${{ github.ref_name }}
+            ghcr.io/hodylabs/upvora:latest
             ghcr.io/hodyhq/upvora:latest
